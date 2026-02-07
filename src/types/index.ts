@@ -1,6 +1,13 @@
 export type Currency = "CZK" | "EUR" | "USD";
 
-export type Theme = "dark" | "light" | "system" | "midnight" | "emerald-dark";
+export type Theme = "dark" | "light" | "system" | "midnight" | "emerald-dark" | "custom";
+
+export interface CustomThemeColors {
+  base: "dark" | "light";
+  bg: string;
+  card: string;
+  border: string;
+}
 
 export type SnapshotReminder = "weekly" | "monthly" | "none";
 
@@ -58,6 +65,7 @@ export interface UserSettings {
   id: string;
   primaryCurrency: Currency;
   theme: Theme;
+  customTheme?: CustomThemeColors;
   snapshotReminder: SnapshotReminder;
   autoSnapshot: AutoSnapshot;
   lastSnapshotDate?: Date;

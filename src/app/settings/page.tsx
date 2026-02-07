@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -13,7 +13,7 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate, formatCurrency, sumConverted } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
-import type { AutoSnapshot, Category, Currency, Theme, SnapshotReminder } from "@/types";
+import type { AutoSnapshot, Category, Currency, CustomThemeColors, Theme, SnapshotReminder } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
@@ -43,11 +43,37 @@ export default function SettingsPage() {
   const activeAssets = assets?.filter((a) => !a.isArchived) ?? [];
   const currency: Currency = settings?.primaryCurrency ?? "USD";
 
+  const DEFAULT_CUSTOM_THEME: CustomThemeColors = {
+    base: "dark",
+    bg: "#1a1a2e",
+    card: "#16213e",
+    border: "#0f3460",
+  };
+
   async function updateSetting(
     key: string,
     value: string,
   ) {
     await db.settings.update("settings", { [key]: value });
+  }
+
+  async function selectCustomTheme() {
+    // Set defaults if no custom palette exists yet
+    if (!settings?.customTheme) {
+      await db.settings.update("settings", {
+        theme: "custom",
+        customTheme: DEFAULT_CUSTOM_THEME,
+      });
+    } else {
+      await db.settings.update("settings", { theme: "custom" });
+    }
+  }
+
+  async function updateCustomColor(key: keyof CustomThemeColors, value: string) {
+    const current = settings?.customTheme ?? DEFAULT_CUSTOM_THEME;
+    await db.settings.update("settings", {
+      customTheme: { ...current, [key]: value },
+    });
   }
 
   // Category helpers
@@ -213,13 +239,19 @@ export default function SettingsPage() {
                 { value: "midnight" as Theme, label: "Midnight", bg: "#000000", card: "#0a0a0a", accent: "#10b981" },
                 { value: "emerald-dark" as Theme, label: "Emerald", bg: "#022c22", card: "#04382b", accent: "#34d399" },
                 { value: "system" as Theme, label: "System" },
+                { value: "custom" as Theme, label: "Custom" },
               ]).map((t) => {
                 const isActive = settings.theme === t.value;
+                const customColors = settings.customTheme ?? DEFAULT_CUSTOM_THEME;
                 return (
                   <button
                     key={t.value}
                     type="button"
-                    onClick={() => updateSetting("theme", t.value)}
+                    onClick={() =>
+                      t.value === "custom"
+                        ? selectCustomTheme()
+                        : updateSetting("theme", t.value)
+                    }
                     className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-2.5 transition-all shrink-0 ${
                       isActive
                         ? "border-emerald-500 bg-emerald-500/5"
@@ -229,6 +261,13 @@ export default function SettingsPage() {
                     {t.value === "system" ? (
                       <div className="flex h-10 w-14 items-center justify-center rounded-lg bg-gradient-to-r from-[#fafafa] to-[#09090b]">
                         <Monitor className="h-5 w-5 text-zinc-500" />
+                      </div>
+                    ) : t.value === "custom" ? (
+                      <div
+                        className="flex h-10 w-14 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: customColors.bg }}
+                      >
+                        <Palette className="h-5 w-5" style={{ color: customColors.border }} />
                       </div>
                     ) : (
                       <div
@@ -249,6 +288,55 @@ export default function SettingsPage() {
                 );
               })}
             </div>
+
+            {/* Custom theme picker panel */}
+            {settings.theme === "custom" && (
+              <div className="mt-4 rounded-xl border border-[var(--dw-border)] bg-[var(--dw-hover)] p-4 space-y-4">
+                <div>
+                  <p className="text-xs font-medium text-zinc-400 mb-2">Base text mode</p>
+                  <div className="flex gap-2">
+                    {(["dark", "light"] as const).map((mode) => {
+                      const active = (settings.customTheme ?? DEFAULT_CUSTOM_THEME).base === mode;
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => updateCustomColor("base", mode)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                            active
+                              ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
+                              : "bg-[var(--dw-card)] text-zinc-400 border border-[var(--dw-border)] hover:text-zinc-200"
+                          }`}
+                        >
+                          {mode === "dark" ? "Light text" : "Dark text"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {([
+                  { key: "bg" as const, label: "Background" },
+                  { key: "card" as const, label: "Card" },
+                  { key: "border" as const, label: "Border" },
+                ]).map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-zinc-400">{label}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-zinc-500 font-mono">
+                        {(settings.customTheme ?? DEFAULT_CUSTOM_THEME)[key]}
+                      </span>
+                      <input
+                        type="color"
+                        value={(settings.customTheme ?? DEFAULT_CUSTOM_THEME)[key]}
+                        onChange={(e) => updateCustomColor(key, e.target.value)}
+                        className="h-8 w-8 cursor-pointer rounded-lg border border-[var(--dw-border)] bg-transparent p-0.5"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between gap-4">

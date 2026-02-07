@@ -71,12 +71,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Apply theme reactively whenever settings change
   useEffect(() => {
     if (!settings) return;
-    applyTheme(settings.theme);
+    applyTheme(settings.theme, settings.customTheme);
 
     if (settings.theme === "system") {
       return watchSystemTheme(() => applyTheme("system"));
     }
-  }, [settings?.theme]);
+  }, [settings?.theme, settings?.customTheme]);
 
   // Before we know the user's state, render just children (no nav).
   // Server always renders this. Client renders this on first pass too (mounted=false).
