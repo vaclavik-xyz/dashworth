@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Github,
   ArrowRight,
+  Share,
 } from "lucide-react";
 
 /* ───────────────────────── Fade-in on scroll ───────────────────────── */
@@ -151,6 +152,14 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
   const router = useRouter();
   const handleStart = onStart ?? (() => router.push("/assets"));
 
+  const [isIosSafari, setIsIosSafari] = useState(false);
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const isIos = /iPhone|iPad/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isStandalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
+    setIsIosSafari(isIos && !isStandalone);
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#09090b]">
       {/* ── Hero ── */}
@@ -193,6 +202,32 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
               No sign-up required
             </span>
           </div>
+
+          {isIosSafari && (
+            <div className="mt-8 mx-auto max-w-sm rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
+              <p className="text-sm leading-relaxed text-zinc-300">
+                <span className="mr-1">📱</span>
+                <span className="font-semibold text-emerald-400">Tip:</span>{" "}
+                For the best experience, add Dashworth to your home screen first.
+              </p>
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({ title: "Dashworth", url: window.location.href }).catch(() => {});
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20 active:scale-[0.98]"
+                >
+                  <Share className="h-4 w-4" />
+                  Open Share Menu
+                </button>
+                <span className="text-xs text-zinc-500">
+                  Then tap &quot;Add to Home Screen&quot; in the menu.
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Scroll hint */}

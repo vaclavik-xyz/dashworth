@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
@@ -12,6 +13,8 @@ import { refreshAutoPrices } from "@/lib/auto-update";
 import { checkAutoSnapshot } from "@/lib/auto-snapshot";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const assetCount = useLiveQuery(() => db.assets.count());
 
@@ -24,6 +27,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       setReady(assetCount > 0);
     }
   }, [assetCount]);
+
+  // Redirect to landing if no data and not on home page
+  useEffect(() => {
+    if (ready === false && pathname !== "/") {
+      router.push("/");
+    }
+  }, [ready, pathname, router]);
 
   useEffect(() => {
     async function init() {

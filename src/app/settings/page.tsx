@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { db } from "@/lib/db";
@@ -19,6 +20,7 @@ import Modal from "@/components/ui/Modal";
 import CategoryForm from "@/components/settings/CategoryForm";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const categories = useLiveQuery(() => db.categories.orderBy("sortOrder").toArray());
   const assets = useLiveQuery(() => db.assets.toArray());
@@ -130,6 +132,7 @@ export default function SettingsPage() {
     await seedDatabase();
     setDeleteModalOpen(false);
     setDeleteConfirmText("");
+    router.push("/");
   }
 
   const selectClass =
