@@ -12,6 +12,7 @@ import NetWorthChart from "@/components/dashboard/NetWorthChart";
 import AllocationPie from "@/components/dashboard/AllocationPie";
 import TopAssets from "@/components/dashboard/TopAssets";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import SnapshotReminder from "@/components/layout/SnapshotReminder";
 
 export default function DashboardPage() {
   const assets = useLiveQuery(() =>
@@ -86,6 +87,8 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 md:p-10">
+      <SnapshotReminder />
+
       {/* Hero */}
       <NetWorthHero
         totalNetWorth={totalNetWorth}

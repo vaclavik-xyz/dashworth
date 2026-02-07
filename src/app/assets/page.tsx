@@ -16,6 +16,7 @@ import AssetCard from "@/components/assets/AssetCard";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
 import type { Selection } from "@/components/assets/detail/DetailPanel";
 import BottomSheet from "@/components/ui/BottomSheet";
+import SnapshotReminder from "@/components/layout/SnapshotReminder";
 
 interface GroupedSection {
   categoryId: string;
@@ -164,6 +165,8 @@ export default function AssetsPage() {
 
   return (
     <div className="p-6 md:p-10">
+      <SnapshotReminder />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

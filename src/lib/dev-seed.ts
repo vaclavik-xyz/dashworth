@@ -9,6 +9,12 @@ function monthsAgo(months: number): Date {
   return d;
 }
 
+function daysAgo(days: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d;
+}
+
 // Realistic value progression over 6 months (index 0 = oldest)
 const VALUE_HISTORY: Record<string, number[]> = {
   bitcoin:     [980000, 1120000, 1050000, 1250000, 1180000, 1350000],
@@ -76,9 +82,10 @@ export async function devSeedDatabase(): Promise<void> {
     };
   });
 
-  // Create 6 monthly snapshots
+  // Create 6 monthly snapshots (most recent is 10 days ago — triggers reminder & auto-snapshot)
+  const snapshotDates = [monthsAgo(5), monthsAgo(4), monthsAgo(3), monthsAgo(2), monthsAgo(1), daysAgo(10)];
   const snapshots: Snapshot[] = Array.from({ length: 6 }, (_, i) => {
-    const date = monthsAgo(5 - i); // oldest first
+    const date = snapshotDates[i];
     const entries: SnapshotEntry[] = assets.map((asset, ai) => {
       const def = ASSET_DEFS[ai];
       return {
@@ -107,6 +114,7 @@ export async function devSeedDatabase(): Promise<void> {
     await db.assets.bulkAdd(assets);
     await db.snapshots.bulkAdd(snapshots);
     await db.settings.update("settings", {
+      snapshotReminder: "weekly",
       lastSnapshotDate: snapshots[snapshots.length - 1].date,
     });
   });

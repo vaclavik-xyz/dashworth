@@ -27,6 +27,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
+  // Re-check auto-snapshot when the setting changes (e.g. user enables it in Settings)
+  useEffect(() => {
+    if (settings?.autoSnapshot && settings.autoSnapshot !== "off") {
+      checkAutoSnapshot();
+    }
+  }, [settings?.autoSnapshot]);
+
   // Apply theme reactively whenever settings change
   useEffect(() => {
     if (!settings) return;
