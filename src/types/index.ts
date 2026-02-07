@@ -14,6 +14,8 @@ export interface Category {
   createdAt: Date;
 }
 
+export type PriceSource = "manual" | "coingecko" | "yahoo";
+
 export interface Asset {
   id: string;
   name: string;
@@ -22,6 +24,9 @@ export interface Asset {
   currency: Currency;
   currentValue: number;
   notes?: string;
+  ticker?: string;
+  priceSource: PriceSource;
+  lastPriceUpdate?: Date;
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -57,5 +62,11 @@ export interface UserSettings {
 export interface ExchangeRateCache {
   id: string;
   rates: Record<string, number>;
+  fetchedAt: Date;
+}
+
+export interface PriceCache {
+  id: string;              // "coingecko:{ticker}" or "yahoo:{ticker}"
+  price: Record<string, number>; // { usd: 100000, czk: 2350000, eur: 92000 }
   fetchedAt: Date;
 }

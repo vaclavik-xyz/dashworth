@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Asset, Category, ExchangeRateCache, Snapshot, UserSettings } from "@/types";
+import type { Asset, Category, ExchangeRateCache, PriceCache, Snapshot, UserSettings } from "@/types";
 
 const db = new Dexie("dashworth") as Dexie & {
   categories: EntityTable<Category, "id">;
@@ -7,6 +7,7 @@ const db = new Dexie("dashworth") as Dexie & {
   snapshots: EntityTable<Snapshot, "id">;
   settings: EntityTable<UserSettings, "id">;
   exchangeRates: EntityTable<ExchangeRateCache, "id">;
+  priceCache: EntityTable<PriceCache, "id">;
 };
 
 db.version(1).stores({
@@ -27,6 +28,15 @@ db.version(2).stores({
 
 db.version(3).stores({
   exchangeRates: "id",
+});
+
+db.version(4).stores({
+  assets: "id, categoryId, name, group, priceSource, isArchived, updatedAt",
+  priceCache: "id",
+}).upgrade((tx) => {
+  return tx.table("assets").toCollection().modify((asset) => {
+    if (!asset.priceSource) asset.priceSource = "manual";
+  });
 });
 
 export { db };

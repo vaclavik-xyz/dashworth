@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, RefreshCw } from "lucide-react";
 import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
@@ -77,7 +77,15 @@ export default function AssetCard({ asset, category, onEdit, onDelete, primaryCu
             </p>
           )}
         </div>
-        <p className="text-xs text-zinc-600">{formatDate(asset.updatedAt)}</p>
+        <div className="text-right">
+          {asset.priceSource !== "manual" && (
+            <div className="flex items-center gap-1 text-xs text-emerald-500 mb-0.5 justify-end">
+              <RefreshCw className="h-3 w-3" />
+              <span>Auto</span>
+            </div>
+          )}
+          <p className="text-xs text-zinc-600">{formatDate(asset.updatedAt)}</p>
+        </div>
       </div>
     </Card>
   );

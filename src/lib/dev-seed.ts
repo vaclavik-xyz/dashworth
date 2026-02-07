@@ -69,6 +69,7 @@ export async function devSeedDatabase(): Promise<void> {
       group: def.group,
       currency: def.currency,
       currentValue: history[history.length - 1],
+      priceSource: "manual",
       isArchived: false,
       createdAt: monthsAgo(6),
       updatedAt: now,

@@ -8,16 +8,21 @@ import { db } from "@/lib/db";
 import { seedDatabase } from "@/lib/seed";
 import { devSeedDatabase } from "@/lib/dev-seed";
 import { applyTheme, watchSystemTheme } from "@/lib/theme";
+import { refreshAutoPrices } from "@/lib/auto-update";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const settings = useLiveQuery(() => db.settings.get("settings"));
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      devSeedDatabase();
-    } else {
-      seedDatabase();
+    async function init() {
+      if (process.env.NODE_ENV === "development") {
+        await devSeedDatabase();
+      } else {
+        await seedDatabase();
+      }
+      refreshAutoPrices();
     }
+    init();
   }, []);
 
   // Apply theme reactively whenever settings change

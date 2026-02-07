@@ -64,13 +64,14 @@ export default function SettingsPage() {
   async function confirmDeleteAll() {
     await db.transaction(
       "rw",
-      [db.categories, db.assets, db.snapshots, db.settings, db.exchangeRates],
+      [db.categories, db.assets, db.snapshots, db.settings, db.exchangeRates, db.priceCache],
       async () => {
         await db.categories.clear();
         await db.assets.clear();
         await db.snapshots.clear();
         await db.settings.clear();
         await db.exchangeRates.clear();
+        await db.priceCache.clear();
       },
     );
     await seedDatabase();
