@@ -9,6 +9,7 @@ import { seedDatabase } from "@/lib/seed";
 import { devSeedDatabase } from "@/lib/dev-seed";
 import { applyTheme, watchSystemTheme } from "@/lib/theme";
 import { refreshAutoPrices } from "@/lib/auto-update";
+import { checkAutoSnapshot } from "@/lib/auto-snapshot";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const settings = useLiveQuery(() => db.settings.get("settings"));
@@ -20,7 +21,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       } else {
         await seedDatabase();
       }
-      refreshAutoPrices();
+      await refreshAutoPrices();
+      checkAutoSnapshot();
     }
     init();
   }, []);

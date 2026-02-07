@@ -4,6 +4,8 @@ export type Theme = "dark" | "light" | "system";
 
 export type SnapshotReminder = "weekly" | "monthly" | "none";
 
+export type AutoSnapshot = "off" | "daily" | "weekly";
+
 export interface Category {
   id: string;
   name: string;
@@ -58,6 +60,7 @@ export interface UserSettings {
   primaryCurrency: Currency;
   theme: Theme;
   snapshotReminder: SnapshotReminder;
+  autoSnapshot: AutoSnapshot;
   lastSnapshotDate?: Date;
 }
 

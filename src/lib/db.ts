@@ -49,4 +49,10 @@ db.version(5).stores({}).upgrade((tx) => {
   });
 });
 
+db.version(6).stores({}).upgrade((tx) => {
+  return tx.table("settings").toCollection().modify((s) => {
+    if (s.autoSnapshot == null) s.autoSnapshot = "off";
+  });
+});
+
 export { db };

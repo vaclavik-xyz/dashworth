@@ -20,6 +20,7 @@ export async function seedDatabase(): Promise<void> {
     primaryCurrency: "CZK",
     theme: "dark",
     snapshotReminder: "none",
+    autoSnapshot: "off",
   };
 
   await db.transaction("rw", db.categories, db.settings, async () => {

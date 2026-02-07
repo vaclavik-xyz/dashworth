@@ -10,7 +10,7 @@ import { seedDatabase } from "@/lib/seed";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate } from "@/lib/utils";
-import type { Currency, Theme, SnapshotReminder } from "@/types";
+import type { AutoSnapshot, Currency, Theme, SnapshotReminder } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
@@ -183,6 +183,31 @@ export default function SettingsPage() {
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
               <option value="none">None</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">
+                Auto-Snapshot
+              </p>
+              <p className="text-xs text-zinc-500">
+                Automatically take snapshots on a schedule
+              </p>
+            </div>
+            <select
+              value={settings.autoSnapshot}
+              onChange={(e) =>
+                updateSetting(
+                  "autoSnapshot",
+                  e.target.value as AutoSnapshot,
+                )
+              }
+              className={`${selectClass} w-28`}
+            >
+              <option value="off">Off</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
             </select>
           </div>
         </Card>
