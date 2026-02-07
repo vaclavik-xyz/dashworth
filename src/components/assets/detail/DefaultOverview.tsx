@@ -82,7 +82,8 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
       {pieData.length > 0 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Allocation by Category</h4>
-          <ResponsiveContainer width="100%" height={180}>
+          <div className="h-[150px] md:h-[180px]">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
@@ -90,8 +91,8 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={80}
+                innerRadius={40}
+                outerRadius={65}
                 strokeWidth={0}
               >
                 {pieData.map((entry, i) => (
@@ -104,6 +105,7 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
               />
             </PieChart>
           </ResponsiveContainer>
+          </div>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {pieData.map((d) => (
               <div key={d.name} className="flex items-center gap-1.5 text-xs">

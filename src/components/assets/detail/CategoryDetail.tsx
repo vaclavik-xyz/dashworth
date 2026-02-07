@@ -135,7 +135,8 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
       {donutData.length > 1 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Asset Allocation</h4>
-          <ResponsiveContainer width="100%" height={180}>
+          <div className="h-[150px] md:h-[180px]">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={donutData}
@@ -143,8 +144,8 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={80}
+                innerRadius={40}
+                outerRadius={65}
                 strokeWidth={0}
               >
                 {donutData.map((entry, i) => (
@@ -157,6 +158,7 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
               />
             </PieChart>
           </ResponsiveContainer>
+          </div>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {donutData.map((d) => (
               <div key={d.name} className="flex items-center gap-1.5 text-xs">

@@ -13,6 +13,7 @@ import AssetForm from "@/components/assets/AssetForm";
 import AssetCard from "@/components/assets/AssetCard";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
 import type { Selection } from "@/components/assets/detail/DetailPanel";
+import BottomSheet from "@/components/ui/BottomSheet";
 
 interface GroupedSection {
   categoryId: string;
@@ -121,6 +122,7 @@ export default function AssetsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
+  const [mobileSelection, setMobileSelection] = useState<Selection>(null);
 
   const primaryCurrency: Currency = settings?.primaryCurrency ?? "CZK";
   const totalNetWorth = assets?.reduce((sum, a) => sum + a.currentValue, 0) ?? 0;
@@ -202,30 +204,22 @@ export default function AssetsPage() {
               const isCategorySelected =
                 selection?.type === "category" && selection.categoryId === section.categoryId;
 
+              const catSelection: Selection = { type: "category", categoryId: section.categoryId };
+
               return (
                 <div key={section.categoryId}>
                   {/* Category header */}
                   <div
-                    className={`mb-3 hidden cursor-pointer rounded-lg transition-colors md:block ${
+                    className={`mb-3 cursor-pointer rounded-lg transition-colors ${
                       isCategorySelected
-                        ? "border-l-2 border-emerald-500 bg-emerald-500/5 pl-2"
-                        : "border-l-2 border-transparent pl-2"
+                        ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-2"
+                        : "md:border-l-2 md:border-transparent md:pl-2"
                     }`}
-                    onClick={() => toggleSelection({ type: "category", categoryId: section.categoryId })}
+                    onClick={() => {
+                      toggleSelection(catSelection);
+                      setMobileSelection(catSelection);
+                    }}
                   >
-                    <div className="flex items-center gap-2">
-                      {Icon && <Icon className={`h-5 w-5 ${colorClass}`} />}
-                      <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                        {section.category?.name ?? "Unknown"}
-                      </h2>
-                    </div>
-                    <p className="mt-0.5 text-sm text-zinc-400">
-                      {formatCurrency(section.subtotal, primaryCurrency)}
-                      <span className="text-zinc-500"> · {section.assetCount} {section.assetCount === 1 ? "asset" : "assets"}</span>
-                    </p>
-                  </div>
-                  {/* Category header — mobile (no click behavior) */}
-                  <div className="mb-3 md:hidden">
                     <div className="flex items-center gap-2">
                       {Icon && <Icon className={`h-5 w-5 ${colorClass}`} />}
                       <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
@@ -246,61 +240,55 @@ export default function AssetsPage() {
                         selection.categoryId === section.categoryId &&
                         selection.group === grp.name;
 
+                      const grpSelection: Selection = grp.name
+                        ? { type: "group", categoryId: section.categoryId, group: grp.name }
+                        : null;
+
                       return (
                         <div key={grp.name ?? `ungrouped-${gi}`}>
                           {/* Group header */}
                           {grp.name && grp.assets.length > 0 && (
-                            <>
-                              <div
-                                className={`mb-2 ml-1 hidden cursor-pointer rounded-lg transition-colors md:block ${
-                                  isGroupSelected
-                                    ? "border-l-2 border-emerald-500 bg-emerald-500/5 pl-2"
-                                    : "border-l-2 border-transparent pl-2"
-                                }`}
-                                onClick={() =>
-                                  toggleSelection({
-                                    type: "group",
-                                    categoryId: section.categoryId,
-                                    group: grp.name!,
-                                  })
+                            <div
+                              className={`mb-2 ml-1 cursor-pointer rounded-lg transition-colors ${
+                                isGroupSelected
+                                  ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-2"
+                                  : "md:border-l-2 md:border-transparent md:pl-2"
+                              }`}
+                              onClick={() => {
+                                if (grpSelection) {
+                                  toggleSelection(grpSelection);
+                                  setMobileSelection(grpSelection);
                                 }
-                              >
-                                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                                  {grp.name}
-                                </span>
-                                {grp.assets.length > 1 && (
-                                  <p className="text-xs text-zinc-500">
-                                    {formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
-                                  </p>
-                                )}
-                              </div>
-                              {/* Group header — mobile */}
-                              <div className="mb-2 ml-1 md:hidden">
-                                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                                  {grp.name}
-                                </span>
-                                {grp.assets.length > 1 && (
-                                  <p className="text-xs text-zinc-500">
-                                    {formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
-                                  </p>
-                                )}
-                              </div>
-                            </>
+                              }}
+                            >
+                              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                                {grp.name}
+                              </span>
+                              {grp.assets.length > 1 && (
+                                <p className="text-xs text-zinc-500">
+                                  {formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
+                                </p>
+                              )}
+                            </div>
                           )}
                           <div className="grid gap-3">
                             {grp.assets.map((asset) => {
                               const isAssetSelected =
                                 selection?.type === "asset" && selection.assetId === asset.id;
+                              const assetSelection: Selection = { type: "asset", assetId: asset.id };
 
                               return (
                                 <div
                                   key={asset.id}
-                                  className={`hidden rounded-lg transition-colors md:block ${
+                                  className={`rounded-lg transition-colors ${
                                     isAssetSelected
-                                      ? "border-l-2 border-emerald-500 bg-emerald-500/5 pl-1"
-                                      : "border-l-2 border-transparent pl-1"
+                                      ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-1"
+                                      : "md:border-l-2 md:border-transparent md:pl-1"
                                   }`}
-                                  onClick={() => toggleSelection({ type: "asset", assetId: asset.id })}
+                                  onClick={() => {
+                                    toggleSelection(assetSelection);
+                                    setMobileSelection(assetSelection);
+                                  }}
                                 >
                                   <AssetCard
                                     asset={asset}
@@ -311,17 +299,6 @@ export default function AssetsPage() {
                                 </div>
                               );
                             })}
-                            {/* Mobile: no selection wrapper */}
-                            {grp.assets.map((asset) => (
-                              <div key={asset.id} className="md:hidden">
-                                <AssetCard
-                                  asset={asset}
-                                  category={section.category}
-                                  onEdit={() => openEdit(asset)}
-                                  onDelete={() => setDeleteTarget(asset)}
-                                />
-                              </div>
-                            ))}
                           </div>
                         </div>
                       );
@@ -375,6 +352,20 @@ export default function AssetsPage() {
           </Button>
         </div>
       </Modal>
+
+      {/* Mobile bottom sheet for detail */}
+      <BottomSheet
+        open={mobileSelection !== null}
+        onClose={() => setMobileSelection(null)}
+      >
+        <DetailPanel
+          selection={mobileSelection}
+          assets={assets ?? []}
+          categories={categories ?? []}
+          snapshots={snapshots ?? []}
+          currency={primaryCurrency}
+        />
+      </BottomSheet>
     </div>
   );
 }
