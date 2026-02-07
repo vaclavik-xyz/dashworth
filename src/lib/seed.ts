@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { uuid } from "./utils";
 import { DEFAULT_CATEGORIES } from "@/constants/categories";
 import type { Category, UserSettings } from "@/types";
 
@@ -10,7 +11,7 @@ export async function seedDatabase(): Promise<void> {
 
   const categories: Category[] = DEFAULT_CATEGORIES.map((cat) => ({
     ...cat,
-    id: crypto.randomUUID(),
+    id: uuid(),
     createdAt: now,
   }));
 
