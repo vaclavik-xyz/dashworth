@@ -12,7 +12,6 @@ export interface Category {
   icon: string;
   color: string;
   sortOrder: number;
-  isDefault: boolean;
   createdAt: Date;
 }
 

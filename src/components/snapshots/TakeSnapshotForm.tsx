@@ -7,6 +7,7 @@ import { uuid, formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { getIcon } from "@/lib/icons";
+import { COLOR_TEXT_CLASSES } from "@/constants/colors";
 import type { Category, Currency } from "@/types";
 import Button from "@/components/ui/Button";
 
@@ -29,18 +30,6 @@ interface GroupedRows {
   }[];
   subtotal: number;
 }
-
-const COLOR_CLASSES: Record<string, string> = {
-  orange: "text-orange-500",
-  blue: "text-blue-500",
-  emerald: "text-emerald-500",
-  purple: "text-purple-500",
-  red: "text-red-500",
-  green: "text-green-500",
-  slate: "text-slate-500",
-  amber: "text-amber-500",
-  zinc: "text-zinc-500",
-};
 
 interface TakeSnapshotFormProps {
   onClose: () => void;
@@ -197,7 +186,7 @@ export default function TakeSnapshotForm({ onClose }: TakeSnapshotFormProps) {
         {sections.map((section) => {
           const Icon = section.category ? getIcon(section.category.icon) : null;
           const colorClass = section.category
-            ? (COLOR_CLASSES[section.category.color] ?? "text-zinc-500")
+            ? (COLOR_TEXT_CLASSES[section.category.color] ?? "text-zinc-500")
             : "text-zinc-500";
 
           return (

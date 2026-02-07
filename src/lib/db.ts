@@ -55,4 +55,10 @@ db.version(6).stores({}).upgrade((tx) => {
   });
 });
 
+db.version(7).stores({}).upgrade((tx) => {
+  return tx.table("categories").toCollection().modify((cat) => {
+    delete cat.isDefault;
+  });
+});
+
 export { db };

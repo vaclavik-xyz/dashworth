@@ -16,7 +16,6 @@ Grouping for assets. Comes with sensible defaults, user can create custom ones.
 | icon | `string` | Lucide icon name (e.g. "bitcoin", "home") |
 | color | `string` | Tailwind color class (e.g. "orange", "blue") |
 | sortOrder | `number` | Display order in lists |
-| isDefault | `boolean` | Whether this is a built-in category (cannot be deleted) |
 | createdAt | `Date` | Creation timestamp |
 
 #### Default Categories

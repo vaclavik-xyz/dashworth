@@ -5,19 +5,8 @@ import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
+import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
-
-const COLOR_CLASSES: Record<string, string> = {
-  orange: "bg-orange-500/15 text-orange-400",
-  blue: "bg-blue-500/15 text-blue-400",
-  emerald: "bg-emerald-500/15 text-emerald-400",
-  purple: "bg-purple-500/15 text-purple-400",
-  red: "bg-red-500/15 text-red-400",
-  green: "bg-green-500/15 text-green-400",
-  slate: "bg-slate-500/15 text-slate-400",
-  amber: "bg-amber-500/15 text-amber-400",
-  zinc: "bg-zinc-500/15 text-zinc-400",
-};
 
 interface AssetCardProps {
   asset: Asset;
@@ -30,7 +19,7 @@ interface AssetCardProps {
 
 export default function AssetCard({ asset, category, onEdit, onDelete, primaryCurrency, rates }: AssetCardProps) {
   const Icon = category ? getIcon(category.icon) : null;
-  const colorClass = category ? (COLOR_CLASSES[category.color] ?? COLOR_CLASSES.zinc) : COLOR_CLASSES.zinc;
+  const colorClass = category ? (COLOR_BADGE_CLASSES[category.color] ?? COLOR_BADGE_CLASSES.zinc) : COLOR_BADGE_CLASSES.zinc;
 
   return (
     <Card>

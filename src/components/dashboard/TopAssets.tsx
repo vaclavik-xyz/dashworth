@@ -4,19 +4,8 @@ import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
+import { COLOR_TEXT_MUTED_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
-
-const COLOR_CLASSES: Record<string, string> = {
-  orange: "text-orange-400",
-  blue: "text-blue-400",
-  emerald: "text-emerald-400",
-  purple: "text-purple-400",
-  red: "text-red-400",
-  green: "text-green-400",
-  slate: "text-slate-400",
-  amber: "text-amber-400",
-  zinc: "text-zinc-400",
-};
 
 interface TopAssetsProps {
   assets: Asset[];
@@ -41,7 +30,7 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
         {top.map(({ asset, converted }) => {
           const cat = categoryMap.get(asset.categoryId);
           const Icon = cat ? getIcon(cat.icon) : null;
-          const colorClass = cat ? (COLOR_CLASSES[cat.color] ?? "text-zinc-400") : "text-zinc-400";
+          const colorClass = cat ? (COLOR_TEXT_MUTED_CLASSES[cat.color] ?? "text-zinc-400") : "text-zinc-400";
 
           return (
             <div

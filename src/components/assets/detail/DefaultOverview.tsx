@@ -15,18 +15,7 @@ import {
 import type { Asset, Category, Currency, Snapshot } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
-
-const COLOR_HEX: Record<string, string> = {
-  orange: "#f97316",
-  blue: "#3b82f6",
-  emerald: "#10b981",
-  purple: "#a855f7",
-  red: "#ef4444",
-  green: "#22c55e",
-  slate: "#64748b",
-  amber: "#f59e0b",
-  zinc: "#71717a",
-};
+import { COLOR_HEX } from "@/constants/colors";
 
 const tooltipStyle = {
   backgroundColor: "var(--tooltip-bg, #18181b)",

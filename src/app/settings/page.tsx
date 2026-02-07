@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, RefreshCw } from "lucide-react";
+import { Download, Upload, Trash2, Globe, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -10,13 +10,18 @@ import { seedDatabase } from "@/lib/seed";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate } from "@/lib/utils";
-import type { AutoSnapshot, Currency, Theme, SnapshotReminder } from "@/types";
+import { getIcon } from "@/lib/icons";
+import { COLOR_BADGE_CLASSES } from "@/constants/colors";
+import type { AutoSnapshot, Category, Currency, Theme, SnapshotReminder } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
+import CategoryForm from "@/components/settings/CategoryForm";
 
 export default function SettingsPage() {
   const settings = useLiveQuery(() => db.settings.get("settings"));
+  const categories = useLiveQuery(() => db.categories.orderBy("sortOrder").toArray());
+  const assets = useLiveQuery(() => db.assets.toArray());
   const { rates, refresh: refreshRates, lastUpdated } = useExchangeRates();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,11 +32,55 @@ export default function SettingsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
+  // Category management state
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | undefined>();
+  const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
+
   async function updateSetting(
     key: string,
     value: string,
   ) {
     await db.settings.update("settings", { [key]: value });
+  }
+
+  // Category helpers
+  function assetCountFor(categoryId: string): number {
+    return assets?.filter((a) => a.categoryId === categoryId && !a.isArchived).length ?? 0;
+  }
+
+  function openAddCategory() {
+    setEditingCategory(undefined);
+    setCategoryModalOpen(true);
+  }
+
+  function openEditCategory(cat: Category) {
+    setEditingCategory(cat);
+    setCategoryModalOpen(true);
+  }
+
+  function closeCategoryModal() {
+    setCategoryModalOpen(false);
+    setEditingCategory(undefined);
+  }
+
+  async function swapSortOrder(cat: Category, direction: "up" | "down") {
+    if (!categories) return;
+    const idx = categories.findIndex((c) => c.id === cat.id);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= categories.length) return;
+
+    const neighbor = categories[swapIdx];
+    await db.transaction("rw", db.categories, async () => {
+      await db.categories.update(cat.id, { sortOrder: neighbor.sortOrder });
+      await db.categories.update(neighbor.id, { sortOrder: cat.sortOrder });
+    });
+  }
+
+  async function confirmDeleteCategory() {
+    if (!deleteCategoryTarget) return;
+    await db.categories.delete(deleteCategoryTarget.id);
+    setDeleteCategoryTarget(null);
   }
 
   // Import flow
@@ -83,6 +132,10 @@ export default function SettingsPage() {
     "w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white";
 
   if (!settings) return null;
+
+  const deleteCategoryHasAssets = deleteCategoryTarget
+    ? assetCountFor(deleteCategoryTarget.id) > 0
+    : false;
 
   return (
     <div className="p-6 md:p-10">
@@ -213,6 +266,94 @@ export default function SettingsPage() {
         </Card>
       </section>
 
+      {/* Categories */}
+      <section className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+            Categories
+          </h2>
+          <Button variant="ghost" onClick={openAddCategory} className="text-xs">
+            <Plus className="h-3.5 w-3.5" />
+            Add Category
+          </Button>
+        </div>
+        <Card className="mt-3 p-0">
+          {categories && categories.length > 0 ? (
+            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {categories.map((cat, idx) => {
+                const Icon = getIcon(cat.icon);
+                const badgeClass = COLOR_BADGE_CLASSES[cat.color] ?? COLOR_BADGE_CLASSES.zinc;
+                const count = assetCountFor(cat.id);
+
+                return (
+                  <div
+                    key={cat.id}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    {/* Icon badge */}
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${badgeClass}`}>
+                      <Icon className="h-4.5 w-4.5" />
+                    </div>
+
+                    {/* Name + count */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                        {cat.name}
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        {count} {count === 1 ? "asset" : "assets"}
+                      </p>
+                    </div>
+
+                    {/* Reorder arrows */}
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        onClick={() => swapSortOrder(cat, "up")}
+                        disabled={idx === 0}
+                        className="rounded p-0.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                      >
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => swapSortOrder(cat, "down")}
+                        disabled={idx === (categories?.length ?? 0) - 1}
+                        className="rounded p-0.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Edit */}
+                    <button
+                      type="button"
+                      onClick={() => openEditCategory(cat)}
+                      className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteCategoryTarget(cat)}
+                      className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-800 dark:hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="px-4 py-6 text-center text-sm text-zinc-500">
+              No categories yet.
+            </p>
+          )}
+        </Card>
+      </section>
+
       {/* Data */}
       <section className="mt-8">
         <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
@@ -308,6 +449,56 @@ export default function SettingsPage() {
           </p>
         </Card>
       </section>
+
+      {/* Add/Edit Category modal */}
+      <Modal
+        open={categoryModalOpen}
+        onClose={closeCategoryModal}
+        title={editingCategory ? "Edit Category" : "Add Category"}
+      >
+        <CategoryForm category={editingCategory} onClose={closeCategoryModal} />
+      </Modal>
+
+      {/* Delete Category confirmation modal */}
+      <Modal
+        open={deleteCategoryTarget !== null}
+        onClose={() => setDeleteCategoryTarget(null)}
+        title="Delete Category"
+      >
+        {deleteCategoryHasAssets ? (
+          <>
+            <p className="text-sm text-zinc-400">
+              <span className="font-medium text-zinc-900 dark:text-white">{deleteCategoryTarget?.name}</span> has{" "}
+              <span className="font-medium text-zinc-900 dark:text-white">{assetCountFor(deleteCategoryTarget!.id)}</span>{" "}
+              {assetCountFor(deleteCategoryTarget!.id) === 1 ? "asset" : "assets"} assigned to it.
+            </p>
+            <p className="mt-2 text-sm text-amber-400">
+              Move or delete those assets first before removing this category.
+            </p>
+            <div className="mt-4 flex justify-end">
+              <Button variant="secondary" onClick={() => setDeleteCategoryTarget(null)}>
+                OK
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-zinc-400">
+              Are you sure you want to delete{" "}
+              <span className="font-medium text-zinc-900 dark:text-white">{deleteCategoryTarget?.name}</span>?
+              This action cannot be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-3">
+              <Button variant="secondary" onClick={() => setDeleteCategoryTarget(null)}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={confirmDeleteCategory}>
+                Delete
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
 
       {/* Import confirmation modal */}
       <Modal
