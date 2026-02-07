@@ -56,12 +56,12 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
   }
 
   const inputClass =
-    "w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-emerald-500 focus:outline-none";
+    "w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-400">Name</label>
+        <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Name</label>
         <input
           type="text"
           value={name}
@@ -74,7 +74,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-400">Category</label>
+        <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Category</label>
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
@@ -92,7 +92,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
 
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="mb-1 block text-sm font-medium text-zinc-400">Value</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Value</label>
           <input
             type="number"
             value={currentValue}
@@ -104,7 +104,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
           />
         </div>
         <div className="w-28">
-          <label className="mb-1 block text-sm font-medium text-zinc-400">Currency</label>
+          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value as Currency)}
@@ -118,7 +118,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-400">Notes</label>
+        <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Notes</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

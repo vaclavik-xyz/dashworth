@@ -40,7 +40,7 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
               {snapshot.entries.length} asset{snapshot.entries.length !== 1 ? "s" : ""}
             </span>
           </div>
-          <p className="mt-1 text-xl font-bold text-white">
+          <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-white">
             {formatCurrency(snapshot.totalNetWorth, currency)}
           </p>
 
@@ -84,7 +84,7 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
                 onDelete();
               }
             }}
-            className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-800 hover:text-red-400 transition-colors"
+            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-red-400 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
           </span>
@@ -97,7 +97,7 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
       </button>
 
       {expanded && (
-        <div className="mt-3 border-t border-zinc-800 pt-3">
+        <div className="mt-3 border-t border-zinc-200 dark:border-zinc-800 pt-3">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-zinc-500">
@@ -107,9 +107,9 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
             </thead>
             <tbody>
               {snapshot.entries.map((entry) => (
-                <tr key={entry.assetId} className="border-t border-zinc-800/50">
-                  <td className="py-1.5 text-zinc-300">{entry.assetName}</td>
-                  <td className="py-1.5 text-right text-white">
+                <tr key={entry.assetId} className="border-t border-zinc-100 dark:border-zinc-800/50">
+                  <td className="py-1.5 text-zinc-600 dark:text-zinc-300">{entry.assetName}</td>
+                  <td className="py-1.5 text-right text-zinc-900 dark:text-white">
                     {formatCurrency(entry.value, entry.currency as Currency)}
                   </td>
                 </tr>

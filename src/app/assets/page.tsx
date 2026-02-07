@@ -55,8 +55,8 @@ export default function AssetsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Assets</h1>
-          <p className="mt-1 text-3xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Assets</h1>
+          <p className="mt-1 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
             {formatCurrency(totalNetWorth, primaryCurrency)}
           </p>
           <p className="text-sm text-zinc-500">Total net worth</p>
@@ -75,7 +75,7 @@ export default function AssetsPage() {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
             <Wallet className="h-8 w-8 text-emerald-500" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-white">No assets yet</h2>
+          <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-white">No assets yet</h2>
           <p className="mt-1 max-w-xs text-sm text-zinc-500">
             Start tracking your net worth by adding your first asset.
           </p>
@@ -114,7 +114,7 @@ export default function AssetsPage() {
         title="Delete Asset"
       >
         <p className="text-sm text-zinc-400">
-          Are you sure you want to delete <span className="font-medium text-white">{deleteTarget?.name}</span>?
+          Are you sure you want to delete <span className="font-medium text-zinc-900 dark:text-white">{deleteTarget?.name}</span>?
           This action cannot be undone.
         </p>
         <div className="mt-4 flex justify-end gap-3">

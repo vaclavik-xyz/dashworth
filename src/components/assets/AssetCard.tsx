@@ -39,7 +39,7 @@ export default function AssetCard({ asset, category, onEdit, onDelete }: AssetCa
             </div>
           )}
           <div className="min-w-0">
-            <h3 className="font-medium text-white truncate">{asset.name}</h3>
+            <h3 className="font-medium text-zinc-900 dark:text-white truncate">{asset.name}</h3>
             <p className="text-xs text-zinc-500">{category?.name ?? "Unknown"}</p>
           </div>
         </div>
@@ -47,13 +47,13 @@ export default function AssetCard({ asset, category, onEdit, onDelete }: AssetCa
         <div className="flex shrink-0 items-center gap-1">
           <button
             onClick={onEdit}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
+            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button
             onClick={onDelete}
-            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-red-400 transition-colors"
+            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-red-400 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -61,7 +61,7 @@ export default function AssetCard({ asset, category, onEdit, onDelete }: AssetCa
       </div>
 
       <div className="mt-3 flex items-end justify-between">
-        <p className="text-xl font-bold text-white">
+        <p className="text-xl font-bold text-zinc-900 dark:text-white">
           {formatCurrency(asset.currentValue, asset.currency)}
         </p>
         <p className="text-xs text-zinc-600">{formatDate(asset.updatedAt)}</p>

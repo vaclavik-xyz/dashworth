@@ -15,9 +15,9 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 border-r border-zinc-800 bg-zinc-950">
+    <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex h-14 items-center px-6">
-        <span className="text-lg font-bold text-white tracking-tight">
+        <span className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
           dash<span className="text-emerald-500">Worth</span>
         </span>
       </div>
@@ -33,7 +33,7 @@ export default function Sidebar() {
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-emerald-500/10 text-emerald-500"
-                  : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
               }`}
             >
               <Icon className="h-5 w-5" />

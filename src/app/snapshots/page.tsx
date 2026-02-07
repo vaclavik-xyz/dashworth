@@ -28,7 +28,7 @@ export default function SnapshotsPage() {
     <div className="p-6 md:p-10">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Snapshots</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Snapshots</h1>
         {snapshots && snapshots.length > 0 && (
           <Button onClick={() => setModalOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -43,7 +43,7 @@ export default function SnapshotsPage() {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
             <Camera className="h-8 w-8 text-emerald-500" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-white">
+          <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-white">
             No snapshots yet
           </h2>
           <p className="mt-1 max-w-sm text-sm text-zinc-500">

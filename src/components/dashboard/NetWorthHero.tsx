@@ -29,7 +29,7 @@ export default function NetWorthHero({
   return (
     <div>
       <p className="text-sm text-zinc-500">Total net worth</p>
-      <p className="mt-1 text-4xl font-bold tracking-tight text-white md:text-5xl">
+      <p className="mt-1 text-4xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">
         {formatCurrency(totalNetWorth, currency)}
       </p>
       {change !== null && (

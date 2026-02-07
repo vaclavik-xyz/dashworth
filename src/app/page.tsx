@@ -30,7 +30,7 @@ export default function DashboardPage() {
   if (assets && snapshots && !hasAssets && !hasSnapshots) {
     return (
       <div className="p-6 md:p-10">
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
           dash<span className="text-emerald-500">Worth</span>
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
@@ -64,12 +64,12 @@ export default function DashboardPage() {
             <Link
               key={step}
               href={href}
-              className="group rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-emerald-500/30"
+              className="group rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 transition-colors hover:border-emerald-500/30"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 text-sm font-bold">
                 {step}
               </div>
-              <h3 className="mt-3 font-medium text-white group-hover:text-emerald-400 transition-colors">
+              <h3 className="mt-3 font-medium text-zinc-900 dark:text-white group-hover:text-emerald-400 transition-colors">
                 {title}
               </h3>
               <p className="mt-1 text-sm text-zinc-500">{description}</p>

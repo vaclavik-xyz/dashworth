@@ -70,10 +70,11 @@ export default function AllocationPie({ assets, categories, currency }: Allocati
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: "#18181b",
-              border: "1px solid #27272a",
+              backgroundColor: "var(--tooltip-bg, #18181b)",
+              border: "1px solid var(--tooltip-border, #27272a)",
               borderRadius: "8px",
               fontSize: "13px",
+              color: "var(--tooltip-text, #fafafa)",
             }}
             formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
           />
@@ -86,7 +87,7 @@ export default function AllocationPie({ assets, categories, currency }: Allocati
               className="inline-block h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: d.color }}
             />
-            <span className="text-zinc-400">{d.name}</span>
+            <span className="text-zinc-600 dark:text-zinc-400">{d.name}</span>
           </div>
         ))}
       </div>

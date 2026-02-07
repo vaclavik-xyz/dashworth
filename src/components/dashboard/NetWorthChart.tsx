@@ -38,15 +38,17 @@ export default function NetWorthChart({ snapshots, currency }: NetWorthChartProp
       </h2>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+          <CartesianGrid strokeDasharray="3 3" className="[&>line]:stroke-zinc-200 dark:[&>line]:stroke-zinc-800" stroke="#e4e4e7" />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 12, fill: "#71717a" }}
-            axisLine={{ stroke: "#27272a" }}
+            tick={{ fontSize: 12 }}
+            className="[&_.recharts-text]:fill-zinc-500"
+            axisLine={{ stroke: "#e4e4e7" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "#71717a" }}
+            tick={{ fontSize: 12 }}
+            className="[&_.recharts-text]:fill-zinc-500"
             axisLine={false}
             tickLine={false}
             tickFormatter={(v: number) => formatCurrency(v, currency)}
@@ -54,12 +56,13 @@ export default function NetWorthChart({ snapshots, currency }: NetWorthChartProp
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#18181b",
-              border: "1px solid #27272a",
+              backgroundColor: "var(--tooltip-bg, #18181b)",
+              border: "1px solid var(--tooltip-border, #27272a)",
               borderRadius: "8px",
               fontSize: "13px",
+              color: "var(--tooltip-text, #fafafa)",
             }}
-            labelStyle={{ color: "#a1a1aa" }}
+            labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
             formatter={(value: number | undefined) => [
               formatCurrency(value ?? 0, currency),
               "Net Worth",

@@ -39,7 +39,7 @@ export default function RecentActivity({ snapshots, currency }: RecentActivityPr
                 {formatDate(snapshot.date)}
               </span>
             </div>
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-medium text-zinc-900 dark:text-white">
               {formatCurrency(snapshot.totalNetWorth, currency)}
             </span>
           </div>

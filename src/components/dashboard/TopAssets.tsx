@@ -44,9 +44,9 @@ export default function TopAssets({ assets, categories }: TopAssetsProps) {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 {Icon && <Icon className={`h-4 w-4 shrink-0 ${colorClass}`} />}
-                <span className="text-sm text-white truncate">{asset.name}</span>
+                <span className="text-sm text-zinc-900 dark:text-white truncate">{asset.name}</span>
               </div>
-              <span className="shrink-0 text-sm font-medium text-white">
+              <span className="shrink-0 text-sm font-medium text-zinc-900 dark:text-white">
                 {formatCurrency(asset.currentValue, asset.currency)}
               </span>
             </div>
