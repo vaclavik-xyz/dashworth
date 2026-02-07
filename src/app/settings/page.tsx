@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
+  const [protectedCategoryHint, setProtectedCategoryHint] = useState<string | null>(null);
 
   const activeAssets = assets?.filter((a) => !a.isArchived) ?? [];
   const currency: Currency = settings?.primaryCurrency ?? "USD";
@@ -338,13 +339,29 @@ export default function SettingsPage() {
                     </button>
 
                     {/* Delete */}
-                    <button
-                      type="button"
-                      onClick={() => setDeleteCategoryTarget(cat)}
-                      className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-800 dark:hover:text-red-400 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {["crypto", "stocks"].includes(cat.name.toLowerCase()) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProtectedCategoryHint(cat.name);
+                          setTimeout(() => setProtectedCategoryHint(null), 3000);
+                        }}
+                        className="relative rounded-lg p-2 text-zinc-600 cursor-not-allowed transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <span className="block h-[1.5px] w-5 rotate-45 rounded bg-zinc-600" />
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteCategoryTarget(cat)}
+                        className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-800 dark:hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -355,6 +372,13 @@ export default function SettingsPage() {
             </p>
           )}
         </Card>
+        {protectedCategoryHint && (
+          <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-800 border border-zinc-700 px-4 py-2.5 shadow-lg">
+            <p className="whitespace-nowrap text-xs text-zinc-300">
+              {protectedCategoryHint} can&apos;t be deleted — needed for auto price tracking.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Data */}
