@@ -14,9 +14,11 @@ export default function BottomSheet({ open, onClose, children }: BottomSheetProp
   const dragStartY = useRef<number | null>(null);
   const dragCurrentY = useRef(0);
 
-  // Lock body scroll when open
+  // Lock body scroll when open (mobile only — sheet is hidden on md+)
   useEffect(() => {
     if (!open) return;
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    if (!isMobile) return;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";

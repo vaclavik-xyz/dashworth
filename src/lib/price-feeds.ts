@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
+import { getExchangeRates, convertCurrency } from "@/lib/exchange-rates";
 
 const PRICE_TTL = 15 * 60 * 1000; // 15 minutes
+const CORS_PROXY = "https://corsproxy.io/?url=";
 
 async function getCached(id: string): Promise<Record<string, number> | null> {
   const cached = await db.priceCache.get(id);
@@ -22,13 +24,26 @@ export async function fetchCryptoPrice(
   if (cached) return cached;
 
   try {
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ticker.toLowerCase())}&vs_currencies=usd,czk,eur`,
-    );
-    if (!res.ok) return null;
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ticker.toLowerCase())}&vs_currencies=usd,czk,eur`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      // Rate limited or other API error — try via CORS proxy as fallback
+      const proxyRes = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
+      if (!proxyRes.ok) return null;
+      const proxyData = await proxyRes.json();
+      const proxyPrices = proxyData[ticker.toLowerCase()];
+      if (!proxyPrices?.usd) return null;
+      const proxyResult: Record<string, number> = {
+        USD: proxyPrices.usd,
+        CZK: proxyPrices.czk,
+        EUR: proxyPrices.eur,
+      };
+      await setCache(cacheKey, proxyResult);
+      return proxyResult;
+    }
     const data = await res.json();
     const prices = data[ticker.toLowerCase()];
-    if (!prices) return null;
+    if (!prices?.usd) return null;
 
     const result: Record<string, number> = {
       USD: prices.usd,
@@ -51,14 +66,19 @@ export async function fetchStockPrice(
 
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker.toUpperCase())}`;
-    const res = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
     if (!res.ok) return null;
     const data = await res.json();
     const meta = data?.chart?.result?.[0]?.meta;
     if (!meta?.regularMarketPrice) return null;
 
     const usdPrice = meta.regularMarketPrice;
-    const result: Record<string, number> = { USD: usdPrice };
+    const { rates } = await getExchangeRates();
+    const result: Record<string, number> = {
+      USD: usdPrice,
+      CZK: convertCurrency(usdPrice, "USD", "CZK", rates),
+      EUR: convertCurrency(usdPrice, "USD", "EUR", rates),
+    };
     await setCache(cacheKey, result);
     return result;
   } catch {
