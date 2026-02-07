@@ -39,4 +39,14 @@ db.version(4).stores({
   });
 });
 
+db.version(5).stores({}).upgrade((tx) => {
+  // Existing auto-fetch assets: set quantity=1, unitPrice=currentValue
+  return tx.table("assets").toCollection().modify((asset) => {
+    if (asset.priceSource !== "manual" && asset.quantity == null) {
+      asset.quantity = 1;
+      asset.unitPrice = asset.currentValue;
+    }
+  });
+});
+
 export { db };

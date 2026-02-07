@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Loader2 } from "lucide-react";
 import { db } from "@/lib/db";
-import { uuid } from "@/lib/utils";
+import { uuid, formatCurrency } from "@/lib/utils";
 import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
 import type { Asset, Currency, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
@@ -26,6 +26,8 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
   const [notes, setNotes] = useState(asset?.notes ?? "");
   const [ticker, setTicker] = useState(asset?.ticker ?? "");
   const [priceSource, setPriceSource] = useState<PriceSource>(asset?.priceSource ?? "manual");
+  const [quantity, setQuantity] = useState(asset?.quantity?.toString() ?? "1");
+  const [unitPrice, setUnitPrice] = useState(asset?.unitPrice?.toString() ?? "");
   const [saving, setSaving] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -39,6 +41,10 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
   const isCrypto = catName === "crypto";
   const isStocks = catName === "stocks";
   const showTicker = isCrypto || isStocks;
+  const isAutoFetch = showTicker && priceSource !== "manual";
+
+  // Computed total for auto-fetch assets
+  const computedTotal = (Number(quantity) || 0) * (Number(unitPrice) || 0);
 
   // When category changes, set price source
   useEffect(() => {
@@ -82,12 +88,11 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
 
       const price = prices[currency];
       if (price != null) {
-        setCurrentValue(Math.round(price).toString());
+        setUnitPrice(price.toString());
       } else {
-        // Fallback: use USD if available
         const usd = prices["USD"];
         if (usd != null) {
-          setCurrentValue(Math.round(usd).toString());
+          setUnitPrice(usd.toString());
           setCurrency("USD");
         } else {
           setPriceError("Price not available for selected currency.");
@@ -114,15 +119,19 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
     setSaving(true);
     const now = new Date();
 
+    const finalValue = isAutoFetch ? computedTotal : (Number(currentValue) || 0);
+
     const common = {
       name: name.trim(),
       categoryId,
       group: group.trim() || undefined,
-      currentValue: Number(currentValue) || 0,
+      currentValue: finalValue,
       currency,
       notes: notes.trim() || undefined,
       ticker: showTicker && ticker.trim() ? ticker.trim() : undefined,
       priceSource: showTicker ? priceSource : ("manual" as PriceSource),
+      quantity: isAutoFetch ? (Number(quantity) || 1) : undefined,
+      unitPrice: isAutoFetch ? (Number(unitPrice) || 0) : undefined,
       lastPriceUpdate: showTicker && ticker.trim() ? now : undefined,
       updatedAt: now,
     };
@@ -143,6 +152,9 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
 
   const inputClass =
     "w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500";
+
+  const readOnlyClass =
+    "w-full rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400";
 
   const listId = `groups-${categoryId}`;
 
@@ -226,32 +238,86 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
         </datalist>
       </div>
 
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Value</label>
-          <input
-            type="number"
-            value={currentValue}
-            onChange={(e) => setCurrentValue(e.target.value)}
-            placeholder="0"
-            className={inputClass}
-            min="0"
-            step="any"
-          />
+      {/* Auto-fetch: quantity + unit price + computed total */}
+      {isAutoFetch && ticker.trim() ? (
+        <>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Quantity</label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="e.g. 0.348"
+                className={inputClass}
+                min="0"
+                step="any"
+              />
+            </div>
+            <div className="w-28">
+              <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as Currency)}
+                className={inputClass}
+              >
+                <option value="CZK">CZK</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Unit Price</label>
+            <input
+              type="number"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(e.target.value)}
+              placeholder="Auto-fetched"
+              className={inputClass}
+              min="0"
+              step="any"
+            />
+          </div>
+
+          <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400">Total Value</span>
+              <span className="text-lg font-bold text-zinc-900 dark:text-white">
+                {formatCurrency(computedTotal, currency)}
+              </span>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Value</label>
+            <input
+              type="number"
+              value={currentValue}
+              onChange={(e) => setCurrentValue(e.target.value)}
+              placeholder="0"
+              className={inputClass}
+              min="0"
+              step="any"
+            />
+          </div>
+          <div className="w-28">
+            <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              className={inputClass}
+            >
+              <option value="CZK">CZK</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
         </div>
-        <div className="w-28">
-          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as Currency)}
-            className={inputClass}
-          >
-            <option value="CZK">CZK</option>
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-          </select>
-        </div>
-      </div>
+      )}
 
       {/* Auto-update toggle for assets with ticker */}
       {showTicker && ticker.trim() && (

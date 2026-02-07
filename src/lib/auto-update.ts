@@ -21,10 +21,12 @@ export async function refreshAutoPrices(): Promise<void> {
 
       if (!prices) continue;
 
-      const price = prices[asset.currency as Currency];
-      if (price != null && price > 0) {
+      const newUnitPrice = prices[asset.currency as Currency];
+      if (newUnitPrice != null && newUnitPrice > 0) {
+        const qty = asset.quantity ?? 1;
         await db.assets.update(asset.id, {
-          currentValue: price,
+          unitPrice: newUnitPrice,
+          currentValue: qty * newUnitPrice,
           lastPriceUpdate: now,
           updatedAt: now,
         });

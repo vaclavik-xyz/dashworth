@@ -26,6 +26,8 @@ export interface Asset {
   notes?: string;
   ticker?: string;
   priceSource: PriceSource;
+  quantity?: number;
+  unitPrice?: number;
   lastPriceUpdate?: Date;
   isArchived: boolean;
   createdAt: Date;

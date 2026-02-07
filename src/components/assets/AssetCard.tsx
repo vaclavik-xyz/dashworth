@@ -71,6 +71,11 @@ export default function AssetCard({ asset, category, onEdit, onDelete, primaryCu
           <p className="text-xl font-bold text-zinc-900 dark:text-white">
             {formatCurrency(asset.currentValue, asset.currency)}
           </p>
+          {asset.quantity != null && asset.unitPrice != null && (
+            <p className="text-xs text-zinc-500">
+              {asset.quantity} × {formatCurrency(asset.unitPrice, asset.currency)}
+            </p>
+          )}
           {primaryCurrency && rates && asset.currency !== primaryCurrency && (
             <p className="text-xs text-zinc-500">
               ≈ {formatCurrency(convertCurrency(asset.currentValue, asset.currency, primaryCurrency, rates), primaryCurrency)}
