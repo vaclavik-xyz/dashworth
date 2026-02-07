@@ -1,4 +1,5 @@
-import type { Currency } from "@/types";
+import type { Asset, Currency } from "@/types";
+import { convertCurrency } from "@/lib/exchange-rates";
 
 export function uuid(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -28,4 +29,15 @@ export function formatCurrency(value: number, currency: Currency): string {
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function sumConverted(
+  assets: Asset[],
+  targetCurrency: Currency,
+  rates: Record<string, number>,
+): number {
+  return assets.reduce(
+    (sum, a) => sum + convertCurrency(a.currentValue, a.currency, targetCurrency, rates),
+    0,
+  );
 }

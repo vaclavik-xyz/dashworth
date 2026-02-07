@@ -11,14 +11,16 @@ import {
 } from "recharts";
 import type { Currency, Snapshot } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import Card from "@/components/ui/Card";
 
 interface NetWorthChartProps {
   snapshots: Snapshot[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function NetWorthChart({ snapshots, currency }: NetWorthChartProps) {
+export default function NetWorthChart({ snapshots, currency, rates }: NetWorthChartProps) {
   if (snapshots.length < 2) return null;
 
   const data = [...snapshots]
@@ -28,7 +30,10 @@ export default function NetWorthChart({ snapshots, currency }: NetWorthChartProp
         day: "numeric",
         month: "short",
       }),
-      value: s.totalNetWorth,
+      value: s.entries.reduce(
+        (sum, e) => sum + convertCurrency(e.value, e.currency, currency, rates),
+        0,
+      ),
     }));
 
   return (

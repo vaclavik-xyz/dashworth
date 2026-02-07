@@ -19,9 +19,10 @@ interface DetailPanelProps {
   categories: Category[];
   snapshots: Snapshot[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function DetailPanel({ selection, assets, categories, snapshots, currency }: DetailPanelProps) {
+export default function DetailPanel({ selection, assets, categories, snapshots, currency, rates }: DetailPanelProps) {
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
   function renderContent() {
@@ -32,6 +33,7 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
           categories={categories}
           snapshots={snapshots}
           currency={currency}
+          rates={rates}
         />
       );
     }
@@ -45,6 +47,7 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
           assets={filtered}
           snapshots={snapshots}
           currency={currency}
+          rates={rates}
         />
       );
     }
@@ -60,6 +63,7 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
           assets={filtered}
           snapshots={snapshots}
           currency={currency}
+          rates={rates}
         />
       );
     }
@@ -74,6 +78,7 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
           category={category}
           snapshots={snapshots}
           currency={currency}
+          rates={rates}
         />
       );
     }

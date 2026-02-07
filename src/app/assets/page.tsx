@@ -4,7 +4,9 @@ import { useState, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, Wallet } from "lucide-react";
 import { db } from "@/lib/db";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, sumConverted } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
+import { useExchangeRates } from "@/lib/useExchangeRates";
 import { getIcon } from "@/lib/icons";
 import type { Asset, Category, Currency } from "@/types";
 import Button from "@/components/ui/Button";
@@ -30,6 +32,8 @@ interface GroupedSection {
 function buildGroupedSections(
   assets: Asset[],
   categories: Category[],
+  rates: Record<string, number>,
+  targetCurrency: Currency,
 ): GroupedSection[] {
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const byCat = new Map<string, Asset[]>();
@@ -68,13 +72,13 @@ function buildGroupedSections(
     const groups = [
       ...groupNames.map((name) => {
         const ga = byGroup.get(name)!;
-        return { name, assets: ga, subtotal: ga.reduce((s, a) => s + a.currentValue, 0) };
+        return { name, assets: ga, subtotal: ga.reduce((s, a) => s + convertCurrency(a.currentValue, a.currency, targetCurrency, rates), 0) };
       }),
       ...(hasUngrouped
         ? byGroup.get(null)!.map((a) => ({
             name: null as string | null,
             assets: [a],
-            subtotal: a.currentValue,
+            subtotal: convertCurrency(a.currentValue, a.currency, targetCurrency, rates),
           }))
         : []),
     ];
@@ -83,7 +87,7 @@ function buildGroupedSections(
       categoryId: catId,
       category,
       groups,
-      subtotal: catAssets.reduce((s, a) => s + a.currentValue, 0),
+      subtotal: catAssets.reduce((s, a) => s + convertCurrency(a.currentValue, a.currency, targetCurrency, rates), 0),
       assetCount: catAssets.length,
     };
   });
@@ -124,12 +128,13 @@ export default function AssetsPage() {
   const [selection, setSelection] = useState<Selection>(null);
   const [mobileSelection, setMobileSelection] = useState<Selection>(null);
 
+  const { rates } = useExchangeRates();
   const primaryCurrency: Currency = settings?.primaryCurrency ?? "CZK";
-  const totalNetWorth = assets?.reduce((sum, a) => sum + a.currentValue, 0) ?? 0;
+  const totalNetWorth = assets ? sumConverted(assets, primaryCurrency, rates) : 0;
 
   const sections = useMemo(
-    () => (assets && categories ? buildGroupedSections(assets, categories) : []),
-    [assets, categories],
+    () => (assets && categories ? buildGroupedSections(assets, categories, rates, primaryCurrency) : []),
+    [assets, categories, rates, primaryCurrency],
   );
 
   function openAdd() {
@@ -295,6 +300,8 @@ export default function AssetsPage() {
                                     category={section.category}
                                     onEdit={() => openEdit(asset)}
                                     onDelete={() => setDeleteTarget(asset)}
+                                    primaryCurrency={primaryCurrency}
+                                    rates={rates}
                                   />
                                 </div>
                               );
@@ -318,6 +325,7 @@ export default function AssetsPage() {
                 categories={categories ?? []}
                 snapshots={snapshots ?? []}
                 currency={primaryCurrency}
+                rates={rates}
               />
             </div>
           </div>
@@ -364,6 +372,7 @@ export default function AssetsPage() {
           categories={categories ?? []}
           snapshots={snapshots ?? []}
           currency={primaryCurrency}
+          rates={rates}
         />
       </BottomSheet>
     </div>

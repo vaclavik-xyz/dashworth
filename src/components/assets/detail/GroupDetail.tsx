@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { Asset, Currency, Snapshot } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 
 const tooltipStyle = {
   backgroundColor: "var(--tooltip-bg, #18181b)",
@@ -26,10 +27,11 @@ interface GroupDetailProps {
   assets: Asset[];
   snapshots: Snapshot[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function GroupDetail({ group, categoryId, assets, snapshots, currency }: GroupDetailProps) {
-  const total = assets.reduce((sum, a) => sum + a.currentValue, 0);
+export default function GroupDetail({ group, categoryId, assets, snapshots, currency, rates }: GroupDetailProps) {
+  const total = assets.reduce((sum, a) => sum + convertCurrency(a.currentValue, a.currency, currency, rates), 0);
 
   // Line chart: sum of entries with matching group + categoryId per snapshot
   const lineData = [...snapshots]
@@ -37,7 +39,7 @@ export default function GroupDetail({ group, categoryId, assets, snapshots, curr
     .map((s) => {
       const groupTotal = s.entries
         .filter((e) => e.categoryId === categoryId && e.group === group)
-        .reduce((sum, e) => sum + e.value, 0);
+        .reduce((sum, e) => sum + convertCurrency(e.value, e.currency, currency, rates), 0);
       return {
         date: new Date(s.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
         value: groupTotal,
@@ -98,17 +100,21 @@ export default function GroupDetail({ group, categoryId, assets, snapshots, curr
         <h4 className="mb-2 text-xs font-medium text-zinc-500">Assets</h4>
         <div className="space-y-2">
           {assets
-            .sort((a, b) => b.currentValue - a.currentValue)
-            .map((asset) => (
+            .map((asset) => ({
+              asset,
+              converted: convertCurrency(asset.currentValue, asset.currency, currency, rates),
+            }))
+            .sort((a, b) => b.converted - a.converted)
+            .map(({ asset, converted }) => (
               <div key={asset.id} className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 dark:bg-zinc-800/50">
                 <span className="text-sm text-zinc-900 dark:text-white">{asset.name}</span>
                 <div className="text-right">
                   <span className="text-sm font-medium text-zinc-900 dark:text-white">
-                    {formatCurrency(asset.currentValue, currency)}
+                    {formatCurrency(converted, currency)}
                   </span>
                   {total > 0 && (
                     <span className="ml-2 text-xs text-zinc-500">
-                      {((asset.currentValue / total) * 100).toFixed(1)}%
+                      {((converted / total) * 100).toFixed(1)}%
                     </span>
                   )}
                 </div>

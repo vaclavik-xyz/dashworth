@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import Card from "@/components/ui/Card";
 
 const COLOR_HEX: Record<string, string> = {
@@ -28,11 +29,12 @@ interface AllocationPieProps {
   assets: Asset[];
   categories: Category[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
 type ViewMode = "categories" | "groups";
 
-export default function AllocationPie({ assets, categories, currency }: AllocationPieProps) {
+export default function AllocationPie({ assets, categories, currency, rates }: AllocationPieProps) {
   const [view, setView] = useState<ViewMode>("categories");
 
   if (assets.length === 0) return null;
@@ -44,13 +46,14 @@ export default function AllocationPie({ assets, categories, currency }: Allocati
     for (const asset of assets) {
       const cat = categoryMap.get(asset.categoryId);
       const key = asset.categoryId;
+      const converted = convertCurrency(asset.currentValue, asset.currency, currency, rates);
       const existing = grouped.get(key);
       if (existing) {
-        existing.value += asset.currentValue;
+        existing.value += converted;
       } else {
         grouped.set(key, {
           name: cat?.name ?? "Other",
-          value: asset.currentValue,
+          value: converted,
           color: COLOR_HEX[cat?.color ?? "zinc"] ?? COLOR_HEX.zinc,
         });
       }
@@ -62,11 +65,12 @@ export default function AllocationPie({ assets, categories, currency }: Allocati
     const grouped = new Map<string, { name: string; value: number }>();
     for (const asset of assets) {
       const key = asset.group ?? asset.name;
+      const converted = convertCurrency(asset.currentValue, asset.currency, currency, rates);
       const existing = grouped.get(key);
       if (existing) {
-        existing.value += asset.currentValue;
+        existing.value += converted;
       } else {
-        grouped.set(key, { name: key, value: asset.currentValue });
+        grouped.set(key, { name: key, value: converted });
       }
     }
     const sorted = [...grouped.values()].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);

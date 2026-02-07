@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import type { Asset, Category, Currency, Snapshot } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 
 const COLOR_HEX: Record<string, string> = {
   orange: "#f97316",
@@ -40,9 +41,10 @@ interface DefaultOverviewProps {
   categories: Category[];
   snapshots: Snapshot[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function DefaultOverview({ assets, categories, snapshots, currency }: DefaultOverviewProps) {
+export default function DefaultOverview({ assets, categories, snapshots, currency, rates }: DefaultOverviewProps) {
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
   // Pie chart data: allocation by category
@@ -51,13 +53,14 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
     for (const asset of assets) {
       const cat = categoryMap.get(asset.categoryId);
       const key = asset.categoryId;
+      const converted = convertCurrency(asset.currentValue, asset.currency, currency, rates);
       const existing = grouped.get(key);
       if (existing) {
-        existing.value += asset.currentValue;
+        existing.value += converted;
       } else {
         grouped.set(key, {
           name: cat?.name ?? "Other",
-          value: asset.currentValue,
+          value: converted,
           color: COLOR_HEX[cat?.color ?? "zinc"] ?? COLOR_HEX.zinc,
         });
       }
@@ -65,12 +68,15 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
     return [...grouped.values()].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
   })();
 
-  // Line chart data: net worth over time from snapshots
+  // Line chart data: net worth over time from snapshots (converted to primary currency)
   const lineData = [...snapshots]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((s) => ({
       date: new Date(s.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
-      value: s.totalNetWorth,
+      value: s.entries.reduce(
+        (sum, e) => sum + convertCurrency(e.value, e.currency, currency, rates),
+        0,
+      ),
     }));
 
   return (

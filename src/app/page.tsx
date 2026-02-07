@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Wallet, Camera, BarChart3 } from "lucide-react";
 import { db } from "@/lib/db";
+import { useExchangeRates } from "@/lib/useExchangeRates";
+import { sumConverted } from "@/lib/utils";
 import type { Currency } from "@/types";
 import NetWorthHero from "@/components/dashboard/NetWorthHero";
 import NetWorthChart from "@/components/dashboard/NetWorthChart";
@@ -21,8 +23,9 @@ export default function DashboardPage() {
   );
   const settings = useLiveQuery(() => db.settings.get("settings"));
 
+  const { rates } = useExchangeRates();
   const currency: Currency = settings?.primaryCurrency ?? "CZK";
-  const totalNetWorth = assets?.reduce((sum, a) => sum + a.currentValue, 0) ?? 0;
+  const totalNetWorth = assets ? sumConverted(assets, currency, rates) : 0;
   const hasAssets = assets && assets.length > 0;
   const hasSnapshots = snapshots && snapshots.length > 0;
 
@@ -94,13 +97,14 @@ export default function DashboardPage() {
       {/* Charts */}
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
         {snapshots && (
-          <NetWorthChart snapshots={snapshots} currency={currency} />
+          <NetWorthChart snapshots={snapshots} currency={currency} rates={rates} />
         )}
         {assets && categories && (
           <AllocationPie
             assets={assets}
             categories={categories}
             currency={currency}
+            rates={rates}
           />
         )}
       </div>
@@ -108,7 +112,7 @@ export default function DashboardPage() {
       {/* Bottom sections */}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {assets && categories && (
-          <TopAssets assets={assets} categories={categories} />
+          <TopAssets assets={assets} categories={categories} currency={currency} rates={rates} />
         )}
         {snapshots && (
           <RecentActivity snapshots={snapshots} currency={currency} />

@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { Asset, Category, Currency, Snapshot } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 
 const COLOR_HEX: Record<string, string> = {
@@ -38,9 +39,10 @@ interface AssetDetailProps {
   category: Category | undefined;
   snapshots: Snapshot[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function AssetDetail({ asset, category, snapshots, currency }: AssetDetailProps) {
+export default function AssetDetail({ asset, category, snapshots, currency, rates }: AssetDetailProps) {
   const Icon = category ? getIcon(category.icon) : null;
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
 
@@ -52,7 +54,7 @@ export default function AssetDetail({ asset, category, snapshots, currency }: As
       if (!entry) return null;
       return {
         date: new Date(s.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
-        value: entry.value,
+        value: convertCurrency(entry.value, entry.currency, currency, rates),
       };
     })
     .filter((d): d is { date: string; value: number } => d !== null);

@@ -53,3 +53,9 @@ export interface UserSettings {
   snapshotReminder: SnapshotReminder;
   lastSnapshotDate?: Date;
 }
+
+export interface ExchangeRateCache {
+  id: string;
+  rates: Record<string, number>;
+  fetchedAt: Date;
+}

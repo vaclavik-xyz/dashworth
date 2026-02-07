@@ -1,8 +1,9 @@
 "use client";
 
 import { Pencil, Trash2 } from "lucide-react";
-import type { Asset, Category } from "@/types";
+import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import Card from "@/components/ui/Card";
 
@@ -23,9 +24,11 @@ interface AssetCardProps {
   category?: Category;
   onEdit: () => void;
   onDelete: () => void;
+  primaryCurrency?: Currency;
+  rates?: Record<string, number>;
 }
 
-export default function AssetCard({ asset, category, onEdit, onDelete }: AssetCardProps) {
+export default function AssetCard({ asset, category, onEdit, onDelete, primaryCurrency, rates }: AssetCardProps) {
   const Icon = category ? getIcon(category.icon) : null;
   const colorClass = category ? (COLOR_CLASSES[category.color] ?? COLOR_CLASSES.zinc) : COLOR_CLASSES.zinc;
 
@@ -64,9 +67,16 @@ export default function AssetCard({ asset, category, onEdit, onDelete }: AssetCa
       </div>
 
       <div className="mt-3 flex items-end justify-between">
-        <p className="text-xl font-bold text-zinc-900 dark:text-white">
-          {formatCurrency(asset.currentValue, asset.currency)}
-        </p>
+        <div>
+          <p className="text-xl font-bold text-zinc-900 dark:text-white">
+            {formatCurrency(asset.currentValue, asset.currency)}
+          </p>
+          {primaryCurrency && rates && asset.currency !== primaryCurrency && (
+            <p className="text-xs text-zinc-500">
+              ≈ {formatCurrency(convertCurrency(asset.currentValue, asset.currency, primaryCurrency, rates), primaryCurrency)}
+            </p>
+          )}
+        </div>
         <p className="text-xs text-zinc-600">{formatDate(asset.updatedAt)}</p>
       </div>
     </Card>

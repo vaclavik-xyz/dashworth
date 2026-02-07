@@ -1,11 +1,12 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Asset, Category, Snapshot, UserSettings } from "@/types";
+import type { Asset, Category, ExchangeRateCache, Snapshot, UserSettings } from "@/types";
 
 const db = new Dexie("dashworth") as Dexie & {
   categories: EntityTable<Category, "id">;
   assets: EntityTable<Asset, "id">;
   snapshots: EntityTable<Snapshot, "id">;
   settings: EntityTable<UserSettings, "id">;
+  exchangeRates: EntityTable<ExchangeRateCache, "id">;
 };
 
 db.version(1).stores({
@@ -22,6 +23,10 @@ db.version(2).stores({
   return tx.table("assets").toCollection().modify(() => {
     // no-op: group field is optional, undefined by default
   });
+});
+
+db.version(3).stores({
+  exchangeRates: "id",
 });
 
 export { db };

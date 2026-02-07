@@ -2,11 +2,14 @@
 
 import { useState, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe } from "lucide-react";
+import { Download, Upload, Trash2, Globe, RefreshCw } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
 import { seedDatabase } from "@/lib/seed";
+import { useExchangeRates } from "@/lib/useExchangeRates";
+import { convertCurrency } from "@/lib/exchange-rates";
+import { formatDate } from "@/lib/utils";
 import type { Currency, Theme, SnapshotReminder } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -14,6 +17,7 @@ import Modal from "@/components/ui/Modal";
 
 export default function SettingsPage() {
   const settings = useLiveQuery(() => db.settings.get("settings"));
+  const { rates, refresh: refreshRates, lastUpdated } = useExchangeRates();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importConfirmOpen, setImportConfirmOpen] = useState(false);
@@ -60,15 +64,13 @@ export default function SettingsPage() {
   async function confirmDeleteAll() {
     await db.transaction(
       "rw",
-      db.categories,
-      db.assets,
-      db.snapshots,
-      db.settings,
+      [db.categories, db.assets, db.snapshots, db.settings, db.exchangeRates],
       async () => {
         await db.categories.clear();
         await db.assets.clear();
         await db.snapshots.clear();
         await db.settings.clear();
+        await db.exchangeRates.clear();
       },
     );
     await seedDatabase();
@@ -109,6 +111,35 @@ export default function SettingsPage() {
               <option value="EUR">EUR</option>
               <option value="USD">USD</option>
             </select>
+          </div>
+
+          {/* Exchange Rates */}
+          <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Exchange Rates</p>
+              <button
+                type="button"
+                onClick={refreshRates}
+                className="flex items-center gap-1.5 text-xs text-emerald-500 hover:text-emerald-400 transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Refresh
+              </button>
+            </div>
+            <div className="space-y-1">
+              {(["USD", "EUR", "CZK"] as Currency[])
+                .filter((c) => c !== settings.primaryCurrency)
+                .map((c) => (
+                  <p key={c} className="text-xs text-zinc-500">
+                    1 {c} = {convertCurrency(1, c, settings.primaryCurrency, rates).toFixed(2)} {settings.primaryCurrency}
+                  </p>
+                ))}
+            </div>
+            <p className="text-xs text-zinc-600">
+              {lastUpdated
+                ? `Updated ${formatDate(lastUpdated)}`
+                : "Using offline rates"}
+            </p>
           </div>
 
           <div className="flex items-center justify-between gap-4">

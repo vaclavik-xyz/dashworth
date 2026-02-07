@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import type { Asset, Category, Currency, Snapshot } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 
 const COLOR_HEX: Record<string, string> = {
@@ -47,12 +48,13 @@ interface CategoryDetailProps {
   assets: Asset[];
   snapshots: Snapshot[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function CategoryDetail({ categoryId, category, assets, snapshots, currency }: CategoryDetailProps) {
+export default function CategoryDetail({ categoryId, category, assets, snapshots, currency, rates }: CategoryDetailProps) {
   const Icon = category ? getIcon(category.icon) : null;
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
-  const total = assets.reduce((sum, a) => sum + a.currentValue, 0);
+  const total = assets.reduce((sum, a) => sum + convertCurrency(a.currentValue, a.currency, currency, rates), 0);
 
   // Line chart: sum of entries with matching categoryId per snapshot
   const lineData = [...snapshots]
@@ -60,7 +62,7 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
     .map((s) => {
       const catTotal = s.entries
         .filter((e) => e.categoryId === categoryId)
-        .reduce((sum, e) => sum + e.value, 0);
+        .reduce((sum, e) => sum + convertCurrency(e.value, e.currency, currency, rates), 0);
       return {
         date: new Date(s.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
         value: catTotal,
@@ -71,10 +73,13 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
   // Donut: allocation of assets within the category
   const donutData = assets
     .filter((a) => a.currentValue > 0)
-    .sort((a, b) => b.currentValue - a.currentValue)
-    .map((a, i) => ({
+    .map((a) => ({
       name: a.name,
-      value: a.currentValue,
+      value: convertCurrency(a.currentValue, a.currency, currency, rates),
+    }))
+    .sort((a, b) => b.value - a.value)
+    .map((a, i) => ({
+      ...a,
       color: ASSET_COLORS[i % ASSET_COLORS.length],
     }));
 

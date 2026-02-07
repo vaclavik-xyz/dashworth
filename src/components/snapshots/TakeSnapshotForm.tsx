@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
+import { useExchangeRates } from "@/lib/useExchangeRates";
 import { getIcon } from "@/lib/icons";
 import type { Category, Currency } from "@/types";
 import Button from "@/components/ui/Button";
@@ -51,6 +53,7 @@ export default function TakeSnapshotForm({ onClose }: TakeSnapshotFormProps) {
   const categories = useLiveQuery(() => db.categories.orderBy("sortOrder").toArray());
   const settings = useLiveQuery(() => db.settings.get("settings"));
 
+  const { rates } = useExchangeRates();
   const [rows, setRows] = useState<AssetRow[] | null>(null);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -71,7 +74,7 @@ export default function TakeSnapshotForm({ onClose }: TakeSnapshotFormProps) {
   const primaryCurrency: Currency = settings?.primaryCurrency ?? "CZK";
 
   const totalNetWorth =
-    rows?.reduce((sum, r) => sum + (Number(r.value) || 0), 0) ?? 0;
+    rows?.reduce((sum, r) => sum + convertCurrency(Number(r.value) || 0, r.currency, primaryCurrency, rates), 0) ?? 0;
 
   // Build grouped structure for display
   const sections = useMemo(() => {
