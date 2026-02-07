@@ -6,8 +6,20 @@ export function applyTheme(theme: Theme): void {
   if (theme === "system") {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     html.classList.toggle("dark", prefersDark);
+    html.removeAttribute("data-theme");
+  } else if (theme === "light") {
+    html.classList.remove("dark");
+    html.setAttribute("data-theme", "light");
+  } else if (theme === "midnight") {
+    html.classList.add("dark");
+    html.setAttribute("data-theme", "midnight");
+  } else if (theme === "emerald-dark") {
+    html.classList.add("dark");
+    html.setAttribute("data-theme", "emerald-dark");
   } else {
-    html.classList.toggle("dark", theme === "dark");
+    // "dark"
+    html.classList.add("dark");
+    html.removeAttribute("data-theme");
   }
 }
 

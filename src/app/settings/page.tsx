@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -136,7 +136,7 @@ export default function SettingsPage() {
   }
 
   const selectClass =
-    "w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white";
+    "w-full rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:text-white";
 
   if (!settings) return null;
 
@@ -175,7 +175,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Exchange Rates */}
-          <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 space-y-2">
+          <div className="rounded-lg bg-[var(--dw-hover)] px-4 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-zinc-900 dark:text-white">Exchange Rates</p>
               <button
@@ -203,22 +203,52 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">Theme</p>
-              <p className="text-xs text-zinc-500">Appearance preference</p>
+          <div>
+            <p className="text-sm font-medium text-zinc-900 dark:text-white">Theme</p>
+            <p className="text-xs text-zinc-500 mb-3">Appearance preference</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {([
+                { value: "light" as Theme, label: "Light", bg: "#fafafa", card: "#ffffff", accent: "#10b981" },
+                { value: "dark" as Theme, label: "Dark", bg: "#09090b", card: "#18181b", accent: "#10b981" },
+                { value: "midnight" as Theme, label: "Midnight", bg: "#000000", card: "#0a0a0a", accent: "#10b981" },
+                { value: "emerald-dark" as Theme, label: "Emerald", bg: "#022c22", card: "#04382b", accent: "#34d399" },
+                { value: "system" as Theme, label: "System" },
+              ]).map((t) => {
+                const isActive = settings.theme === t.value;
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => updateSetting("theme", t.value)}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-2.5 transition-all shrink-0 ${
+                      isActive
+                        ? "border-emerald-500 bg-emerald-500/5"
+                        : "border-[var(--dw-border)] hover:border-zinc-400 dark:hover:border-zinc-500"
+                    }`}
+                  >
+                    {t.value === "system" ? (
+                      <div className="flex h-10 w-14 items-center justify-center rounded-lg bg-gradient-to-r from-[#fafafa] to-[#09090b]">
+                        <Monitor className="h-5 w-5 text-zinc-500" />
+                      </div>
+                    ) : (
+                      <div
+                        className="flex h-10 w-14 items-center justify-center gap-1 rounded-lg"
+                        style={{ backgroundColor: t.bg }}
+                      >
+                        <div className="h-6 w-5 rounded" style={{ backgroundColor: t.card }} />
+                        <div className="flex flex-col gap-0.5">
+                          <div className="h-1.5 w-4 rounded-full" style={{ backgroundColor: t.accent, opacity: 0.8 }} />
+                          <div className="h-1 w-3 rounded-full" style={{ backgroundColor: t.card }} />
+                        </div>
+                      </div>
+                    )}
+                    <span className={`text-[11px] font-medium ${isActive ? "text-emerald-500" : "text-zinc-500"}`}>
+                      {t.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <select
-              value={settings.theme}
-              onChange={(e) =>
-                updateSetting("theme", e.target.value as Theme)
-              }
-              className={`${selectClass} w-28`}
-            >
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-              <option value="system">System</option>
-            </select>
           </div>
 
           <div className="flex items-center justify-between gap-4">
@@ -286,7 +316,7 @@ export default function SettingsPage() {
         </div>
         <Card className="mt-3 p-0">
           {categories && categories.length > 0 ? (
-            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <div className="divide-y divide-[var(--dw-border)]">
               {categories.map((cat, idx) => {
                 const Icon = getIcon(cat.icon);
                 const badgeClass = COLOR_BADGE_CLASSES[cat.color] ?? COLOR_BADGE_CLASSES.zinc;
@@ -336,7 +366,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => openEditCategory(cat)}
-                      className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
+                      className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:hover:text-white transition-colors"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
@@ -360,7 +390,7 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setDeleteCategoryTarget(cat)}
-                        className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:hover:bg-zinc-800 dark:hover:text-red-400 transition-colors"
+                        className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -618,7 +648,7 @@ export default function SettingsPage() {
           value={deleteConfirmText}
           onChange={(e) => setDeleteConfirmText(e.target.value)}
           placeholder="DELETE"
-          className="mt-2 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-600"
+          className="mt-2 w-full rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-red-500 focus:outline-none dark:text-white dark:placeholder-zinc-600"
           autoComplete="off"
         />
         <div className="mt-4 flex justify-end gap-3">

@@ -77,14 +77,14 @@ export default function BottomSheet({ open, onClose, children }: BottomSheetProp
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 max-h-[85vh] rounded-t-2xl border-t border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900 translate-y-0 transition-transform duration-300 ease-out"
+        className="absolute bottom-0 left-0 right-0 max-h-[85vh] rounded-t-2xl border-t border-[var(--dw-border)] bg-[var(--dw-card)] shadow-xl translate-y-0 transition-transform duration-300 ease-out"
         style={{ animation: "slideUp 300ms ease-out" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {/* Handle + close button */}
-        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl bg-white px-4 pb-2 pt-3 dark:bg-zinc-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl bg-[var(--dw-card)] px-4 pb-2 pt-3">
           <div className="flex-1" />
           <div className="h-1 w-8 rounded-full bg-zinc-300 dark:bg-zinc-600" />
           <div className="flex flex-1 justify-end">

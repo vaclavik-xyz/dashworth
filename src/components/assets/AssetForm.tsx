@@ -151,10 +151,10 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
   }
 
   const inputClass =
-    "w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500";
+    "w-full rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:text-white dark:placeholder-zinc-500";
 
   const readOnlyClass =
-    "w-full rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400";
+    "w-full rounded-lg border border-[var(--dw-border)] bg-[var(--dw-hover)] px-3 py-2 text-sm text-zinc-600 dark:text-zinc-400";
 
   const listId = `groups-${categoryId}`;
 
@@ -281,7 +281,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
             />
           </div>
 
-          <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3">
+          <div className="rounded-lg bg-[var(--dw-hover)] px-4 py-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-zinc-400">Total Value</span>
               <span className="text-lg font-bold text-zinc-900 dark:text-white">

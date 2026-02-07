@@ -43,12 +43,12 @@ export default function NetWorthChart({ snapshots, currency, rates }: NetWorthCh
       </h2>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" className="[&>line]:stroke-zinc-200 dark:[&>line]:stroke-zinc-800" stroke="#e4e4e7" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
           <XAxis
             dataKey="date"
             tick={{ fontSize: 12 }}
             className="[&_.recharts-text]:fill-zinc-500"
-            axisLine={{ stroke: "#e4e4e7" }}
+            axisLine={{ stroke: "var(--dw-grid)" }}
             tickLine={false}
           />
           <YAxis
@@ -67,6 +67,7 @@ export default function NetWorthChart({ snapshots, currency, rates }: NetWorthCh
               fontSize: "13px",
               color: "var(--tooltip-text, #fafafa)",
             }}
+            itemStyle={{ color: "var(--tooltip-text, #fafafa)" }}
             labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
             formatter={(value: number | undefined) => [
               formatCurrency(value ?? 0, currency),

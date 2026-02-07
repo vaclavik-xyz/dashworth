@@ -25,6 +25,8 @@ const tooltipStyle = {
   color: "var(--tooltip-text, #fafafa)",
 };
 
+const tooltipItemStyle = { color: "var(--tooltip-text, #fafafa)" };
+
 interface DefaultOverviewProps {
   assets: Asset[];
   categories: Category[];
@@ -96,6 +98,7 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
               </Pie>
               <Tooltip
                 contentStyle={tooltipStyle}
+                itemStyle={tooltipItemStyle}
                 formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
               />
             </PieChart>
@@ -117,7 +120,7 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Net Worth Over Time</h4>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" className="[&>line]:stroke-zinc-200 dark:[&>line]:stroke-zinc-800" stroke="#e4e4e7" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 11 }}
@@ -135,6 +138,7 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
               />
               <Tooltip
                 contentStyle={tooltipStyle}
+                itemStyle={tooltipItemStyle}
                 labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
                 formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), "Net Worth"]}
               />

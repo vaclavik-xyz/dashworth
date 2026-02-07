@@ -1,6 +1,6 @@
 export type Currency = "CZK" | "EUR" | "USD";
 
-export type Theme = "dark" | "light" | "system";
+export type Theme = "dark" | "light" | "system" | "midnight" | "emerald-dark";
 
 export type SnapshotReminder = "weekly" | "monthly" | "none";
 

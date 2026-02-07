@@ -18,15 +18,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const assetCount = useLiveQuery(() => db.assets.count());
 
+  // Ensure first client render matches server (no nav).
+  const [mounted, setMounted] = useState(false);
+
   // Start as null = "don't know yet" (matches server render)
   const [ready, setReady] = useState<boolean | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // After hydration + DB query, decide if user has data
   useEffect(() => {
-    if (assetCount !== undefined) {
+    if (mounted && assetCount !== undefined) {
       setReady(assetCount > 0);
     }
-  }, [assetCount]);
+  }, [mounted, assetCount]);
 
   // Redirect to landing if no data and not on home page
   useEffect(() => {
@@ -72,8 +79,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [settings?.theme]);
 
   // Before we know the user's state, render just children (no nav).
-  // Server always renders this. Client also renders this first, then switches.
-  if (ready === null) {
+  // Server always renders this. Client renders this on first pass too (mounted=false).
+  if (!mounted || ready === null) {
     return (
       <main className="min-h-screen">
         {children}

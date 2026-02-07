@@ -23,6 +23,8 @@ const tooltipStyle = {
   color: "var(--tooltip-text, #fafafa)",
 };
 
+const tooltipItemStyle = { color: "var(--tooltip-text, #fafafa)" };
+
 interface AssetDetailProps {
   asset: Asset;
   category: Category | undefined;
@@ -67,7 +69,7 @@ export default function AssetDetail({ asset, category, snapshots, currency, rate
           <p>Updated: <span className="text-zinc-700 dark:text-zinc-300">{formatDate(asset.updatedAt)}</span></p>
         </div>
         {asset.notes && (
-          <p className="mt-3 rounded-lg bg-zinc-50 p-3 text-xs text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400">
+          <p className="mt-3 rounded-lg bg-[var(--dw-hover)] p-3 text-xs text-zinc-600 dark:text-zinc-400">
             {asset.notes}
           </p>
         )}
@@ -78,7 +80,7 @@ export default function AssetDetail({ asset, category, snapshots, currency, rate
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" className="[&>line]:stroke-zinc-200 dark:[&>line]:stroke-zinc-800" stroke="#e4e4e7" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 11 }}
@@ -96,6 +98,7 @@ export default function AssetDetail({ asset, category, snapshots, currency, rate
               />
               <Tooltip
                 contentStyle={tooltipStyle}
+                itemStyle={tooltipItemStyle}
                 labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
                 formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), asset.name]}
               />

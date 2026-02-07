@@ -76,7 +76,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. NFTs, Real Estate"
-          className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500"
+          className="w-full rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:text-white dark:placeholder-zinc-500"
           autoFocus
         />
       </div>
@@ -100,7 +100,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
                       className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
                         isSelected
                           ? badgeClass
-                          : "text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          : "text-zinc-400 hover:bg-[var(--dw-hover)]"
                       }`}
                     >
                       <Icon className="h-4.5 w-4.5" />

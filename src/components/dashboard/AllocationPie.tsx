@@ -75,7 +75,7 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
         <h2 className="text-sm font-medium text-zinc-400">
           Asset Allocation
         </h2>
-        <div className="flex rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs overflow-hidden">
+        <div className="flex rounded-lg border border-[var(--dw-border)] text-xs overflow-hidden">
           <button
             type="button"
             onClick={() => setView("categories")}
@@ -124,6 +124,7 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
               fontSize: "13px",
               color: "var(--tooltip-text, #fafafa)",
             }}
+            itemStyle={{ color: "var(--tooltip-text, #fafafa)" }}
             formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
           />
         </PieChart>

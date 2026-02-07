@@ -114,7 +114,7 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
                 onDelete();
               }
             }}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 hover:text-red-500 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-red-400 transition-colors"
+            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
           </span>
@@ -127,7 +127,7 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
       </button>
 
       {expanded && (
-        <div className="mt-3 border-t border-zinc-200 dark:border-zinc-800 pt-3 space-y-3">
+        <div className="mt-3 border-t border-[var(--dw-border)] pt-3 space-y-3">
           {groupedEntries.map((grp, gi) => (
             <div key={grp.group ?? `ungrouped-${gi}`}>
               {grp.group && (
@@ -143,7 +143,7 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
               <table className="w-full text-sm">
                 <tbody>
                   {grp.entries.map((entry) => (
-                    <tr key={entry.assetId} className="border-t border-zinc-100 dark:border-zinc-800/50">
+                    <tr key={entry.assetId} className="border-t border-[var(--dw-border)]">
                       <td className="py-1.5 text-zinc-600 dark:text-zinc-300">{entry.assetName}</td>
                       <td className="py-1.5 text-right text-zinc-900 dark:text-white">
                         {formatCurrency(entry.value, entry.currency as Currency)}

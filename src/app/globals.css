@@ -1,34 +1,85 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-body {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  background: #fafafa;
-  color: #09090b;
-  padding-top: env(safe-area-inset-top, 0px);
-}
+/* ── Theme tokens ────────────────────────────────────────── */
 
 :root {
+  --dw-bg: #fafafa;
+  --dw-card: #ffffff;
+  --dw-nav: #ffffff;
+  --dw-input: #fafaf9;
+  --dw-input-border: #d4d4d8;
+  --dw-border: #e4e4e7;
+  --dw-hover: #f4f4f5;
+  --dw-grid: #e4e4e7;
+
   --tooltip-bg: #ffffff;
   --tooltip-border: #e4e4e7;
   --tooltip-text: #09090b;
   --tooltip-label: #71717a;
 }
 
-.dark body {
-  background: #09090b;
-  color: #fafafa;
-}
-
 .dark {
+  --dw-bg: #09090b;
+  --dw-card: #18181b;
+  --dw-nav: #0a0a0a;
+  --dw-input: #27272a;
+  --dw-input-border: #3f3f46;
+  --dw-border: #27272a;
+  --dw-hover: #27272a;
+  --dw-grid: #27272a;
+
   --tooltip-bg: #18181b;
   --tooltip-border: #27272a;
   --tooltip-text: #fafafa;
   --tooltip-label: #a1a1aa;
+}
+
+.dark[data-theme="midnight"] {
+  --dw-bg: #000000;
+  --dw-card: #0a0a0a;
+  --dw-nav: #000000;
+  --dw-input: #171717;
+  --dw-input-border: #262626;
+  --dw-border: #171717;
+  --dw-hover: #171717;
+  --dw-grid: #171717;
+
+  --tooltip-bg: #0a0a0a;
+  --tooltip-border: #171717;
+}
+
+.dark[data-theme="emerald-dark"] {
+  --dw-bg: #022c22;
+  --dw-card: #04382b;
+  --dw-nav: #012a20;
+  --dw-input: #064e3b;
+  --dw-input-border: #065f46;
+  --dw-border: #064e3b;
+  --dw-hover: #064e3b;
+  --dw-grid: #064e3b;
+
+  --tooltip-bg: #04382b;
+  --tooltip-border: #064e3b;
+}
+
+/* ── Base styles ─────────────────────────────────────────── */
+
+body {
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: var(--dw-bg);
+  color: #09090b;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.dark body {
+  color: #fafafa;
 }
 
 /* PWA safe area: bottom nav + home indicator */

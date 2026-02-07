@@ -206,7 +206,7 @@ export default function TakeSnapshotForm({ onClose }: TakeSnapshotFormProps) {
                     {grp.rows.map(({ row, index }) => (
                       <div
                         key={row.assetId}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2"
+                        className="flex items-center justify-between gap-3 rounded-lg bg-[var(--dw-hover)] px-3 py-2"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
@@ -218,7 +218,7 @@ export default function TakeSnapshotForm({ onClose }: TakeSnapshotFormProps) {
                           type="number"
                           value={row.value}
                           onChange={(e) => updateValue(index, e.target.value)}
-                          className="w-28 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                          className="w-28 rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-card)] px-2 py-1 text-right text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:text-white"
                           step="any"
                           min="0"
                         />
@@ -232,7 +232,7 @@ export default function TakeSnapshotForm({ onClose }: TakeSnapshotFormProps) {
         })}
       </div>
 
-      <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3">
+      <div className="rounded-lg bg-[var(--dw-hover)] px-4 py-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-zinc-400">Total</span>
           <span className="text-lg font-bold text-zinc-900 dark:text-white">
@@ -250,7 +250,7 @@ export default function TakeSnapshotForm({ onClose }: TakeSnapshotFormProps) {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder='e.g. "After selling apartment"'
-          className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500"
+          className="w-full rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:text-white dark:placeholder-zinc-500"
         />
       </div>
 

@@ -36,8 +36,8 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="w-full sm:max-w-lg max-h-[calc(100vh-5rem)] sm:max-h-[85vh] rounded-t-2xl sm:rounded-2xl bg-white border border-zinc-200 shadow-xl dark:bg-zinc-900 dark:border-zinc-800 flex flex-col">
-        <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+      <div className="w-full sm:max-w-lg max-h-[calc(100vh-5rem)] sm:max-h-[85vh] rounded-t-2xl sm:rounded-2xl bg-[var(--dw-card)] border border-[var(--dw-border)] shadow-xl flex flex-col">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--dw-border)] px-5 py-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">{title}</h2>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors">
             <X className="h-5 w-5" />

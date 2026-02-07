@@ -21,6 +21,8 @@ const tooltipStyle = {
   color: "var(--tooltip-text, #fafafa)",
 };
 
+const tooltipItemStyle = { color: "var(--tooltip-text, #fafafa)" };
+
 interface GroupDetailProps {
   group: string;
   categoryId: string;
@@ -62,7 +64,7 @@ export default function GroupDetail({ group, categoryId, assets, snapshots, curr
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" className="[&>line]:stroke-zinc-200 dark:[&>line]:stroke-zinc-800" stroke="#e4e4e7" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 11 }}
@@ -80,6 +82,7 @@ export default function GroupDetail({ group, categoryId, assets, snapshots, curr
               />
               <Tooltip
                 contentStyle={tooltipStyle}
+                itemStyle={tooltipItemStyle}
                 labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
                 formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), group]}
               />
@@ -106,7 +109,7 @@ export default function GroupDetail({ group, categoryId, assets, snapshots, curr
             }))
             .sort((a, b) => b.converted - a.converted)
             .map(({ asset, converted }) => (
-              <div key={asset.id} className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 dark:bg-zinc-800/50">
+              <div key={asset.id} className="flex items-center justify-between rounded-lg bg-[var(--dw-hover)] px-3 py-2">
                 <span className="text-sm text-zinc-900 dark:text-white">{asset.name}</span>
                 <div className="text-right">
                   <span className="text-sm font-medium text-zinc-900 dark:text-white">
