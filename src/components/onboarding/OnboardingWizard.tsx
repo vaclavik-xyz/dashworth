@@ -22,6 +22,17 @@ import Button from "@/components/ui/Button";
 
 const STEPS = ["Currency", "Assets", "Snapshot", "Done"];
 
+function detectCurrency(): Currency {
+  try {
+    const lang = navigator.language ?? "";
+    if (lang.startsWith("cs")) return "CZK";
+    if (lang === "en-US" || lang.startsWith("en-US")) return "USD";
+    return "EUR";
+  } catch {
+    return "USD";
+  }
+}
+
 const selectClass =
   "w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2371717a%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat px-3 pr-10 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none";
 
@@ -563,7 +574,7 @@ export default function OnboardingWizard({
   onComplete: () => void;
 }) {
   const [step, setStep] = useState(0);
-  const [currency, setCurrency] = useState<Currency>("CZK");
+  const [currency, setCurrency] = useState<Currency>(detectCurrency);
   const [drafts, setDrafts] = useState<DraftAsset[]>([EMPTY_DRAFT()]);
   const [saving, setSaving] = useState(false);
   const [totalNetWorth, setTotalNetWorth] = useState(0);
