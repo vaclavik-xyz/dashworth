@@ -208,23 +208,16 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
               <p className="text-sm leading-relaxed text-zinc-300">
                 <span className="mr-1">📱</span>
                 <span className="font-semibold text-emerald-400">Tip:</span>{" "}
-                For the best experience, add Dashworth to your home screen first.
+                For the best experience, add Dashworth to your home screen.
               </p>
-              <div className="mt-3 flex flex-col items-center gap-2">
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({ title: "Dashworth", url: window.location.href }).catch(() => {});
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20 active:scale-[0.98]"
-                >
-                  <Share className="h-4 w-4" />
-                  Open Share Menu
-                </button>
-                <span className="text-xs text-zinc-500">
-                  Then tap &quot;Add to Home Screen&quot; in the menu.
-                </span>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                Tap{" "}
+                <Share className="inline h-4 w-4 text-emerald-400 -translate-y-px" />{" "}
+                in the toolbar below, then{" "}
+                <span className="font-medium text-white">&quot;Add to Home Screen&quot;</span>.
+              </p>
+              <div className="mt-3 flex justify-center">
+                <ChevronDown className="h-5 w-5 animate-bounce text-emerald-400" />
               </div>
             </div>
           )}
