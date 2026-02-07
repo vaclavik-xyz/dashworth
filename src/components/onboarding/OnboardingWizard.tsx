@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   ArrowLeft,
@@ -157,6 +157,7 @@ function AssetDraftCard({
 }) {
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
+  const tickerDirty = useRef(false);
 
   const catName =
     categories.find((c) => c.id === draft.categoryId)?.name?.toLowerCase() ?? "";
@@ -165,13 +166,30 @@ function AssetDraftCard({
   const showTicker = isCrypto || isStocks;
   const isAutoFetch = showTicker && draft.priceSource !== "manual";
 
-  // Auto-set priceSource when category changes
+  // Auto-set priceSource + auto-derive ticker when category changes
   useEffect(() => {
-    if (isCrypto) onUpdate(draft.id, { priceSource: "coingecko" });
-    else if (isStocks) onUpdate(draft.id, { priceSource: "yahoo" });
-    else onUpdate(draft.id, { priceSource: "manual", ticker: "" });
+    tickerDirty.current = false;
+    if (isCrypto) {
+      const ticker = draft.name.trim().toLowerCase();
+      onUpdate(draft.id, { priceSource: "coingecko", ticker });
+    } else if (isStocks) {
+      const ticker = draft.name.trim().toUpperCase();
+      onUpdate(draft.id, { priceSource: "yahoo", ticker });
+    } else {
+      onUpdate(draft.id, { priceSource: "manual", ticker: "" });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.categoryId]);
+
+  // Auto-update ticker when name changes (only if user hasn't manually edited it)
+  useEffect(() => {
+    if (!showTicker || tickerDirty.current) return;
+    const derived = isCrypto
+      ? draft.name.trim().toLowerCase()
+      : draft.name.trim().toUpperCase();
+    if (derived) onUpdate(draft.id, { ticker: derived });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.name]);
 
   // Auto-fetch price when ticker changes (debounced)
   const fetchPrice = useCallback(async () => {
@@ -267,7 +285,10 @@ function AssetDraftCard({
             <input
               type="text"
               value={draft.ticker}
-              onChange={(e) => onUpdate(draft.id, { ticker: e.target.value })}
+              onChange={(e) => {
+                tickerDirty.current = true;
+                onUpdate(draft.id, { ticker: e.target.value });
+              }}
               placeholder={
                 isCrypto
                   ? "CoinGecko ID (e.g. bitcoin, ethereum)"
