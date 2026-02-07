@@ -147,8 +147,9 @@ const STEPS = [
 
 /* ───────────────────────── Landing Page ───────────────────────── */
 
-export default function LandingPage() {
+export default function LandingPage({ onStart }: { onStart?: () => void }) {
   const router = useRouter();
+  const handleStart = onStart ?? (() => router.push("/assets"));
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#09090b]">
@@ -182,7 +183,7 @@ export default function LandingPage() {
 
           <div className="mt-10 flex flex-col items-center gap-3">
             <button
-              onClick={() => router.push("/assets")}
+              onClick={handleStart}
               className="group inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-500 hover:shadow-emerald-500/30 active:scale-[0.98]"
             >
               Start Tracking — It&apos;s Free
@@ -272,7 +273,7 @@ export default function LandingPage() {
           Start tracking your net worth in seconds. No accounts needed.
         </p>
         <button
-          onClick={() => router.push("/assets")}
+          onClick={handleStart}
           className="group mt-8 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-500 hover:shadow-emerald-500/30 active:scale-[0.98]"
         >
           Start Tracking — It&apos;s Free

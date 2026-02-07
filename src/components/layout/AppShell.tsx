@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
@@ -14,7 +14,16 @@ import { checkAutoSnapshot } from "@/lib/auto-snapshot";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const assetCount = useLiveQuery(() => db.assets.count());
-  const hasData = (assetCount ?? 0) > 0;
+
+  // Start as null = "don't know yet" (matches server render)
+  const [ready, setReady] = useState<boolean | null>(null);
+
+  // After hydration + DB query, decide if user has data
+  useEffect(() => {
+    if (assetCount !== undefined) {
+      setReady(assetCount > 0);
+    }
+  }, [assetCount]);
 
   useEffect(() => {
     async function init() {
@@ -52,17 +61,33 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [settings?.theme]);
 
-  return (
-    <>
-      <div className={hasData ? "" : "hidden"}>
-        <Sidebar />
-      </div>
-      <main className={`min-h-screen ${hasData ? "pb-safe md:pl-60 md:!pb-0" : ""}`}>
+  // Before we know the user's state, render just children (no nav).
+  // Server always renders this. Client also renders this first, then switches.
+  if (ready === null) {
+    return (
+      <main className="min-h-screen">
         {children}
       </main>
-      <div className={hasData ? "" : "hidden"}>
+    );
+  }
+
+  // User has data → show full app shell with nav
+  if (ready) {
+    return (
+      <>
+        <Sidebar />
+        <main className="min-h-screen pb-safe md:pl-60 md:!pb-0">
+          {children}
+        </main>
         <BottomNav />
-      </div>
-    </>
+      </>
+    );
+  }
+
+  // New user → just content, no nav (landing page / onboarding handles its own layout)
+  return (
+    <main className="min-h-screen">
+      {children}
+    </main>
   );
 }

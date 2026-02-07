@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { sumConverted } from "@/lib/utils";
 import type { Currency } from "@/types";
 import LandingPage from "@/components/landing/LandingPage";
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import NetWorthHero from "@/components/dashboard/NetWorthHero";
 import NetWorthChart from "@/components/dashboard/NetWorthChart";
 import AllocationPie from "@/components/dashboard/AllocationPie";
@@ -14,7 +16,11 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import SnapshotReminder from "@/components/layout/SnapshotReminder";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 
+type View = "landing" | "onboarding" | "dashboard";
+
 export default function DashboardPage() {
+  const [view, setView] = useState<View>("landing");
+
   const assets = useLiveQuery(() =>
     db.assets.filter((a) => !a.isArchived).toArray()
   );
@@ -43,9 +49,12 @@ export default function DashboardPage() {
     );
   }
 
-  // New user → landing page (full-screen overlay)
+  // New user flow
   if (!hasAssets && !hasSnapshots) {
-    return <LandingPage />;
+    if (view === "onboarding") {
+      return <OnboardingWizard onComplete={() => setView("dashboard")} />;
+    }
+    return <LandingPage onStart={() => setView("onboarding")} />;
   }
 
   return (
