@@ -18,7 +18,7 @@ export default function Sidebar() {
     <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex h-14 items-center px-6">
         <span className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
-          dash<span className="text-emerald-500">Worth</span>
+          Dash<span className="text-emerald-500">worth</span>
         </span>
       </div>
 

@@ -1,7 +1,7 @@
-# dashWorth
+# Dashworth
 
 ## About
-dashWorth is a privacy-first net worth tracker. All data stays in the user's browser (IndexedDB). No backend, no registration, no data leaving the device.
+Dashworth is a privacy-first net worth tracker. All data stays in the user's browser (IndexedDB). No backend, no registration, no data leaving the device.
 
 **Domain:** dashworth.net
 **Tagline:** "Your wealth. Your data. Your dashboard."

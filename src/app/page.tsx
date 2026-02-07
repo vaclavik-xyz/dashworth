@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Wallet, Camera, BarChart3 } from "lucide-react";
 import { db } from "@/lib/db";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { sumConverted } from "@/lib/utils";
 import type { Currency } from "@/types";
+import LandingPage from "@/components/landing/LandingPage";
 import NetWorthHero from "@/components/dashboard/NetWorthHero";
 import NetWorthChart from "@/components/dashboard/NetWorthChart";
 import AllocationPie from "@/components/dashboard/AllocationPie";
@@ -31,59 +30,22 @@ export default function DashboardPage() {
   const hasAssets = assets && assets.length > 0;
   const hasSnapshots = snapshots && snapshots.length > 0;
 
-  // Onboarding state
-  if (assets && snapshots && !hasAssets && !hasSnapshots) {
+  // Still loading from IndexedDB — show branded splash
+  if (assets === undefined || snapshots === undefined) {
     return (
-      <div className="p-6 md:p-10">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-          dash<span className="text-emerald-500">Worth</span>
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Your wealth. Your data. Your dashboard.
-        </p>
-
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
-          {[
-            {
-              step: 1,
-              title: "Add your assets",
-              description: "Track everything you own — crypto, stocks, real estate, and more.",
-              icon: Wallet,
-              href: "/assets",
-            },
-            {
-              step: 2,
-              title: "Take a snapshot",
-              description: "Freeze your asset values at a point in time to build history.",
-              icon: Camera,
-              href: "/snapshots",
-            },
-            {
-              step: 3,
-              title: "Track your wealth",
-              description: "Watch your net worth grow with charts and insights over time.",
-              icon: BarChart3,
-              href: "/",
-            },
-          ].map(({ step, title, description, icon: Icon, href }) => (
-            <Link
-              key={step}
-              href={href}
-              className="group rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 p-5 transition-colors hover:border-emerald-500/30"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 text-sm font-bold">
-                {step}
-              </div>
-              <h3 className="mt-3 font-medium text-zinc-900 dark:text-white group-hover:text-emerald-400 transition-colors">
-                {title}
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">{description}</p>
-              <Icon className="mt-3 h-5 w-5 text-zinc-600" />
-            </Link>
-          ))}
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090b]">
+        <div className="animate-pulse text-center">
+          <h1 className="text-3xl font-bold text-white">
+            Dash<span className="text-emerald-500">worth</span>
+          </h1>
         </div>
       </div>
     );
+  }
+
+  // New user → landing page (full-screen overlay)
+  if (!hasAssets && !hasSnapshots) {
+    return <LandingPage />;
   }
 
   return (

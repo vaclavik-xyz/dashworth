@@ -1,6 +1,6 @@
 {
-  "name": "dashWorth",
-  "short_name": "dashWorth",
+  "name": "Dashworth",
+  "short_name": "Dashworth",
   "description": "Your wealth. Your data. Your dashboard.",
   "start_url": "/",
   "display": "standalone",

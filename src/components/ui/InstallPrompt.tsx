@@ -65,7 +65,7 @@ export default function InstallPrompt() {
       <Download className="h-5 w-5 shrink-0 text-emerald-500" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-zinc-900 dark:text-white">
-          Install dashWorth
+          Install Dashworth
         </p>
         {isIos ? (
           <p className="text-xs text-zinc-500 flex items-center gap-1">

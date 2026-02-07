@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "dashWorth",
+  title: "Dashworth",
   description: "Your wealth. Your data. Your dashboard.",
   appleWebApp: {
     capable: true,

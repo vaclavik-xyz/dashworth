@@ -1,4 +1,4 @@
-# dashWorth — Data Model
+# Dashworth — Data Model
 
 All data is stored locally in the user's browser using IndexedDB (via Dexie.js).
 No data ever leaves the device unless the user explicitly exports it.

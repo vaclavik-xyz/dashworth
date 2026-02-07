@@ -92,7 +92,7 @@ export default function SettingsPage() {
     try {
       const data = await readJsonFile(file);
       if (!validateImport(data)) {
-        setImportError("Invalid file format. Expected a dashWorth backup JSON.");
+        setImportError("Invalid file format. Expected a Dashworth backup JSON.");
         return;
       }
       setPendingImport(data);

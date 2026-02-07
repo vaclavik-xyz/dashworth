@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
@@ -13,14 +13,21 @@ import { checkAutoSnapshot } from "@/lib/auto-snapshot";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const settings = useLiveQuery(() => db.settings.get("settings"));
+  const assetCount = useLiveQuery(() => db.assets.count());
+  const [hasData, setHasData] = useState(false);
+
+  useEffect(() => {
+    if (assetCount !== undefined) setHasData(assetCount > 0);
+  }, [assetCount]);
 
   useEffect(() => {
     async function init() {
-      if (process.env.NODE_ENV === "development") {
-        await devSeedDatabase();
-      } else {
+      // TODO: uncomment dev seed after landing page testing
+      // if (process.env.NODE_ENV === "development") {
+      //   await devSeedDatabase();
+      // } else {
         await seedDatabase();
-      }
+      // }
       await refreshAutoPrices();
       checkAutoSnapshot();
     }
@@ -51,11 +58,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Sidebar />
-      <main className="min-h-screen pb-safe md:pl-60 md:!pb-0">
+      {hasData && <Sidebar />}
+      <main className={`min-h-screen ${hasData ? "pb-safe md:pl-60 md:!pb-0" : ""}`}>
         {children}
       </main>
-      <BottomNav />
+      {hasData && <BottomNav />}
     </>
   );
 }
