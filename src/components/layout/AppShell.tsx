@@ -4,10 +4,15 @@ import { useEffect } from "react";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import { seedDatabase } from "@/lib/seed";
+import { devSeedDatabase } from "@/lib/dev-seed";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    seedDatabase();
+    if (process.env.NODE_ENV === "development") {
+      devSeedDatabase();
+    } else {
+      seedDatabase();
+    }
   }, []);
 
   return (
