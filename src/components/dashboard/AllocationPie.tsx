@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency } from "@/lib/utils";
@@ -17,41 +18,95 @@ const COLOR_HEX: Record<string, string> = {
   zinc: "#71717a",
 };
 
+// Distinct colors for groups when not tied to a category color
+const GROUP_COLORS = [
+  "#f97316", "#3b82f6", "#10b981", "#a855f7", "#ef4444",
+  "#22c55e", "#64748b", "#f59e0b", "#ec4899", "#06b6d4",
+];
+
 interface AllocationPieProps {
   assets: Asset[];
   categories: Category[];
   currency: Currency;
 }
 
+type ViewMode = "categories" | "groups";
+
 export default function AllocationPie({ assets, categories, currency }: AllocationPieProps) {
+  const [view, setView] = useState<ViewMode>("categories");
+
   if (assets.length === 0) return null;
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
-  const grouped = new Map<string, { name: string; value: number; color: string }>();
-  for (const asset of assets) {
-    const cat = categoryMap.get(asset.categoryId);
-    const key = asset.categoryId;
-    const existing = grouped.get(key);
-    if (existing) {
-      existing.value += asset.currentValue;
-    } else {
-      grouped.set(key, {
-        name: cat?.name ?? "Other",
-        value: asset.currentValue,
-        color: COLOR_HEX[cat?.color ?? "zinc"] ?? COLOR_HEX.zinc,
-      });
+  function buildCategoryData() {
+    const grouped = new Map<string, { name: string; value: number; color: string }>();
+    for (const asset of assets) {
+      const cat = categoryMap.get(asset.categoryId);
+      const key = asset.categoryId;
+      const existing = grouped.get(key);
+      if (existing) {
+        existing.value += asset.currentValue;
+      } else {
+        grouped.set(key, {
+          name: cat?.name ?? "Other",
+          value: asset.currentValue,
+          color: COLOR_HEX[cat?.color ?? "zinc"] ?? COLOR_HEX.zinc,
+        });
+      }
     }
+    return [...grouped.values()].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
   }
 
-  const data = [...grouped.values()].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
+  function buildGroupData() {
+    const grouped = new Map<string, { name: string; value: number }>();
+    for (const asset of assets) {
+      const key = asset.group ?? asset.name;
+      const existing = grouped.get(key);
+      if (existing) {
+        existing.value += asset.currentValue;
+      } else {
+        grouped.set(key, { name: key, value: asset.currentValue });
+      }
+    }
+    const sorted = [...grouped.values()].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
+    return sorted.map((d, i) => ({ ...d, color: GROUP_COLORS[i % GROUP_COLORS.length] }));
+  }
+
+  const data = view === "categories" ? buildCategoryData() : buildGroupData();
   if (data.length === 0) return null;
 
   return (
     <Card>
-      <h2 className="mb-4 text-sm font-medium text-zinc-400">
-        Asset Allocation
-      </h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-zinc-400">
+          Asset Allocation
+        </h2>
+        <div className="flex rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setView("categories")}
+            className={`px-2.5 py-1 transition-colors ${
+              view === "categories"
+                ? "bg-emerald-500/10 text-emerald-500 font-medium"
+                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            }`}
+          >
+            Categories
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("groups")}
+            className={`px-2.5 py-1 transition-colors ${
+              view === "groups"
+                ? "bg-emerald-500/10 text-emerald-500 font-medium"
+                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            }`}
+          >
+            Groups
+          </button>
+        </div>
+      </div>
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie

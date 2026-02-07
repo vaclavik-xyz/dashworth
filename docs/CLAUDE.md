@@ -31,9 +31,10 @@ dashWorth is a privacy-first net worth tracker. All data stays in the user's bro
 5. Import → JSON file parsed and written to IndexedDB
 
 ### Key Data Entities
-- **Asset** — a single thing of value (e.g. "Bitcoin", "Apartment Prague 6")
-- **Category** — grouping for assets (e.g. "Crypto", "Real Estate")
-- **Snapshot** — point-in-time record of all asset values
+- **Asset** — a single thing of value (e.g. "Bitcoin — Trezor", "Apartment Prague 6")
+- **Category** — top-level grouping for assets (e.g. "Crypto", "Real Estate")
+- **Group** — optional sub-group within a category (e.g. "Bitcoin", "US Tech"). Assets on the Assets page are displayed grouped by category → group. AllocationPie supports toggling between category and group views.
+- **Snapshot** — point-in-time record of all asset values (entries include denormalized group field)
 - See `/docs/data-model.md` for full schema
 
 ### File Structure
@@ -120,3 +121,8 @@ src/
 - All data operations must work offline
 - Keep bundle size small — lazy load heavy components (charts)
 - Test responsive design at 375px (mobile) and 1280px (desktop)
+
+
+<claude-mem-context>
+
+</claude-mem-context>

@@ -15,4 +15,13 @@ db.version(1).stores({
   settings: "id",
 });
 
+db.version(2).stores({
+  assets: "id, categoryId, name, group, isArchived, updatedAt",
+}).upgrade((tx) => {
+  // Existing assets get no group (undefined) — no data migration needed
+  return tx.table("assets").toCollection().modify(() => {
+    // no-op: group field is optional, undefined by default
+  });
+});
+
 export { db };

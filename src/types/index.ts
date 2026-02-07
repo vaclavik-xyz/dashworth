@@ -18,6 +18,7 @@ export interface Asset {
   id: string;
   name: string;
   categoryId: string;
+  group?: string;
   currency: Currency;
   currentValue: number;
   notes?: string;
@@ -30,6 +31,7 @@ export interface SnapshotEntry {
   assetId: string;
   assetName: string;
   categoryId: string;
+  group?: string;
   value: number;
   currency: string;
 }

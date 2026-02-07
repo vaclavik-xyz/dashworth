@@ -1,0 +1,121 @@
+"use client";
+
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
+import type { Asset, Currency, Snapshot } from "@/types";
+import { formatCurrency } from "@/lib/utils";
+
+const tooltipStyle = {
+  backgroundColor: "var(--tooltip-bg, #18181b)",
+  border: "1px solid var(--tooltip-border, #27272a)",
+  borderRadius: "8px",
+  fontSize: "13px",
+  color: "var(--tooltip-text, #fafafa)",
+};
+
+interface GroupDetailProps {
+  group: string;
+  categoryId: string;
+  assets: Asset[];
+  snapshots: Snapshot[];
+  currency: Currency;
+}
+
+export default function GroupDetail({ group, categoryId, assets, snapshots, currency }: GroupDetailProps) {
+  const total = assets.reduce((sum, a) => sum + a.currentValue, 0);
+
+  // Line chart: sum of entries with matching group + categoryId per snapshot
+  const lineData = [...snapshots]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((s) => {
+      const groupTotal = s.entries
+        .filter((e) => e.categoryId === categoryId && e.group === group)
+        .reduce((sum, e) => sum + e.value, 0);
+      return {
+        date: new Date(s.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
+        value: groupTotal,
+      };
+    })
+    .filter((d) => d.value > 0);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{group}</h3>
+        <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
+          {formatCurrency(total, currency)}
+        </p>
+        <p className="text-xs text-zinc-500">{assets.length} {assets.length === 1 ? "asset" : "assets"}</p>
+      </div>
+
+      {lineData.length >= 2 && (
+        <div>
+          <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
+          <ResponsiveContainer width="100%" height={160}>
+            <LineChart data={lineData}>
+              <CartesianGrid strokeDasharray="3 3" className="[&>line]:stroke-zinc-200 dark:[&>line]:stroke-zinc-800" stroke="#e4e4e7" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11 }}
+                className="[&_.recharts-text]:fill-zinc-500"
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11 }}
+                className="[&_.recharts-text]:fill-zinc-500"
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => formatCurrency(v, currency)}
+                width={80}
+              />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
+                formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), group]}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#10b981"
+                strokeWidth={2}
+                dot={{ fill: "#10b981", r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      <div>
+        <h4 className="mb-2 text-xs font-medium text-zinc-500">Assets</h4>
+        <div className="space-y-2">
+          {assets
+            .sort((a, b) => b.currentValue - a.currentValue)
+            .map((asset) => (
+              <div key={asset.id} className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 dark:bg-zinc-800/50">
+                <span className="text-sm text-zinc-900 dark:text-white">{asset.name}</span>
+                <div className="text-right">
+                  <span className="text-sm font-medium text-zinc-900 dark:text-white">
+                    {formatCurrency(asset.currentValue, currency)}
+                  </span>
+                  {total > 0 && (
+                    <span className="ml-2 text-xs text-zinc-500">
+                      {((asset.currentValue / total) * 100).toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+}

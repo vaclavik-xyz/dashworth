@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { uuid } from "@/lib/utils";
@@ -14,13 +14,25 @@ interface AssetFormProps {
 
 export default function AssetForm({ asset, onClose }: AssetFormProps) {
   const categories = useLiveQuery(() => db.categories.orderBy("sortOrder").toArray());
+  const allAssets = useLiveQuery(() => db.assets.toArray());
 
   const [name, setName] = useState(asset?.name ?? "");
   const [categoryId, setCategoryId] = useState(asset?.categoryId ?? "");
+  const [group, setGroup] = useState(asset?.group ?? "");
   const [currentValue, setCurrentValue] = useState(asset?.currentValue?.toString() ?? "");
   const [currency, setCurrency] = useState<Currency>(asset?.currency ?? "CZK");
   const [notes, setNotes] = useState(asset?.notes ?? "");
   const [saving, setSaving] = useState(false);
+
+  // Existing groups for the selected category (for autocomplete)
+  const existingGroups = useMemo(() => {
+    if (!allAssets || !categoryId) return [];
+    const groups = new Set<string>();
+    for (const a of allAssets) {
+      if (a.categoryId === categoryId && a.group) groups.add(a.group);
+    }
+    return [...groups].sort();
+  }, [allAssets, categoryId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,6 +45,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
       await db.assets.update(asset.id, {
         name: name.trim(),
         categoryId,
+        group: group.trim() || undefined,
         currentValue: Number(currentValue) || 0,
         currency,
         notes: notes.trim() || undefined,
@@ -43,6 +56,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
         id: uuid(),
         name: name.trim(),
         categoryId,
+        group: group.trim() || undefined,
         currentValue: Number(currentValue) || 0,
         currency,
         notes: notes.trim() || undefined,
@@ -58,6 +72,8 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
   const inputClass =
     "w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500";
 
+  const listId = `groups-${categoryId}`;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -66,7 +82,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Bitcoin, Apartment Prague 6"
+          placeholder="e.g. Bitcoin — Trezor, Apple (AAPL)"
           className={inputClass}
           required
           autoFocus
@@ -88,6 +104,25 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
             </option>
           ))}
         </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          Group <span className="text-zinc-400 dark:text-zinc-500 font-normal">(optional)</span>
+        </label>
+        <input
+          type="text"
+          value={group}
+          onChange={(e) => setGroup(e.target.value)}
+          placeholder="e.g. Bitcoin, US Tech"
+          className={inputClass}
+          list={listId}
+        />
+        <datalist id={listId}>
+          {existingGroups.map((g) => (
+            <option key={g} value={g} />
+          ))}
+        </datalist>
       </div>
 
       <div className="flex gap-3">

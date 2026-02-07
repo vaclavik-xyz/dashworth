@@ -13,6 +13,7 @@ function monthsAgo(months: number): Date {
 const VALUE_HISTORY: Record<string, number[]> = {
   bitcoin:     [980000, 1120000, 1050000, 1250000, 1180000, 1350000],
   ethereum:    [72000,   85000,   78000,   92000,   88000,  105000],
+  btcBinance:  [220000,  250000,  235000,  280000,  265000,  300000],
   apple:       [45000,   47000,   44000,   49000,   51000,   53000],
   apartment:   [6200000, 6200000, 6300000, 6300000, 6400000, 6500000],
   dragonLore:  [38000,   42000,   45000,   41000,   48000,   52000],
@@ -27,14 +28,16 @@ interface AssetDef {
   key: string;
   name: string;
   categoryName: string;
+  group?: string;
   currency: Currency;
 }
 
 const ASSET_DEFS: AssetDef[] = [
-  { key: "bitcoin",    name: "Bitcoin",              categoryName: "Crypto",          currency: "CZK" },
-  { key: "ethereum",   name: "Ethereum",             categoryName: "Crypto",          currency: "CZK" },
-  { key: "apple",      name: "Apple (AAPL)",         categoryName: "Stocks",          currency: "USD" },
-  { key: "tesla",      name: "Tesla (TSLA)",         categoryName: "Stocks",          currency: "USD" },
+  { key: "bitcoin",    name: "Bitcoin — Trezor",     categoryName: "Crypto",          group: "Bitcoin",   currency: "CZK" },
+  { key: "ethereum",   name: "Ethereum — Binance",   categoryName: "Crypto",          group: "Ethereum",  currency: "CZK" },
+  { key: "btcBinance", name: "Bitcoin — Binance",    categoryName: "Crypto",          group: "Bitcoin",   currency: "CZK" },
+  { key: "apple",      name: "Apple (AAPL)",         categoryName: "Stocks",          group: "US Tech",   currency: "USD" },
+  { key: "tesla",      name: "Tesla (TSLA)",         categoryName: "Stocks",          group: "US Tech",   currency: "USD" },
   { key: "apartment",  name: "Byt Praha 6",          categoryName: "Real Estate",     currency: "CZK" },
   { key: "dragonLore", name: "AWP Dragon Lore FN",   categoryName: "Gaming",          currency: "CZK" },
   { key: "domain",     name: "dashworth.net",        categoryName: "Domains",         currency: "USD" },
@@ -63,6 +66,7 @@ export async function devSeedDatabase(): Promise<void> {
       id: uuid(),
       name: def.name,
       categoryId: categoryByName.get(def.categoryName)!.id,
+      group: def.group,
       currency: def.currency,
       currentValue: history[history.length - 1],
       isArchived: false,
@@ -80,6 +84,7 @@ export async function devSeedDatabase(): Promise<void> {
         assetId: asset.id,
         assetName: asset.name,
         categoryId: asset.categoryId,
+        group: def.group,
         value: VALUE_HISTORY[def.key][i],
         currency: def.currency,
       };

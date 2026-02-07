@@ -40,7 +40,10 @@ export default function AssetCard({ asset, category, onEdit, onDelete }: AssetCa
           )}
           <div className="min-w-0">
             <h3 className="font-medium text-zinc-900 dark:text-white truncate">{asset.name}</h3>
-            <p className="text-xs text-zinc-500">{category?.name ?? "Unknown"}</p>
+            <p className="text-xs text-zinc-500">
+              {category?.name ?? "Unknown"}
+              {asset.group && <span className="text-zinc-400 dark:text-zinc-600"> · {asset.group}</span>}
+            </p>
           </div>
         </div>
 

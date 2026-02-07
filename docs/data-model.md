@@ -40,8 +40,9 @@ A single item of value that the user tracks.
 | Field | Type | Description |
 |-------|------|-------------|
 | id | `string` | Unique identifier (uuid) |
-| name | `string` | Display name (e.g. "Bitcoin", "Apartment Prague 6", "AWP Dragon Lore") |
+| name | `string` | Display name (e.g. "Bitcoin — Trezor", "Apartment Prague 6", "AWP Dragon Lore") |
 | categoryId | `string` | Reference to Category.id |
+| group | `string?` | Optional sub-group within the category (e.g. "Bitcoin", "US Tech") |
 | currency | `"CZK" \| "EUR" \| "USD"` | Currency of the value |
 | currentValue | `number` | Current value in the specified currency |
 | notes | `string?` | Optional notes |
@@ -73,6 +74,7 @@ if an asset is later renamed or deleted, the snapshot still has the original dat
 | assetId | `string` | Reference to Asset.id |
 | assetName | `string` | Asset name at time of snapshot (denormalized) |
 | categoryId | `string` | Category at time of snapshot (denormalized) |
+| group | `string?` | Group at time of snapshot (denormalized) |
 | value | `number` | Value at time of snapshot |
 | currency | `string` | Currency at time of snapshot |
 
@@ -98,6 +100,10 @@ db.version(1).stores({
   assets: 'id, categoryId, name, isArchived, updatedAt',
   snapshots: 'id, date, createdAt',
   settings: 'id',
+});
+
+db.version(2).stores({
+  assets: 'id, categoryId, name, group, isArchived, updatedAt',
 });
 ```
 

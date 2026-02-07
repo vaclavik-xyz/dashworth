@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp, Trash2, TrendingUp, TrendingDown } from "lucide-react";
-import type { Snapshot, Currency } from "@/types";
+import type { Snapshot, SnapshotEntry, Currency } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Card from "@/components/ui/Card";
+
+interface GroupedEntries {
+  group: string | null;
+  entries: SnapshotEntry[];
+  subtotal: number;
+}
 
 interface SnapshotCardProps {
   snapshot: Snapshot;
@@ -16,6 +22,30 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
   const [expanded, setExpanded] = useState(false);
 
   const currency = snapshot.primaryCurrency as Currency;
+
+  // Group entries by group name for display
+  const groupedEntries = useMemo((): GroupedEntries[] => {
+    const byGroup = new Map<string | null, SnapshotEntry[]>();
+    for (const entry of snapshot.entries) {
+      const key = entry.group ?? null;
+      const list = byGroup.get(key) ?? [];
+      list.push(entry);
+      byGroup.set(key, list);
+    }
+
+    const groupNames = [...byGroup.keys()].filter((k) => k !== null).sort() as string[];
+    const hasUngrouped = byGroup.has(null);
+
+    return [
+      ...groupNames.map((name) => {
+        const entries = byGroup.get(name)!;
+        return { group: name as string | null, entries, subtotal: entries.reduce((s, e) => s + e.value, 0) };
+      }),
+      ...(hasUngrouped
+        ? [{ group: null as string | null, entries: byGroup.get(null)!, subtotal: byGroup.get(null)!.reduce((s, e) => s + e.value, 0) }]
+        : []),
+    ];
+  }, [snapshot.entries]);
   const change = previousSnapshot
     ? snapshot.totalNetWorth - previousSnapshot.totalNetWorth
     : null;
@@ -97,25 +127,33 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
       </button>
 
       {expanded && (
-        <div className="mt-3 border-t border-zinc-200 dark:border-zinc-800 pt-3">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-zinc-500">
-                <th className="pb-2 font-medium">Asset</th>
-                <th className="pb-2 text-right font-medium">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {snapshot.entries.map((entry) => (
-                <tr key={entry.assetId} className="border-t border-zinc-100 dark:border-zinc-800/50">
-                  <td className="py-1.5 text-zinc-600 dark:text-zinc-300">{entry.assetName}</td>
-                  <td className="py-1.5 text-right text-zinc-900 dark:text-white">
-                    {formatCurrency(entry.value, entry.currency as Currency)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-3 border-t border-zinc-200 dark:border-zinc-800 pt-3 space-y-3">
+          {groupedEntries.map((grp, gi) => (
+            <div key={grp.group ?? `ungrouped-${gi}`}>
+              {grp.group && (
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-zinc-500">{grp.group}</span>
+                  {grp.entries.length > 1 && (
+                    <span className="text-xs text-zinc-500">
+                      {formatCurrency(grp.subtotal, currency)}
+                    </span>
+                  )}
+                </div>
+              )}
+              <table className="w-full text-sm">
+                <tbody>
+                  {grp.entries.map((entry) => (
+                    <tr key={entry.assetId} className="border-t border-zinc-100 dark:border-zinc-800/50">
+                      <td className="py-1.5 text-zinc-600 dark:text-zinc-300">{entry.assetName}</td>
+                      <td className="py-1.5 text-right text-zinc-900 dark:text-white">
+                        {formatCurrency(entry.value, entry.currency as Currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
       )}
     </Card>
