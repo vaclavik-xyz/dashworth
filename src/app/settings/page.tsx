@@ -2,14 +2,14 @@
 
 import { useState, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
 import { seedDatabase } from "@/lib/seed";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency, sumConverted } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import type { AutoSnapshot, Category, Currency, Theme, SnapshotReminder } from "@/types";
@@ -36,6 +36,9 @@ export default function SettingsPage() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
+
+  const activeAssets = assets?.filter((a) => !a.isArchived) ?? [];
+  const currency: Currency = settings?.primaryCurrency ?? "USD";
 
   async function updateSetting(
     key: string,
@@ -413,6 +416,7 @@ export default function SettingsPage() {
             </div>
             <Button
               variant="danger"
+              className="shrink-0 whitespace-nowrap"
               onClick={() => setDeleteModalOpen(true)}
             >
               <Trash2 className="h-4 w-4" />
@@ -444,9 +448,29 @@ export default function SettingsPage() {
               dashworth.net
             </a>
           </div>
-          <p className="pt-1 text-xs text-zinc-600">
-            Your wealth. Your data. Your dashboard.
-          </p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-zinc-400">GitHub</span>
+            <a
+              href="https://github.com/vaclavik-xyz/dashworth"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emerald-400 transition-colors"
+            >
+              <Github className="h-3.5 w-3.5" />
+              vaclavik-xyz/dashworth
+            </a>
+          </div>
+          {activeAssets.length > 0 && (
+            <p className="pt-2 text-xs text-zinc-500">
+              You&apos;re tracking{" "}
+              <span className="font-medium text-emerald-400">{activeAssets.length} asset{activeAssets.length !== 1 ? "s" : ""}</span>
+              {" "}worth{" "}
+              <span className="font-medium text-emerald-400">
+                {formatCurrency(sumConverted(activeAssets, currency, rates), currency)}
+              </span>
+              . Keep building!
+            </p>
+          )}
         </Card>
       </section>
 
