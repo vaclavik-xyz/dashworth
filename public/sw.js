@@ -1,4 +1,4 @@
-const CACHE_NAME = "dashworth-v1";
+const CACHE_NAME = "dashworth-v8";
 
 // Core shell files cached on install
 const PRECACHE_URLS = ["/", "/assets", "/snapshots", "/settings"];

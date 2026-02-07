@@ -9,6 +9,7 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   background: #fafafa;
   color: #09090b;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 :root {
@@ -28,6 +29,11 @@ body {
   --tooltip-border: #27272a;
   --tooltip-text: #fafafa;
   --tooltip-label: #a1a1aa;
+}
+
+/* PWA safe area: bottom nav + home indicator */
+.pb-safe {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 @keyframes slideUp {
