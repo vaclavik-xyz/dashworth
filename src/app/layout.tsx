@@ -22,7 +22,21 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Dashworth",
-  description: "Your wealth. Your data. Your dashboard.",
+  description: "All your assets in one dashboard. No accounts, no cloud. Everything stays on your device.",
+  openGraph: {
+    title: "Dashworth — Track your net worth. Privately.",
+    description: "All your assets in one dashboard. No accounts, no cloud. Everything stays on your device.",
+    url: "https://dashworth.net",
+    siteName: "Dashworth",
+    images: [{ url: "https://dashworth.net/og-image.png" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Dashworth — Track your net worth. Privately.",
+    description: "All your assets in one dashboard. No accounts, no cloud. Everything stays on your device.",
+    images: ["https://dashworth.net/og-image.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
