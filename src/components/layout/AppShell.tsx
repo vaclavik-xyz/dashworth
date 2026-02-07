@@ -25,6 +25,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       checkAutoSnapshot();
     }
     init();
+
+    // Register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
   }, []);
 
   // Re-check auto-snapshot when the setting changes (e.g. user enables it in Settings)
