@@ -160,9 +160,9 @@ export default function LandingPage() {
         </div>
 
         <div className="relative">
-          <div className="mb-6 flex items-center justify-center gap-3">
-            <img src="/icons/icon-192x192.png" alt="Dashworth" className="h-10 w-10 rounded-xl" />
-            <span className="text-xl font-bold text-white">
+          <div className="mb-8 flex items-center justify-center gap-4">
+            <img src="/icons/icon-192x192.png" alt="Dashworth" className="h-16 w-16 rounded-2xl" />
+            <span className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
               Dash<span className="text-emerald-500">worth</span>
             </span>
           </div>
@@ -301,7 +301,7 @@ export default function LandingPage() {
               <Github className="h-4 w-4" />
               GitHub
             </a>
-            <span className="text-xs text-zinc-600">&copy; 2025</span>
+            <span className="text-xs text-zinc-600">&copy; 2026</span>
           </div>
         </div>
       </footer>

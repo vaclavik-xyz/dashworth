@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
@@ -14,11 +14,7 @@ import { checkAutoSnapshot } from "@/lib/auto-snapshot";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const assetCount = useLiveQuery(() => db.assets.count());
-  const [hasData, setHasData] = useState(false);
-
-  useEffect(() => {
-    if (assetCount !== undefined) setHasData(assetCount > 0);
-  }, [assetCount]);
+  const hasData = (assetCount ?? 0) > 0;
 
   useEffect(() => {
     async function init() {
@@ -58,11 +54,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {hasData && <Sidebar />}
+      <div className={hasData ? "" : "hidden"}>
+        <Sidebar />
+      </div>
       <main className={`min-h-screen ${hasData ? "pb-safe md:pl-60 md:!pb-0" : ""}`}>
         {children}
       </main>
-      {hasData && <BottomNav />}
+      <div className={hasData ? "" : "hidden"}>
+        <BottomNav />
+      </div>
     </>
   );
 }
