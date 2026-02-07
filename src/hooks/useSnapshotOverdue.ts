@@ -23,6 +23,8 @@ export function useSnapshotOverdue(): {
 
   const thresholdDays = settings.snapshotReminder === "weekly" ? 7 : 30;
 
+  // const thresholdDays = 0; // TEST: always overdue
+
   // No snapshot ever taken
   if (latestSnapshot === undefined) {
     return { isOverdue: true, daysSinceLastSnapshot: 0 };
