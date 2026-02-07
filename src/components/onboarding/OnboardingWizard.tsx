@@ -116,12 +116,12 @@ function StepCurrency({
         This is your display currency. You can change it later.
       </p>
 
-      <div className="mt-10 grid w-full grid-cols-3 gap-3">
+      <div className="mt-10 flex w-full gap-3">
         {CURRENCIES.map(({ code, symbol, label }) => (
           <button
             key={code}
             onClick={() => onSelect(code)}
-            className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-6 transition-all ${
+            className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 p-6 transition-all ${
               selected === code
                 ? "border-emerald-500 bg-emerald-500/10"
                 : "border-zinc-800 bg-zinc-900/50 hover:border-zinc-700"
@@ -574,7 +574,16 @@ export default function OnboardingWizard({
   onComplete: () => void;
 }) {
   const [step, setStep] = useState(0);
-  const [currency, setCurrency] = useState<Currency>(detectCurrency);
+  const [currency, setCurrency] = useState<Currency>("USD");
+
+  // Detect from browser locale after hydration (avoids SSR mismatch)
+  const currencyDetected = useRef(false);
+  useEffect(() => {
+    if (!currencyDetected.current) {
+      currencyDetected.current = true;
+      setCurrency(detectCurrency());
+    }
+  }, []);
   const [drafts, setDrafts] = useState<DraftAsset[]>([EMPTY_DRAFT()]);
   const [saving, setSaving] = useState(false);
   const [totalNetWorth, setTotalNetWorth] = useState(0);
