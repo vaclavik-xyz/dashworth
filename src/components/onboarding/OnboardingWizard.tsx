@@ -108,7 +108,7 @@ function StepCurrency({
   onSelect: (c: Currency) => void;
 }) {
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex w-full max-w-md flex-col items-center">
       <h2 className="text-2xl font-bold text-white sm:text-3xl">
         Choose your currency
       </h2>
@@ -116,7 +116,7 @@ function StepCurrency({
         This is your display currency. You can change it later.
       </p>
 
-      <div className="mt-10 grid w-full max-w-md grid-cols-3 gap-3">
+      <div className="mt-10 grid w-full grid-cols-3 gap-3">
         {CURRENCIES.map(({ code, symbol, label }) => (
           <button
             key={code}
