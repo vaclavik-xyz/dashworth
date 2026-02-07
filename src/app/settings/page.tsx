@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, BookOpen, Wallet, Camera, BarChart3, Shield } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -500,6 +500,74 @@ export default function SettingsPage() {
             </p>
           </div>
         )}
+      </section>
+
+      {/* How to Use */}
+      <section className="mt-8">
+        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+          How to Use
+        </h2>
+        <Card className="mt-3 space-y-5">
+          <div className="flex gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+              <Wallet className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">1. Add your assets</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Go to <span className="text-zinc-400">Assets</span> and tap <span className="text-zinc-400">+ Add Asset</span>. Enter a name, pick a category, set the currency and current value. For crypto and stocks, select a price source to get automatic updates.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+              <Camera className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">2. Take snapshots</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Go to <span className="text-zinc-400">Snapshots</span> and tap <span className="text-zinc-400">Take Snapshot</span>. This captures the current value of all your assets. Take snapshots regularly (weekly or monthly) to track how your net worth changes over time.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+              <BarChart3 className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">3. Watch your progress</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                The <span className="text-zinc-400">Dashboard</span> shows your total net worth, a trend chart, asset allocation breakdown, and recent activity. The more snapshots you take, the more detailed your chart becomes.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+              <RefreshCw className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Auto price updates</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Assets in the <span className="text-zinc-400">Crypto</span> and <span className="text-zinc-400">Stocks</span> categories can pull live prices automatically. When adding an asset, choose <span className="text-zinc-400">CoinGecko</span> or <span className="text-zinc-400">Yahoo Finance</span> as the price source and enter the ticker symbol.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+              <Shield className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Your data stays private</p>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                All data is stored locally in your browser. Nothing is sent to any server. Use <span className="text-zinc-400">Export</span> below to create backups. You can install Dashworth as an app from your browser for quick access.
+              </p>
+            </div>
+          </div>
+        </Card>
       </section>
 
       {/* Data */}
