@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Wallet, Camera, Settings } from "lucide-react";
+import { useSnapshotOverdue } from "@/hooks/useSnapshotOverdue";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -13,11 +14,13 @@ const NAV_ITEMS = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { isOverdue } = useSnapshotOverdue();
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 flex md:hidden border-t border-[var(--dw-border)] bg-[var(--dw-nav)] pb-[env(safe-area-inset-bottom)]">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+        const showDot = href === "/snapshots" && isOverdue;
 
         return (
           <Link
@@ -27,7 +30,12 @@ export default function BottomNav() {
               isActive ? "text-emerald-500" : "text-zinc-500"
             }`}
           >
-            <Icon className="h-7 w-7" />
+            <span className="relative">
+              <Icon className="h-7 w-7" />
+              {showDot && (
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+              )}
+            </span>
             {label}
           </Link>
         );

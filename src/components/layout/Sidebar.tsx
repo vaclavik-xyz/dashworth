@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Wallet, Camera, Settings } from "lucide-react";
+import { useSnapshotOverdue } from "@/hooks/useSnapshotOverdue";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { isOverdue } = useSnapshotOverdue();
 
   return (
     <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 border-r border-[var(--dw-border)] bg-[var(--dw-nav)]">
@@ -25,6 +27,7 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const showDot = href === "/snapshots" && isOverdue;
 
           return (
             <Link
@@ -36,7 +39,12 @@ export default function Sidebar() {
                   : "text-zinc-500 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <span className="relative">
+                <Icon className="h-5 w-5" />
+                {showDot && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+                )}
+              </span>
               {label}
             </Link>
           );
