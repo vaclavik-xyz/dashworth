@@ -483,7 +483,6 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
   const [isStandalone, setIsStandalone] = useState(true);
   const [isIosSafari, setIsIosSafari] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
-  const [installSkipped, setInstallSkipped] = useState(false);
 
   useEffect(() => {
     const standalone =
@@ -497,9 +496,6 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     setIsIosSafari(isIos && !standalone);
 
-    if (localStorage.getItem("dashworth-install-skipped") === "1") {
-      setInstallSkipped(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -512,10 +508,9 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
   }, []);
 
   const showInstallCard =
-    !isStandalone && (isIosSafari || !!deferredPrompt) && !installSkipped;
+    !isStandalone && (isIosSafari || !!deferredPrompt);
 
   const handleSkip = () => {
-    localStorage.setItem("dashworth-install-skipped", "1");
     handleStart();
   };
 
