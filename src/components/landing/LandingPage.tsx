@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Shield,
   Layers,
@@ -276,6 +277,43 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
               </p>
             </div>
           ))}
+        </div>
+      </Section>
+
+      {/* ── Examples ── */}
+      <Section className="mx-auto max-w-3xl px-6 py-24">
+        <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">
+          See how the world&apos;s richest track their wealth
+        </h2>
+        <p className="mx-auto mt-3 max-w-lg text-center text-sm text-zinc-500">
+          Explore real portfolio examples from billionaires and celebrities
+        </p>
+
+        <div className="mt-10 flex justify-center gap-3">
+          {[
+            { initials: "EM", color: "bg-blue-600" },
+            { initials: "WB", color: "bg-amber-600" },
+            { initials: "DD", color: "bg-red-600" },
+            { initials: "LJ", color: "bg-purple-600" },
+            { initials: "DK", color: "bg-emerald-600" },
+          ].map(({ initials, color }) => (
+            <div
+              key={initials}
+              className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white ${color}`}
+            >
+              {initials}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/examples"
+            className="group inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/50 px-6 py-3 text-sm font-semibold text-white transition-all hover:border-emerald-500/50 hover:bg-emerald-500/5"
+          >
+            View Examples
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </Section>
 

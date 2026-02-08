@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Wallet, Camera, Settings, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Wallet, Camera, Users, Settings, HelpCircle } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { useSnapshotOverdue } from "@/hooks/useSnapshotOverdue";
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/assets", label: "Assets", icon: Wallet },
   { href: "/snapshots", label: "Snapshots", icon: Camera },
+  { href: "/examples", label: "Examples", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
