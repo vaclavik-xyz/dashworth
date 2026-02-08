@@ -20,18 +20,16 @@ interface AssetCardProps {
 
 export default function AssetCard({ asset, category, onEdit, onDelete, primaryCurrency, rates }: AssetCardProps) {
   const { hidden } = usePrivacy();
-  const Icon = category ? getIcon(category.icon) : null;
+  const Icon = getIcon(asset.icon ?? category?.icon ?? "box");
   const colorClass = category ? (COLOR_BADGE_CLASSES[category.color] ?? COLOR_BADGE_CLASSES.zinc) : COLOR_BADGE_CLASSES.zinc;
 
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          {Icon && (
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
-              <Icon className="h-5 w-5" />
-            </div>
-          )}
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
+            <Icon className="h-5 w-5" />
+          </div>
           <div className="min-w-0">
             <h3 className="font-medium text-zinc-900 dark:text-white truncate">{asset.name}</h3>
             <p className="text-xs text-zinc-500">

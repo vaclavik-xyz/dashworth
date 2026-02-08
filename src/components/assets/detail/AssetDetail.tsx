@@ -15,14 +15,14 @@ interface AssetDetailProps {
 
 export default function AssetDetail({ asset, category }: AssetDetailProps) {
   const { hidden } = usePrivacy();
-  const Icon = category ? getIcon(category.icon) : null;
+  const Icon = getIcon(asset.icon ?? category?.icon ?? "box");
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
 
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-5 w-5" style={{ color: catColor }} />}
+          <Icon className="h-5 w-5" style={{ color: catColor }} />
           <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{asset.name}</h3>
         </div>
         <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">

@@ -25,6 +25,7 @@ export interface Asset {
   name: string;
   categoryId: string;
   group?: string;
+  icon?: string;
   currency: Currency;
   currentValue: number;
   notes?: string;

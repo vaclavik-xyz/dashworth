@@ -32,7 +32,7 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
       <div className="space-y-2">
         {top.map(({ asset, converted }) => {
           const cat = categoryMap.get(asset.categoryId);
-          const Icon = cat ? getIcon(cat.icon) : null;
+          const Icon = getIcon(asset.icon ?? cat?.icon ?? "box");
           const colorClass = cat ? (COLOR_TEXT_MUTED_CLASSES[cat.color] ?? "text-zinc-400") : "text-zinc-400";
 
           return (
@@ -41,7 +41,7 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
               className="flex items-center justify-between gap-3"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                {Icon && <Icon className={`h-4 w-4 shrink-0 ${colorClass}`} />}
+                <Icon className={`h-4 w-4 shrink-0 ${colorClass}`} />
                 <span className="text-sm text-zinc-900 dark:text-white truncate">{asset.name}</span>
               </div>
               <div className="shrink-0 text-right">

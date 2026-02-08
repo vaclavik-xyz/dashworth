@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { db } from "@/lib/db";
 import { uuid } from "@/lib/utils";
-import { getIcon, ICON_GROUPS } from "@/lib/icons";
+import { getIcon } from "@/lib/icons";
 import { PALETTE_COLORS, COLOR_BADGE_CLASSES, COLOR_BG_CLASSES } from "@/constants/colors";
 import type { Category } from "@/types";
 import Button from "@/components/ui/Button";
+import IconPicker from "@/components/ui/IconPicker";
 import { Check } from "lucide-react";
 
 interface CategoryFormProps {
@@ -84,33 +85,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
       {/* Icon picker — own scroll area */}
       <div>
         <label className="mb-2 block text-sm font-medium text-zinc-400">Icon</label>
-        <div className="max-h-40 overflow-y-auto space-y-3 pr-1">
-          {ICON_GROUPS.map((group) => (
-            <div key={group.label}>
-              <p className="mb-1 text-xs text-zinc-500">{group.label}</p>
-              <div className="grid grid-cols-6 gap-1.5">
-                {group.icons.map((iconName) => {
-                  const Icon = getIcon(iconName);
-                  const isSelected = icon === iconName;
-                  return (
-                    <button
-                      key={iconName}
-                      type="button"
-                      onClick={() => setIcon(iconName)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
-                        isSelected
-                          ? badgeClass
-                          : "text-zinc-400 hover:bg-[var(--dw-hover)]"
-                      }`}
-                    >
-                      <Icon className="h-4.5 w-4.5" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+        <IconPicker value={icon} onChange={setIcon} color={badgeClass} />
       </div>
 
       {/* Color picker */}

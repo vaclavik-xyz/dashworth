@@ -132,8 +132,9 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     {(() => {
+                      const asset = assets.find((a) => a.id === entry.assetId);
                       const cat = assetCategoryMap.get(entry.assetId);
-                      const Icon = cat ? getIcon(cat.icon) : getIcon("box");
+                      const Icon = getIcon(asset?.icon ?? cat?.icon ?? "box");
                       const colorClass = cat ? (COLOR_TEXT_MUTED_CLASSES[cat.color] ?? "text-zinc-400") : "text-zinc-400";
                       return <Icon className={`h-4 w-4 shrink-0 ${colorClass}`} />;
                     })()}

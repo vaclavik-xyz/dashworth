@@ -2,13 +2,16 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown, RotateCcw } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency } from "@/lib/utils";
+import { getIcon } from "@/lib/icons";
+import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
 import type { Asset, Currency, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
 import HintTooltip from "@/components/ui/HintTooltip";
+import IconPicker from "@/components/ui/IconPicker";
 
 interface AssetFormProps {
   asset?: Asset;
@@ -32,6 +35,8 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
     asset?.unitPrice?.toString()
     ?? (asset?.currentValue && asset?.quantity ? (asset.currentValue / asset.quantity).toString() : ""),
   );
+  const [icon, setIcon] = useState(asset?.icon ?? "");
+  const [iconOpen, setIconOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -132,6 +137,7 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
       name: name.trim(),
       categoryId,
       group: group.trim() || undefined,
+      icon: icon || undefined,
       currentValue: finalValue,
       currency,
       notes: notes.trim() || undefined,
@@ -208,6 +214,55 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
           ))}
         </select>
       </div>
+
+      {/* Icon override */}
+      {categoryId && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            Icon <span className="text-zinc-400 dark:text-zinc-500 font-normal">(optional)</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIconOpen(!iconOpen)}
+              className={`flex h-9 items-center gap-2 rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 text-sm transition-colors ${
+                iconOpen ? "border-emerald-500" : ""
+              }`}
+            >
+              {(() => {
+                const effectiveIcon = icon || selectedCategory?.icon || "box";
+                const Preview = getIcon(effectiveIcon);
+                return <Preview className="h-4 w-4 text-zinc-400" />;
+              })()}
+              <span className="text-zinc-500 text-xs">
+                {icon ? "Custom" : "Category default"}
+              </span>
+              <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${iconOpen ? "rotate-180" : ""}`} />
+            </button>
+            {icon && (
+              <button
+                type="button"
+                onClick={() => { setIcon(""); setIconOpen(false); }}
+                className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset
+              </button>
+            )}
+          </div>
+          {iconOpen && (
+            <div className="mt-2">
+              <IconPicker
+                value={icon || selectedCategory?.icon || "box"}
+                onChange={(v) => {
+                  setIcon(v === selectedCategory?.icon ? "" : v);
+                }}
+                color={selectedCategory ? (COLOR_BADGE_CLASSES[selectedCategory.color] ?? COLOR_BADGE_CLASSES.zinc) : undefined}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Ticker field for Crypto / Stocks */}
       {showTicker && (

@@ -92,4 +92,7 @@ db.version(9).stores({
   assetChanges: "++id, assetId, createdAt",
 });
 
+db.version(10).stores({});
+// No schema index change — icon is not indexed
+
 export { db };
