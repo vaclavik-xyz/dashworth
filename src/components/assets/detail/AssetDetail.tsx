@@ -210,7 +210,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                         {new Date(entry.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                       {entry.note && (
-                        <span className="text-[11px] text-zinc-400 dark:text-zinc-500 italic truncate block">
+                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500 italic truncate block">
                           {entry.note}
                         </span>
                       )}
