@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, BookOpen, Wallet, Camera, BarChart3, Shield, Users } from "lucide-react";
 import { db } from "@/lib/db";
@@ -13,7 +14,6 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate, formatCurrency, sumConverted } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
-import Link from "next/link";
 import type { AutoSnapshot, Category, Currency, CustomThemeColors, Theme, SnapshotReminder } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
