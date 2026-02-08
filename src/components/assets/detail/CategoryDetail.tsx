@@ -17,6 +17,7 @@ import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
+import ClientOnly from "@/components/ui/ClientOnly";
 
 const ASSET_COLORS = [
   "#10b981", "#3b82f6", "#f97316", "#a855f7", "#ef4444",
@@ -92,40 +93,42 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
       {lineData.length >= 2 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11 }}
-                className="[&_.recharts-text]:fill-zinc-500"
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                className="[&_.recharts-text]:fill-zinc-500"
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => formatCurrency(v, currency)}
-                width={80}
-              />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                itemStyle={tooltipItemStyle}
-                labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
-                formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), category?.name ?? "Value"]}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke={catColor}
-                strokeWidth={2}
-                dot={{ fill: catColor, r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <ClientOnly>
+            <ResponsiveContainer width="100%" height={160} minWidth={0}>
+              <LineChart data={lineData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  className="[&_.recharts-text]:fill-zinc-500"
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  className="[&_.recharts-text]:fill-zinc-500"
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v: number) => formatCurrency(v, currency)}
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  itemStyle={tooltipItemStyle}
+                  labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
+                  formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), category?.name ?? "Value"]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={catColor}
+                  strokeWidth={2}
+                  dot={{ fill: catColor, r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ClientOnly>
         </div>
       )}
 
@@ -133,29 +136,31 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Asset Allocation</h4>
           <div className="h-[150px] md:h-[180px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={donutData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={65}
-                strokeWidth={0}
-              >
-                {donutData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={tooltipStyle}
-                itemStyle={tooltipItemStyle}
-                formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+            <ClientOnly>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <PieChart>
+                  <Pie
+                    data={donutData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={65}
+                    strokeWidth={0}
+                  >
+                    {donutData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    itemStyle={tooltipItemStyle}
+                    formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ClientOnly>
           </div>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {donutData.map((d) => (

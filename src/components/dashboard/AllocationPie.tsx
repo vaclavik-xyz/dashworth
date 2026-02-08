@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { COLOR_HEX } from "@/constants/colors";
 import Card from "@/components/ui/Card";
+import ClientOnly from "@/components/ui/ClientOnly";
 
 // Distinct colors for groups when not tied to a category color
 const GROUP_COLORS = [
@@ -100,35 +101,37 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
           </button>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={220}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            innerRadius={55}
-            outerRadius={90}
-            strokeWidth={0}
-          >
-            {data.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--tooltip-bg, #18181b)",
-              border: "1px solid var(--tooltip-border, #27272a)",
-              borderRadius: "8px",
-              fontSize: "13px",
-              color: "var(--tooltip-text, #fafafa)",
-            }}
-            itemStyle={{ color: "var(--tooltip-text, #fafafa)" }}
-            formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+      <ClientOnly>
+        <ResponsiveContainer width="100%" height={220} minWidth={0}>
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={90}
+              strokeWidth={0}
+            >
+              {data.map((entry, i) => (
+                <Cell key={i} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "var(--tooltip-bg, #18181b)",
+                border: "1px solid var(--tooltip-border, #27272a)",
+                borderRadius: "8px",
+                fontSize: "13px",
+                color: "var(--tooltip-text, #fafafa)",
+              }}
+              itemStyle={{ color: "var(--tooltip-text, #fafafa)" }}
+              formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </ClientOnly>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         {data.map((d) => (
           <div key={d.name} className="flex items-center gap-1.5 text-xs">

@@ -14,6 +14,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
+import ClientOnly from "@/components/ui/ClientOnly";
 
 const tooltipStyle = {
   backgroundColor: "var(--tooltip-bg, #18181b)",
@@ -78,40 +79,42 @@ export default function AssetDetail({ asset, category, snapshots, currency, rate
       {lineData.length >= 2 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11 }}
-                className="[&_.recharts-text]:fill-zinc-500"
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                className="[&_.recharts-text]:fill-zinc-500"
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => formatCurrency(v, currency)}
-                width={80}
-              />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                itemStyle={tooltipItemStyle}
-                labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
-                formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), asset.name]}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke={catColor}
-                strokeWidth={2}
-                dot={{ fill: catColor, r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <ClientOnly>
+            <ResponsiveContainer width="100%" height={160} minWidth={0}>
+              <LineChart data={lineData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  className="[&_.recharts-text]:fill-zinc-500"
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  className="[&_.recharts-text]:fill-zinc-500"
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v: number) => formatCurrency(v, currency)}
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  itemStyle={tooltipItemStyle}
+                  labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
+                  formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), asset.name]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={catColor}
+                  strokeWidth={2}
+                  dot={{ fill: catColor, r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ClientOnly>
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@ import { uuid } from "@/lib/utils";
 import type { Asset, Category, Snapshot, SnapshotEntry, Currency } from "@/types";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import ClientOnly from "@/components/ui/ClientOnly";
 import NetWorthHero from "@/components/dashboard/NetWorthHero";
 import NetWorthChart from "@/components/dashboard/NetWorthChart";
 import AllocationPie from "@/components/dashboard/AllocationPie";
@@ -102,15 +103,17 @@ function MiniDonut({ assets, accentHex }: { assets: { name: string; percentage: 
   const data = assets.map((a) => ({ name: a.name, value: a.percentage }));
   return (
     <div className="h-16 w-16 shrink-0">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={18} outerRadius={30} strokeWidth={0}>
-            {data.map((_, i) => (
-              <Cell key={i} fill={i === 0 ? accentHex : PIE_COLORS[i % PIE_COLORS.length]} opacity={1 - i * 0.1} />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
+      <ClientOnly>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <PieChart>
+            <Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={18} outerRadius={30} strokeWidth={0}>
+              {data.map((_, i) => (
+                <Cell key={i} fill={i === 0 ? accentHex : PIE_COLORS[i % PIE_COLORS.length]} opacity={1 - i * 0.1} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </ClientOnly>
     </div>
   );
 }
