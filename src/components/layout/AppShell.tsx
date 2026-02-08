@@ -35,9 +35,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [mounted, assetCount]);
 
-  // Redirect to landing if no data and not on home page
+  // Redirect to landing if no data and not on home page or examples
   useEffect(() => {
-    if (ready === false && pathname !== "/") {
+    if (ready === false && pathname !== "/" && pathname !== "/examples") {
       router.push("/");
     }
   }, [ready, pathname, router]);
@@ -88,8 +88,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // User has data → show full app shell with nav
-  if (ready) {
+  // User has data OR viewing examples → show full app shell with nav
+  if (ready || pathname === "/examples") {
     return (
       <>
         <Sidebar />
