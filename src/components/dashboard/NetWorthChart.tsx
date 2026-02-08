@@ -24,18 +24,27 @@ interface NetWorthChartProps {
 export default function NetWorthChart({ snapshots, currency, rates }: NetWorthChartProps) {
   if (snapshots.length < 2) return null;
 
-  const data = [...snapshots]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((s) => ({
-      date: new Date(s.date).toLocaleDateString("cs-CZ", {
-        day: "numeric",
-        month: "short",
-      }),
+  const sorted = [...snapshots].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
+
+  // Use year labels when snapshots span multiple years, otherwise day+month
+  const firstYear = new Date(sorted[0].date).getFullYear();
+  const lastYear = new Date(sorted[sorted.length - 1].date).getFullYear();
+  const spansYears = lastYear - firstYear >= 1;
+
+  const data = sorted.map((s) => {
+    const d = new Date(s.date);
+    return {
+      date: spansYears
+        ? d.getFullYear().toString()
+        : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
       value: s.entries.reduce(
         (sum, e) => sum + convertCurrency(e.value, e.currency, currency, rates),
         0,
       ),
-    }));
+    };
+  });
 
   return (
     <Card>

@@ -11,6 +11,7 @@ import { devSeedDatabase } from "@/lib/dev-seed";
 import { applyTheme, watchSystemTheme } from "@/lib/theme";
 import { refreshAutoPrices } from "@/lib/auto-update";
 import { checkAutoSnapshot } from "@/lib/auto-snapshot";
+import SampleDataBanner from "./SampleDataBanner";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -94,6 +95,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <>
         <Sidebar />
         <main className="min-h-screen pb-safe md:pl-60 md:!pb-0">
+          <SampleDataBanner />
           {children}
         </main>
         <BottomNav />

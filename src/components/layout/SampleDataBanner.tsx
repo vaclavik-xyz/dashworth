@@ -22,7 +22,7 @@ export default function SampleDataBanner() {
   }
 
   return (
-    <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5">
+    <div className="mx-6 mt-4 md:mx-10 md:mt-6 flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5">
       <p className="text-sm text-amber-200">
         You&apos;re viewing sample data &mdash;{" "}
         <button

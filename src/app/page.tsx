@@ -14,7 +14,6 @@ import AllocationPie from "@/components/dashboard/AllocationPie";
 import TopAssets from "@/components/dashboard/TopAssets";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import SnapshotReminder from "@/components/layout/SnapshotReminder";
-import SampleDataBanner from "@/components/layout/SampleDataBanner";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 import HintTooltip from "@/components/ui/HintTooltip";
 
@@ -62,7 +61,6 @@ export default function DashboardPage() {
   return (
     <div className="p-6 md:p-10">
       <InstallPrompt />
-      <SampleDataBanner />
       <SnapshotReminder />
 
       {/* Hero */}
