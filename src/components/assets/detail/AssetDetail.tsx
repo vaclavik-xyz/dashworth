@@ -42,13 +42,14 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
 
-    // Start with the oldest known value (oldValue of first change)
-    const points: { label: string; fullLabel: string; value: number }[] = [];
+    const points: { idx: number; tickLabel: string; fullLabel: string; value: number }[] = [];
+    let idx = 0;
 
     // Add the initial value before first change
     const firstDate = new Date(sorted[0].createdAt);
     points.push({
-      label: `${firstDate.getDate()} ${MONTHS[firstDate.getMonth()]}`,
+      idx: idx++,
+      tickLabel: `${firstDate.getDate()} ${MONTHS[firstDate.getMonth()]}`,
       fullLabel: formatFullLabel(firstDate),
       value: sorted[0].oldValue,
     });
@@ -57,7 +58,8 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
     for (const c of sorted) {
       const d = new Date(c.createdAt);
       points.push({
-        label: `${d.getDate()} ${MONTHS[d.getMonth()]}`,
+        idx: idx++,
+        tickLabel: `${d.getDate()} ${MONTHS[d.getMonth()]}`,
         fullLabel: formatFullLabel(d),
         value: c.newValue,
       });
@@ -68,7 +70,8 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
     if (lastPoint && Math.round(lastPoint.value) !== Math.round(asset.currentValue)) {
       const now = new Date(asset.updatedAt);
       points.push({
-        label: `${now.getDate()} ${MONTHS[now.getMonth()]}`,
+        idx: idx++,
+        tickLabel: `${now.getDate()} ${MONTHS[now.getMonth()]}`,
         fullLabel: formatFullLabel(now),
         value: asset.currentValue,
       });
@@ -78,10 +81,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
   }, [changes, asset.currentValue, asset.updatedAt]);
 
   const manyPoints = chartData.length > 10;
-  const maxTicks = width < 300 ? 3 : 5;
-  const tickInterval = chartData.length > maxTicks
-    ? Math.max(1, Math.floor(chartData.length / maxTicks)) - 1
-    : 0;
+  const maxTicks = Math.min(chartData.length, width < 300 ? 3 : 5);
 
   return (
     <div className="space-y-5">
@@ -118,12 +118,15 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
               <LineChart width={width} height={160} data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
                 <XAxis
-                  dataKey="label"
+                  dataKey="idx"
+                  type="number"
+                  domain={[0, chartData.length - 1]}
                   tick={{ fontSize: 10 }}
                   className="[&_.recharts-text]:fill-zinc-500"
                   axisLine={{ stroke: "var(--dw-grid)" }}
                   tickLine={false}
-                  interval={tickInterval}
+                  tickCount={maxTicks}
+                  tickFormatter={(idx: number) => chartData[idx]?.tickLabel ?? ""}
                 />
                 <YAxis
                   tick={{ fontSize: 10 }}
