@@ -46,4 +46,6 @@ export async function exportData(): Promise<void> {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+
+  await db.settings.update("settings", { lastExportAt: new Date().toISOString() });
 }

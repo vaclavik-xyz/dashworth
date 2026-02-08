@@ -15,6 +15,13 @@ import {
   Pencil,
   Bitcoin,
   Banknote,
+  Eye,
+  Download,
+  History,
+  FolderOpen,
+  Palette,
+  Wifi,
+  Sparkles,
 } from "lucide-react";
 
 /* ───────────────────────── Fade-in on scroll ───────────────────────── */
@@ -63,7 +70,11 @@ function Section({
 const FAQ_ITEMS = [
   {
     q: "Where is my data stored?",
-    a: "Everything is stored locally in your browser using IndexedDB. Nothing is sent to any server.",
+    a: "All data is stored locally in your browser using IndexedDB. Nothing is sent to any server \u2014 there are no accounts, no cloud sync, and no analytics. Your portfolio data exists only on this device, in this browser. To keep your data safe, install the app to your home screen and export backups regularly via Settings \u2192 Export.",
+  },
+  {
+    q: "Can I lose my data?",
+    a: "Your data is stored in your browser\u2019s local storage (IndexedDB). It\u2019s private and never leaves your device, but it can be lost if you clear your browser data, reinstall your browser, or reset your device. On iOS Safari without installing the app, data may be automatically deleted after 7 days of inactivity. We strongly recommend installing Dashworth to your home screen and using the Export feature regularly to create backups.",
   },
   {
     q: "Can I use it on multiple devices?",
@@ -152,195 +163,6 @@ const CHANGE_ENTRIES = [
     old: "$17,800", new_: "$18,200", delta: "+$400", pct: "+2.2%", up: true,
   },
 ];
-
-/* ───────────────────────── Mockup Components ───────────────────────── */
-
-function MockupGrid() {
-  const [activePoint, setActivePoint] = useState<number | null>(null);
-  const [historyTab, setHistoryTab] = useState<"networth" | "changes">("networth");
-
-  // Chart scaling
-  const svgW = 200, svgH = 70, padTop = 10, padBot = 10;
-  const minY = Math.min(...CHART_POINTS.map((p) => p.y));
-  const maxY = Math.max(...CHART_POINTS.map((p) => p.y));
-  const scaleY = (v: number) => padTop + ((maxY - v) / (maxY - minY)) * (svgH - padTop - padBot);
-  const polyline = CHART_POINTS.map((p) => `${p.x},${scaleY(p.y)}`).join(" ");
-  const fill = `${polyline} ${svgW},${svgH} 0,${svgH}`;
-
-  return (
-    <div className="mt-12 grid gap-6 sm:grid-cols-3">
-      {/* Mockup 1: Dashboard (Net Worth + Chart) */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1">
-        <p className="text-sm text-zinc-500">Total net worth</p>
-        <p className="mt-1 text-2xl font-bold tracking-tight text-white">$102,480</p>
-        <div className="mt-1.5 flex items-center gap-1.5">
-          <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-          <span className="text-xs font-medium text-emerald-400">
-            +$2,400 (+2.4%)
-          </span>
-          <span className="text-[10px] text-zinc-600">vs previous</span>
-        </div>
-
-        {/* Interactive chart */}
-        <div className="relative mt-4">
-          <svg viewBox={`0 0 ${svgW} ${svgH}`} className="h-16 w-full" preserveAspectRatio="none">
-            <linearGradient id="mockChartFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-            </linearGradient>
-            <polygon points={fill} fill="url(#mockChartFill)" />
-            <polyline
-              points={polyline}
-              fill="none"
-              stroke="#10b981"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {CHART_POINTS.map((p, i) => (
-              <circle
-                key={i}
-                cx={p.x}
-                cy={scaleY(p.y)}
-                r={activePoint === i ? 5 : 3}
-                fill={activePoint === i ? "#10b981" : "#09090b"}
-                stroke="#10b981"
-                strokeWidth="1.5"
-                className="cursor-pointer"
-                onClick={() => setActivePoint(activePoint === i ? null : i)}
-              />
-            ))}
-          </svg>
-
-          {/* Tooltip */}
-          {activePoint !== null && (
-            <div
-              className="absolute z-10 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs shadow-lg pointer-events-none"
-              style={{
-                left: `${(CHART_POINTS[activePoint].x / svgW) * 100}%`,
-                top: -4,
-                transform: "translate(-50%, -100%)",
-              }}
-            >
-              <p className="text-zinc-400">{CHART_POINTS[activePoint].label}</p>
-              <p className="font-medium text-white">${CHART_POINTS[activePoint].y.toLocaleString()}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 flex gap-2 text-[10px] text-zinc-500">
-          <span>Crypto 50%</span>
-          <span className="text-zinc-700">&middot;</span>
-          <span>Stocks 27%</span>
-          <span className="text-zinc-700">&middot;</span>
-          <span>Cash 24%</span>
-        </div>
-      </div>
-
-      {/* Mockup 2: Top Assets */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:rotate-1 sm:translate-y-2">
-        <h2 className="mb-3 text-sm font-medium text-zinc-400">Top Assets</h2>
-        <div className="space-y-2">
-          {TOP_ASSETS.map((a) => (
-            <div key={a.name} className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <a.icon className={`h-4 w-4 shrink-0 ${a.color}`} />
-                <span className="text-sm text-white truncate">{a.name}</span>
-              </div>
-              <span className="shrink-0 text-sm font-medium text-white">{a.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Mockup 3: History / Changes */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1 sm:-translate-y-1">
-        {/* Pill switcher */}
-        <div className="mb-3 flex items-center gap-1 rounded-lg bg-zinc-800/60 p-1">
-          <button
-            onClick={() => setHistoryTab("networth")}
-            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              historyTab === "networth"
-                ? "bg-zinc-700 text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            Net Worth
-            <span className={`ml-1.5 text-[10px] ${historyTab === "networth" ? "text-emerald-500" : "text-zinc-400"}`}>3</span>
-          </button>
-          <button
-            onClick={() => setHistoryTab("changes")}
-            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              historyTab === "changes"
-                ? "bg-zinc-700 text-white shadow-sm"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            Changes
-            <span className={`ml-1.5 text-[10px] ${historyTab === "changes" ? "text-emerald-500" : "text-zinc-400"}`}>3</span>
-          </button>
-        </div>
-
-        {/* Tab content */}
-        <div className="space-y-2">
-          {historyTab === "networth"
-            ? NW_ENTRIES.map((e) => (
-                <div key={e.date} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {e.up ? (
-                      <TrendingUp className="h-4 w-4 shrink-0 text-emerald-500" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 shrink-0 text-red-500" />
-                    )}
-                    <span className="text-sm text-zinc-500 truncate">{e.date}</span>
-                    {e.source === "auto" ? (
-                      <RefreshCw className="h-3 w-3 text-blue-400/60" />
-                    ) : (
-                      <Pencil className="h-3 w-3 text-zinc-500/60" />
-                    )}
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="text-sm font-medium text-white">{e.value}</span>
-                    <p className={`text-xs ${e.up ? "text-emerald-500" : "text-red-500"}`}>
-                      {e.delta} ({e.pct})
-                    </p>
-                  </div>
-                </div>
-              ))
-            : CHANGE_ENTRIES.map((e) => (
-                <div key={e.name} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <e.icon className={`h-4 w-4 shrink-0 ${e.color}`} />
-                    <div className="min-w-0">
-                      <span className="text-sm text-white truncate block">{e.name}</span>
-                      <span className="text-xs text-zinc-500 flex items-center gap-1">
-                        {e.date}
-                        {e.source === "auto" ? (
-                          <RefreshCw className="h-3 w-3 text-blue-400/60" />
-                        ) : (
-                          <Pencil className="h-3 w-3 text-zinc-500/60" />
-                        )}
-                      </span>
-                      {e.note && (
-                        <span className="text-xs text-zinc-500 italic truncate block">{e.note}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="text-sm font-medium text-white">
-                      {e.old} → {e.new_}
-                    </span>
-                    <p className={`text-xs ${e.up ? "text-emerald-500" : "text-red-500"}`}>
-                      {e.delta} ({e.pct})
-                    </p>
-                  </div>
-                </div>
-              ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ───────────────────────── Hero Carousel ───────────────────────── */
 
@@ -822,62 +644,85 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
         )}
       </div>
 
-      {/* ── App Preview ── */}
+      {/* ── Features ── */}
       <Section className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
         <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">
-          Your dashboard at a glance
+          Features
         </h2>
-        <MockupGrid />
-      </Section>
+        <p className="mx-auto mt-3 max-w-lg text-center text-sm text-zinc-400">
+          Everything you need to track and understand your wealth.
+        </p>
 
-      <div className="mx-auto max-w-5xl px-6">
-        <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
-      </div>
-
-      {/* ── How it works ── */}
-      <Section className="mx-auto max-w-4xl px-6 py-16 sm:py-24">
-        <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">
-          How it works
-        </h2>
-
-        <div className="mx-auto mt-10 grid max-w-xs grid-cols-2 gap-6 sm:mt-12 sm:max-w-none sm:grid-cols-4 sm:gap-8">
-          <div className="flex items-start gap-3 sm:flex-col sm:items-center sm:text-center">
-            <Layers className="h-5 w-5 shrink-0 text-emerald-500 sm:h-6 sm:w-6" />
-            <div>
-              <p className="text-sm font-semibold text-white">Add assets</p>
-              <p className="mt-0.5 text-xs text-zinc-400">
-                List everything you own
-              </p>
-            </div>
+        <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <Shield className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">100% Private</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              All data stored locally. No accounts, no servers.
+            </p>
           </div>
-          <div className="flex items-start gap-3 sm:flex-col sm:items-center sm:text-center">
-            <RefreshCw className="h-5 w-5 shrink-0 text-emerald-500 sm:h-6 sm:w-6" />
-            <div>
-              <p className="text-sm font-semibold text-white">Connect prices</p>
-              <p className="mt-0.5 text-xs text-zinc-400">
-                Auto-updating crypto &amp; stocks
-              </p>
-            </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <RefreshCw className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Live Prices</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Auto-updating crypto &amp; stock prices.
+            </p>
           </div>
-          <div className="flex items-start gap-3 sm:flex-col sm:items-center sm:text-center">
-            <TrendingUp className="h-5 w-5 shrink-0 text-emerald-500 sm:h-6 sm:w-6" />
-            <div>
-              <p className="text-sm font-semibold text-white">Track growth</p>
-              <p className="mt-0.5 text-xs text-zinc-400">
-                See your net worth over time
-              </p>
-            </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <Layers className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Track Anything</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Crypto, stocks, real estate, cash — all in one place.
+            </p>
           </div>
-          <div className="flex items-start gap-3 sm:flex-col sm:items-center sm:text-center">
-            <Shield className="h-5 w-5 shrink-0 text-emerald-500 sm:h-6 sm:w-6" />
-            <div>
-              <p className="text-sm font-semibold text-white">Stay private</p>
-              <p className="mt-0.5 text-xs text-zinc-400">
-                No accounts, no cloud
-              </p>
-            </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <History className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Auto History</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Net worth tracked automatically with charts.
+            </p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <Eye className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Privacy Mode</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Hide all values with one tap.
+            </p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <FolderOpen className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Categories</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Organize assets into groups and categories.
+            </p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <Download className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Export &amp; Import</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Back up as JSON. Move between devices.
+            </p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <Wifi className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
+            <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Works Offline</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Install as a PWA, access anytime.
+            </p>
+          </div>
+          <div className="hidden md:block rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
+            <Palette className="h-5 w-5 text-emerald-500" />
+            <h3 className="mt-3 text-sm font-semibold text-white">Themes</h3>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              Multiple dark themes to match your style.
+            </p>
           </div>
         </div>
+
+        <p className="mt-8 flex items-center justify-center gap-2 text-sm text-zinc-500">
+          <Sparkles className="h-4 w-4 text-emerald-500/60" />
+          More features coming soon
+        </p>
       </Section>
 
       <div className="mx-auto max-w-5xl px-6">

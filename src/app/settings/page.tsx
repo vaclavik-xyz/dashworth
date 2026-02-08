@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield, Info } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -587,6 +587,23 @@ export default function SettingsPage() {
         <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
           Data
         </h2>
+        <div className="mt-3 flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+          <div className="text-xs">
+            <p className="text-zinc-500 dark:text-zinc-400">Your data is stored locally in this browser only.</p>
+            <p className="mt-0.5 text-zinc-700 dark:text-zinc-300">Regular exports are your only backup.</p>
+            <p className="mt-1">
+              <span className="text-zinc-500 dark:text-zinc-400">Last export: </span>
+              {(() => {
+                if (!settings?.lastExportAt) return <span className="text-amber-500">Never</span>;
+                const days = Math.floor((Date.now() - new Date(settings.lastExportAt).getTime()) / 86400000);
+                if (days > 30) return <span className="text-amber-500">{days} days ago</span>;
+                if (days === 0) return <span className="text-zinc-500 dark:text-zinc-400">Today</span>;
+                return <span className="text-zinc-500 dark:text-zinc-400">{days} {days === 1 ? "day" : "days"} ago</span>;
+              })()}
+            </p>
+          </div>
+        </div>
         <Card className="mt-3 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>

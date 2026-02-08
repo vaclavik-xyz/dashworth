@@ -53,6 +53,7 @@ export interface UserSettings {
   theme: Theme;
   customTheme?: CustomThemeColors;
   showHints?: boolean;
+  lastExportAt?: string;
 }
 
 export interface ExchangeRateCache {
