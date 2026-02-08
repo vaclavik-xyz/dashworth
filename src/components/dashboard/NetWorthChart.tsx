@@ -36,22 +36,22 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
 
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  // Every entry is a separate equidistant point
-  const data = sorted.map((h) => {
+  // Every entry is a separate equidistant point with unique index
+  const data = sorted.map((h, i) => {
     const d = new Date(h.createdAt);
     const mon = MONTHS[d.getMonth()];
     const yr = String(d.getFullYear()).slice(2);
     const day = d.getDate();
     return {
-      label: spansYears ? `${mon} ${yr}` : `${day} ${mon}`,
+      idx: i,
+      tickLabel: spansYears ? `${mon} ${yr}` : `${day} ${mon}`,
       fullLabel: `${day} ${mon} ${d.getFullYear()}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`,
       value: h.totalValue,
     };
   });
 
   // Fewer ticks on narrow screens to prevent overlap
-  const maxTicks = width < 400 ? 3 : width < 600 ? 5 : 7;
-  const tickInterval = Math.max(1, Math.floor(data.length / maxTicks)) - 1;
+  const maxTicks = Math.min(data.length, width < 400 ? 3 : width < 600 ? 5 : 7);
 
   return (
     <Card>
@@ -63,12 +63,15 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
           <LineChart width={width} height={250} data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
             <XAxis
-              dataKey="label"
+              dataKey="idx"
+              type="number"
+              domain={[0, data.length - 1]}
               tick={{ fontSize: 12 }}
               className="[&_.recharts-text]:fill-zinc-500"
               axisLine={{ stroke: "var(--dw-grid)" }}
               tickLine={false}
-              interval={tickInterval}
+              tickCount={maxTicks}
+              tickFormatter={(idx: number) => data[idx]?.tickLabel ?? ""}
             />
             <YAxis
               tick={{ fontSize: 12 }}
