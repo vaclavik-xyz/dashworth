@@ -49,8 +49,9 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
     };
   });
 
-  // Show ~6-8 evenly spaced ticks
-  const tickInterval = Math.max(1, Math.floor(data.length / 7)) - 1;
+  // Fewer ticks on narrow screens to prevent overlap
+  const maxTicks = width < 400 ? 3 : width < 600 ? 5 : 7;
+  const tickInterval = Math.max(1, Math.floor(data.length / maxTicks)) - 1;
 
   return (
     <Card>
