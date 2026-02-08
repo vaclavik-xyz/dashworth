@@ -69,6 +69,7 @@ export interface AssetChangeEntry {
   newValue: number;
   currency: Currency;
   source: "manual" | "auto";
+  note?: string;
   createdAt: Date;
 }
 

@@ -150,6 +150,11 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                       <span className="text-xs text-zinc-500">
                         {formatDate(entry.createdAt)}
                       </span>
+                      {entry.note && (
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500 italic truncate block">
+                          {entry.note}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="shrink-0 text-right">

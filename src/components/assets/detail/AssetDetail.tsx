@@ -195,12 +195,21 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                     ) : (
                       <Minus className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
                     )}
-                    <span className="text-xs text-zinc-500 truncate">
-                      {formatDate(entry.createdAt)}
-                    </span>
-                    <span className="text-[10px] text-zinc-600 dark:text-zinc-500">
-                      {entry.source === "auto" ? "auto" : "manual"}
-                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-zinc-500 truncate">
+                          {formatDate(entry.createdAt)}
+                        </span>
+                        <span className="text-[10px] text-zinc-600 dark:text-zinc-500">
+                          {entry.source === "auto" ? "auto" : "manual"}
+                        </span>
+                      </div>
+                      {entry.note && (
+                        <span className="text-[11px] text-zinc-400 dark:text-zinc-500 italic truncate block">
+                          {entry.note}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-xs font-medium text-zinc-900 dark:text-white">

@@ -39,6 +39,7 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
   );
   const [icon, setIcon] = useState(asset?.icon ?? "");
   const [iconOpen, setIconOpen] = useState(false);
+  const [updateNote, setUpdateNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -161,6 +162,7 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
           newValue: finalValue,
           currency,
           source: "manual",
+          note: updateNote.trim() || undefined,
           createdAt: now,
         });
       }
@@ -419,6 +421,23 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
             Auto-update price on app open
           </span>
         </label>
+      )}
+
+      {/* Update note — only when editing, attached to this specific change */}
+      {asset && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            Update Note <span className="text-zinc-400 dark:text-zinc-500 font-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={updateNote}
+            onChange={(e) => setUpdateNote(e.target.value)}
+            placeholder='e.g. "Sold crypto to buy car"'
+            className={inputClass}
+          />
+          <p className="mt-1 text-xs text-zinc-500">One-time note attached to this change</p>
+        </div>
       )}
 
       <div>
