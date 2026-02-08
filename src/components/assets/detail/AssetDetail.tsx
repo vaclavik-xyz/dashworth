@@ -100,7 +100,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
             <p>Group: <span className="text-zinc-700 dark:text-zinc-300">{asset.group}</span></p>
           )}
           <p>Currency: <span className="text-zinc-700 dark:text-zinc-300">{asset.currency}</span></p>
-          <p>Updated: <span className="text-zinc-700 dark:text-zinc-300">{formatDate(asset.updatedAt)}</span></p>
+          <p>Updated: <span className="text-zinc-700 dark:text-zinc-300">{formatDate(asset.updatedAt)}{", "}{new Date(asset.updatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span></p>
         </div>
         {asset.notes && (
           <p className="mt-3 rounded-lg bg-[var(--dw-hover)] p-3 text-xs text-zinc-600 dark:text-zinc-400">
@@ -206,6 +206,9 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                           : <Pencil className="h-2.5 w-2.5 text-zinc-500/60" />
                         }
                       </div>
+                      <span className="text-[10px] text-zinc-500 block">
+                        {new Date(entry.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
                       {entry.note && (
                         <span className="text-[11px] text-zinc-400 dark:text-zinc-500 italic truncate block">
                           {entry.note}
