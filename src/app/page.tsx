@@ -38,17 +38,9 @@ export default function DashboardPage() {
   const totalNetWorth = assets ? sumConverted(assets, currency, rates) : 0;
   const hasAssets = assets && assets.length > 0;
 
-  // Still loading from IndexedDB — show branded splash
+  // Still loading from IndexedDB — blank dark screen for seamless transition
   if (assets === undefined || history === undefined) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090b]">
-        <div className="animate-pulse text-center">
-          <h1 className="text-3xl font-bold text-white">
-            Dash<span className="text-emerald-500">worth</span>
-          </h1>
-        </div>
-      </div>
-    );
+    return <div className="fixed inset-0 z-50 bg-[#09090b]" />;
   }
 
   // New user flow

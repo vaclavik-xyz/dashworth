@@ -217,7 +217,10 @@ function HeroCarousel() {
     "shrink-0 w-[75vw] max-w-[280px] rounded-2xl border border-zinc-800 bg-zinc-900 p-3 md:p-4 shadow-lg shadow-black/20 md:w-auto md:max-w-none";
 
   return (
-    <div className="w-screen -mx-6 mt-5 sm:mt-8 md:mx-0 md:w-full">
+    <div className="relative w-screen -mx-6 mt-5 sm:mt-8 md:mx-0 md:w-[720px] lg:w-[860px]">
+      {/* Horizontal edge fades — mobile only */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[#09090b] to-transparent md:hidden" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[#09090b] to-transparent md:hidden" />
       <div
         ref={scrollRef}
         className="overflow-x-auto snap-x snap-mandatory scrollbar-hide md:overflow-visible"
@@ -525,15 +528,31 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#09090b]">
       {/* ── Hero ── */}
       <div
-        className={`relative flex min-h-[100dvh] flex-col items-center px-6 text-center${
+        style={{ opacity: 0 }}
+        className={`relative flex min-h-[100dvh] flex-col items-center px-6 text-center animate-hero-in${
           showInstallCard
             ? " pb-3 md:justify-center md:pb-0"
             : " justify-center"
         }`}
       >
-        {/* Subtle radial glow */}
+        {/* Background layers */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.07] blur-[120px]" />
+          {/* Primary emerald glow — top center */}
+          <div className="absolute left-1/2 top-[30%] h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.08] blur-[120px]" />
+          {/* Secondary emerald glow — bottom right */}
+          <div className="absolute right-[-10%] top-[70%] h-[400px] w-[400px] rounded-full bg-emerald-600/[0.05] blur-[100px]" />
+          {/* Teal accent — top left */}
+          <div className="absolute left-[-5%] top-[10%] h-[300px] w-[300px] rounded-full bg-teal-500/[0.04] blur-[80px]" />
+          {/* Dot grid pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.035]"
+            style={{
+              backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
+              backgroundSize: "24px 24px",
+            }}
+          />
+          {/* Vignette */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#09090b_100%)]" />
         </div>
 
         <div className={`relative${showInstallCard ? " flex flex-1 flex-col items-center justify-center pt-[5vh] md:flex-none md:pt-0" : ""}`}>
