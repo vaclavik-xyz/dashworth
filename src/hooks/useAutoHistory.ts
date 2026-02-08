@@ -26,23 +26,28 @@ export function useAutoHistory(): void {
   }, []);
 
   useEffect(() => {
-    if (!assets || assets.length === 0 || !settings) return;
+    if (!assets || assets.length === 0 || !settings) {
+      if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+      return;
+    }
 
     const total = sumConverted(assets, settings.primaryCurrency, rates);
     const rounded = Math.round(total);
 
-    // Skip if value hasn't changed
-    if (lastValueRef.current === rounded) return;
+    if (lastValueRef.current === rounded) {
+      if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+      return;
+    }
 
-    // Debounce: record after 2 seconds of stability
+    // Value changed — restart debounce timer
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
+      timerRef.current = null;
       lastValueRef.current = rounded;
       recordHistory();
     }, 2000);
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    // No cleanup — timer is managed entirely above so React's
+    // effect cleanup cycle cannot accidentally cancel a pending record.
   }, [assets, settings, rates]);
 }
