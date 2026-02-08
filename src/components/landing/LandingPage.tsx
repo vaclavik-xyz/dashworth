@@ -217,7 +217,7 @@ function HeroCarousel() {
     "shrink-0 w-[75vw] max-w-[280px] rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-lg shadow-black/20 md:w-auto md:max-w-none";
 
   return (
-    <div className="w-screen -mx-6 mt-5 sm:mt-8 md:mx-0 md:w-full">
+    <div className="w-screen -mx-6 mt-8 sm:mt-8 md:mx-0 md:w-full">
       <div
         ref={scrollRef}
         className="overflow-x-auto snap-x snap-mandatory scrollbar-hide md:overflow-visible"
@@ -532,7 +532,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
       <div
         className={`relative flex min-h-[100dvh] flex-col items-center px-6 text-center${
           showInstallCard
-            ? " justify-between pt-[12vh] pb-6 md:justify-center md:pt-0 md:pb-0"
+            ? " justify-between pt-[8vh] pb-6 md:justify-center md:pt-0 md:pb-0"
             : " justify-center"
         }`}
       >
@@ -561,7 +561,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           </h1>
 
           {/* Feature badges */}
-          <div className="mx-auto mt-4 grid max-w-xs grid-cols-3 gap-x-2 sm:mt-8 sm:max-w-md sm:gap-x-6">
+          <div className="mx-auto mt-6 grid max-w-xs grid-cols-3 gap-x-2 sm:mt-8 sm:max-w-md sm:gap-x-6">
             <div className="flex flex-col items-center gap-1.5">
               <Shield className="h-5 w-5 text-emerald-500" />
               <p className="text-sm font-semibold text-white">100% Private</p>
