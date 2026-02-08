@@ -11,7 +11,7 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import type { Asset, Category, Currency, Snapshot } from "@/types";
+import type { Asset, Category, Currency, HistoryEntry } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { COLOR_HEX } from "@/constants/colors";
@@ -30,12 +30,12 @@ const tooltipItemStyle = { color: "var(--tooltip-text, #fafafa)" };
 interface DefaultOverviewProps {
   assets: Asset[];
   categories: Category[];
-  snapshots: Snapshot[];
+  history: HistoryEntry[];
   currency: Currency;
   rates: Record<string, number>;
 }
 
-export default function DefaultOverview({ assets, categories, snapshots, currency, rates }: DefaultOverviewProps) {
+export default function DefaultOverview({ assets, categories, history, currency, rates }: DefaultOverviewProps) {
   const { ref: pieRef, width: pieWidth } = useContainerWidth();
   const { ref: lineRef, width: lineWidth } = useContainerWidth();
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
@@ -61,15 +61,12 @@ export default function DefaultOverview({ assets, categories, snapshots, currenc
     return [...grouped.values()].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
   })();
 
-  // Line chart data: net worth over time from snapshots (converted to primary currency)
-  const lineData = [...snapshots]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((s) => ({
-      date: new Date(s.date).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
-      value: s.entries.reduce(
-        (sum, e) => sum + convertCurrency(e.value, e.currency, currency, rates),
-        0,
-      ),
+  // Line chart data: net worth over time from history
+  const lineData = [...history]
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map((h) => ({
+      date: new Date(h.createdAt).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
+      value: h.totalValue,
     }));
 
   const pieSize = Math.min(pieWidth, 180);

@@ -17,10 +17,10 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
-import type { Currency, Asset, PriceSource, SnapshotEntry } from "@/types";
+import type { Currency, Asset, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
 
-const STEPS = ["Currency", "Assets", "Snapshot", "Done"];
+const STEPS = ["Currency", "Assets", "Review", "Done"];
 
 function detectCurrency(): Currency {
   try {
@@ -443,9 +443,9 @@ function StepAssets({
   );
 }
 
-/* ───────────────────────── Step 3: Snapshot ───────────────────────── */
+/* ───────────────────────── Step 3: Review ───────────────────────── */
 
-function StepSnapshot({
+function StepReview({
   drafts,
   currency,
   rates,
@@ -469,11 +469,10 @@ function StepSnapshot({
   return (
     <div className="flex w-full max-w-lg flex-col items-center">
       <h2 className="text-2xl font-bold text-white sm:text-3xl">
-        Take your first snapshot
+        Review your portfolio
       </h2>
       <p className="mt-2 max-w-sm text-center text-sm text-zinc-400">
-        Snapshots record your portfolio&apos;s value at a point in time. Take
-        them regularly to track your progress.
+        Your net worth will be tracked automatically from now on.
       </p>
 
       <div className="mt-8 w-full rounded-xl border border-zinc-800 bg-zinc-900/50 divide-y divide-zinc-800">
@@ -519,7 +518,7 @@ function StepSnapshot({
         disabled={saving}
         className="mt-8 rounded-full px-8 py-3"
       >
-        {saving ? "Saving..." : "Save Snapshot"}
+        {saving ? "Saving..." : "Save & Start Tracking"}
       </Button>
     </div>
   );
@@ -628,32 +627,18 @@ export default function OnboardingWizard({
 
     await db.assets.bulkAdd(assets);
 
-    // Create snapshot
-    const entries: SnapshotEntry[] = assets.map((a) => ({
-      assetId: a.id,
-      assetName: a.name,
-      categoryId: a.categoryId,
-      value: a.currentValue,
-      currency: a.currency,
-    }));
-
+    // Record initial history entry
     const total = assets.reduce(
       (sum, a) =>
         sum + convertCurrency(a.currentValue, a.currency, currency, rates),
       0
     );
 
-    await db.snapshots.add({
-      id: uuid(),
-      date: now,
-      entries,
-      totalNetWorth: total,
-      primaryCurrency: currency,
+    await db.history.add({
+      totalValue: total,
+      currency,
       createdAt: now,
     });
-
-    // Update last snapshot date for auto-snapshot tracking
-    await db.settings.update("settings", { lastSnapshotDate: now });
 
     setTotalNetWorth(total);
     setSaving(false);
@@ -690,7 +675,7 @@ export default function OnboardingWizard({
           />
         )}
         {step === 2 && (
-          <StepSnapshot
+          <StepReview
             drafts={validDrafts}
             currency={currency}
             rates={rates}
@@ -727,7 +712,7 @@ export default function OnboardingWizard({
                 disabled={saving}
                 className="rounded-full px-6"
               >
-                {saving ? "Saving..." : "Save Snapshot"}
+                {saving ? "Saving..." : "Save & Start Tracking"}
               </Button>
             ) : (
               <button

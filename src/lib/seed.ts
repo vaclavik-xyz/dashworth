@@ -19,8 +19,6 @@ export async function seedDatabase(): Promise<void> {
     id: "settings",
     primaryCurrency: "CZK",
     theme: "dark",
-    snapshotReminder: "none",
-    autoSnapshot: "off",
     showHints: true,
   };
 

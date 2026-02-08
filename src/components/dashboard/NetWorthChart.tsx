@@ -8,41 +8,36 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import type { Currency, Snapshot } from "@/types";
+import type { Currency, HistoryEntry } from "@/types";
 import { formatCurrency } from "@/lib/utils";
-import { convertCurrency } from "@/lib/exchange-rates";
 import Card from "@/components/ui/Card";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
 
 interface NetWorthChartProps {
-  snapshots: Snapshot[];
+  history: HistoryEntry[];
   currency: Currency;
-  rates: Record<string, number>;
 }
 
-export default function NetWorthChart({ snapshots, currency, rates }: NetWorthChartProps) {
+export default function NetWorthChart({ history, currency }: NetWorthChartProps) {
   const { ref, width } = useContainerWidth();
 
-  if (snapshots.length < 2) return null;
+  if (history.length < 2) return null;
 
-  const sorted = [...snapshots].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  const sorted = [...history].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
-  const firstYear = new Date(sorted[0].date).getFullYear();
-  const lastYear = new Date(sorted[sorted.length - 1].date).getFullYear();
+  const firstYear = new Date(sorted[0].createdAt).getFullYear();
+  const lastYear = new Date(sorted[sorted.length - 1].createdAt).getFullYear();
   const spansYears = lastYear - firstYear >= 1;
 
-  const data = sorted.map((s) => {
-    const d = new Date(s.date);
+  const data = sorted.map((h) => {
+    const d = new Date(h.createdAt);
     return {
       date: spansYears
         ? d.getFullYear().toString()
         : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
-      value: s.entries.reduce(
-        (sum, e) => sum + convertCurrency(e.value, e.currency, currency, rates),
-        0,
-      ),
+      value: h.totalValue,
     };
   });
 

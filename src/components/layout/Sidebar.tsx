@@ -2,21 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Wallet, Camera, Settings, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Wallet, Settings, HelpCircle } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
-import { useSnapshotOverdue } from "@/hooks/useSnapshotOverdue";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/assets", label: "Assets", icon: Wallet },
-  { href: "/snapshots", label: "Snapshots", icon: Camera },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { isOverdue } = useSnapshotOverdue();
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const hintsOn = settings?.showHints !== false;
 
@@ -35,7 +32,6 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
-          const showDot = href === "/snapshots" && isOverdue;
 
           return (
             <Link
@@ -47,12 +43,7 @@ export default function Sidebar() {
                   : "text-zinc-500 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
               }`}
             >
-              <span className="relative">
-                <Icon className="h-5 w-5" />
-                {showDot && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500" />
-                )}
-              </span>
+              <Icon className="h-5 w-5" />
               {label}
             </Link>
           );

@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, BookOpen, Wallet, Camera, BarChart3, Shield } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -14,7 +14,7 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate, formatCurrency, sumConverted } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
-import type { AutoSnapshot, Category, Currency, CustomThemeColors, Theme, SnapshotReminder } from "@/types";
+import type { Category, Currency, CustomThemeColors, Theme } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
@@ -147,11 +147,11 @@ export default function SettingsPage() {
   async function confirmDeleteAll() {
     await db.transaction(
       "rw",
-      [db.categories, db.assets, db.snapshots, db.settings, db.exchangeRates, db.priceCache],
+      [db.categories, db.assets, db.history, db.settings, db.exchangeRates, db.priceCache],
       async () => {
         await db.categories.clear();
         await db.assets.clear();
-        await db.snapshots.clear();
+        await db.history.clear();
         await db.settings.clear();
         await db.exchangeRates.clear();
         await db.priceCache.clear();
@@ -341,55 +341,6 @@ export default function SettingsPage() {
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">
-                <HintTooltip text="Shows a reminder on the dashboard when you haven't taken a snapshot recently.">Snapshot Reminder</HintTooltip>
-              </p>
-              <p className="text-xs text-zinc-500">
-                How often to remind you to take a snapshot
-              </p>
-            </div>
-            <select
-              value={settings.snapshotReminder}
-              onChange={(e) =>
-                updateSetting(
-                  "snapshotReminder",
-                  e.target.value as SnapshotReminder,
-                )
-              }
-              className={`${selectClass} w-28`}
-            >
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="none">None</option>
-            </select>
-          </div>
-
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">
-                <HintTooltip text="Automatically saves your portfolio value on a schedule when you open the app.">Auto-Snapshot</HintTooltip>
-              </p>
-              <p className="text-xs text-zinc-500">
-                Automatically take snapshots on a schedule
-              </p>
-            </div>
-            <select
-              value={settings.autoSnapshot}
-              onChange={(e) =>
-                updateSetting(
-                  "autoSnapshot",
-                  e.target.value as AutoSnapshot,
-                )
-              }
-              className={`${selectClass} w-28`}
-            >
-              <option value="off">Off</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-            </select>
-          </div>
         </Card>
       </section>
 
@@ -524,12 +475,12 @@ export default function SettingsPage() {
 
           <div className="flex gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-              <Camera className="h-4 w-4 text-emerald-500" />
+              <RefreshCw className="h-4 w-4 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">2. Take snapshots</p>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">2. Set live prices</p>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Go to <span className="text-zinc-400">Snapshots</span> and tap <span className="text-zinc-400">Take Snapshot</span>. This captures the current value of all your assets. Take snapshots regularly (weekly or monthly) to track how your net worth changes over time.
+                Connect to <span className="text-zinc-400">CoinGecko</span> and <span className="text-zinc-400">Yahoo Finance</span> for auto-updating crypto and stock prices. The app tracks your net worth automatically.
               </p>
             </div>
           </div>
@@ -539,9 +490,9 @@ export default function SettingsPage() {
               <BarChart3 className="h-4 w-4 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">3. Watch your progress</p>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">3. Watch it grow</p>
               <p className="text-xs text-zinc-500 mt-0.5">
-                The <span className="text-zinc-400">Dashboard</span> shows your total net worth, a trend chart, asset allocation breakdown, and recent activity. The more snapshots you take, the more detailed your chart becomes.
+                Your net worth is tracked automatically. The <span className="text-zinc-400">Dashboard</span> shows trends, allocation breakdowns, and your top assets.
               </p>
             </div>
           </div>
@@ -682,7 +633,7 @@ export default function SettingsPage() {
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-white">Delete All Data</p>
               <p className="text-xs text-zinc-500">
-                Permanently remove all assets, snapshots, and settings
+                Permanently remove all assets, history, and settings
               </p>
             </div>
             <Button
@@ -851,7 +802,7 @@ export default function SettingsPage() {
         title="Delete All Data"
       >
         <p className="text-sm text-zinc-400">
-          This will permanently delete all your assets, snapshots, and settings.
+          This will permanently delete all your assets, history, and settings.
           This action <span className="font-medium text-red-400">cannot be undone</span>.
         </p>
         <p className="mt-3 text-sm text-zinc-400">

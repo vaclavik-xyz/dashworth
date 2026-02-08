@@ -1,6 +1,6 @@
 "use client";
 
-import type { Asset, Category, Currency, Snapshot } from "@/types";
+import type { Asset, Category, Currency, HistoryEntry } from "@/types";
 import Card from "@/components/ui/Card";
 import DefaultOverview from "./DefaultOverview";
 import CategoryDetail from "./CategoryDetail";
@@ -17,12 +17,12 @@ interface DetailPanelProps {
   selection: Selection;
   assets: Asset[];
   categories: Category[];
-  snapshots: Snapshot[];
+  history: HistoryEntry[];
   currency: Currency;
   rates: Record<string, number>;
 }
 
-export default function DetailPanel({ selection, assets, categories, snapshots, currency, rates }: DetailPanelProps) {
+export default function DetailPanel({ selection, assets, categories, history, currency, rates }: DetailPanelProps) {
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
   function renderContent() {
@@ -31,7 +31,7 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
         <DefaultOverview
           assets={assets}
           categories={categories}
-          snapshots={snapshots}
+          history={history}
           currency={currency}
           rates={rates}
         />
@@ -42,10 +42,8 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
       const filtered = assets.filter((a) => a.categoryId === selection.categoryId);
       return (
         <CategoryDetail
-          categoryId={selection.categoryId}
           category={categoryMap.get(selection.categoryId)}
           assets={filtered}
-          snapshots={snapshots}
           currency={currency}
           rates={rates}
         />
@@ -59,9 +57,7 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
       return (
         <GroupDetail
           group={selection.group}
-          categoryId={selection.categoryId}
           assets={filtered}
-          snapshots={snapshots}
           currency={currency}
           rates={rates}
         />
@@ -76,7 +72,6 @@ export default function DetailPanel({ selection, assets, categories, snapshots, 
         <AssetDetail
           asset={asset}
           category={category}
-          snapshots={snapshots}
           currency={currency}
           rates={rates}
         />

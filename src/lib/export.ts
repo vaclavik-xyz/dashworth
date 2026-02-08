@@ -2,32 +2,32 @@ import { db } from "./db";
 
 interface ExportData {
   app: "dashworth";
-  version: 1;
+  version: 2;
   exportedAt: string;
   data: {
     categories: unknown[];
     assets: unknown[];
-    snapshots: unknown[];
+    history: unknown[];
     settings: unknown;
   };
 }
 
 export async function exportData(): Promise<void> {
-  const [categories, assets, snapshots, settings] = await Promise.all([
+  const [categories, assets, history, settings] = await Promise.all([
     db.categories.toArray(),
     db.assets.toArray(),
-    db.snapshots.toArray(),
+    db.history.toArray(),
     db.settings.get("settings"),
   ]);
 
   const payload: ExportData = {
     app: "dashworth",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     data: {
       categories,
       assets,
-      snapshots,
+      history,
       settings: settings ?? {},
     },
   };

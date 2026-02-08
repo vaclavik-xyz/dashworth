@@ -1,29 +1,29 @@
 "use client";
 
 import { TrendingUp, TrendingDown } from "lucide-react";
-import type { Currency, Snapshot } from "@/types";
+import type { Currency, HistoryEntry } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 
 interface NetWorthHeroProps {
   totalNetWorth: number;
   currency: Currency;
-  lastSnapshot?: Snapshot;
-  previousSnapshot?: Snapshot;
+  lastEntry?: HistoryEntry;
+  previousEntry?: HistoryEntry;
 }
 
 export default function NetWorthHero({
   totalNetWorth,
   currency,
-  lastSnapshot,
-  previousSnapshot,
+  lastEntry,
+  previousEntry,
 }: NetWorthHeroProps) {
   const change =
-    lastSnapshot && previousSnapshot
-      ? lastSnapshot.totalNetWorth - previousSnapshot.totalNetWorth
+    lastEntry && previousEntry
+      ? lastEntry.totalValue - previousEntry.totalValue
       : null;
   const changePercent =
-    change !== null && previousSnapshot && previousSnapshot.totalNetWorth !== 0
-      ? (change / previousSnapshot.totalNetWorth) * 100
+    change !== null && previousEntry && previousEntry.totalValue !== 0
+      ? (change / previousEntry.totalValue) * 100
       : null;
 
   return (
@@ -50,7 +50,7 @@ export default function NetWorthHero({
               <> ({change >= 0 ? "+" : ""}{changePercent.toFixed(1)}%)</>
             )}
           </span>
-          <span className="text-xs text-zinc-600">vs last snapshot</span>
+          <span className="text-xs text-zinc-600">vs previous</span>
         </div>
       )}
     </div>

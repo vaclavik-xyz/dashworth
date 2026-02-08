@@ -9,10 +9,6 @@ export interface CustomThemeColors {
   border: string;
 }
 
-export type SnapshotReminder = "weekly" | "monthly" | "none";
-
-export type AutoSnapshot = "off" | "daily" | "weekly";
-
 export interface Category {
   id: string;
   name: string;
@@ -42,22 +38,10 @@ export interface Asset {
   updatedAt: Date;
 }
 
-export interface SnapshotEntry {
-  assetId: string;
-  assetName: string;
-  categoryId: string;
-  group?: string;
-  value: number;
-  currency: string;
-}
-
-export interface Snapshot {
-  id: string;
-  date: Date;
-  entries: SnapshotEntry[];
-  totalNetWorth: number;
-  primaryCurrency: Currency;
-  note?: string;
+export interface HistoryEntry {
+  id?: number;
+  totalValue: number;
+  currency: Currency;
   createdAt: Date;
 }
 
@@ -66,9 +50,6 @@ export interface UserSettings {
   primaryCurrency: Currency;
   theme: Theme;
   customTheme?: CustomThemeColors;
-  snapshotReminder: SnapshotReminder;
-  autoSnapshot: AutoSnapshot;
-  lastSnapshotDate?: Date;
   showHints?: boolean;
 }
 

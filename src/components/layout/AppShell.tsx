@@ -7,10 +7,9 @@ import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import { db } from "@/lib/db";
 import { seedDatabase } from "@/lib/seed";
-import { devSeedDatabase } from "@/lib/dev-seed";
 import { applyTheme, watchSystemTheme } from "@/lib/theme";
 import { refreshAutoPrices } from "@/lib/auto-update";
-import { checkAutoSnapshot } from "@/lib/auto-snapshot";
+import { useAutoHistory } from "@/hooks/useAutoHistory";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -23,6 +22,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Start as null = "don't know yet" (matches server render)
   const [ready, setReady] = useState<boolean | null>(null);
+
+  // Auto-record history when portfolio value changes
+  useAutoHistory();
 
   useEffect(() => {
     setMounted(true);
@@ -44,14 +46,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function init() {
-      // TODO: uncomment dev seed after landing page testing
-      // if (process.env.NODE_ENV === "development") {
-      //   await devSeedDatabase();
-      // } else {
-        await seedDatabase();
-      // }
+      await seedDatabase();
       await refreshAutoPrices();
-      checkAutoSnapshot();
     }
     init();
 
@@ -60,13 +56,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       navigator.serviceWorker.register("/sw.js");
     }
   }, []);
-
-  // Re-check auto-snapshot when the setting changes (e.g. user enables it in Settings)
-  useEffect(() => {
-    if (settings?.autoSnapshot && settings.autoSnapshot !== "off") {
-      checkAutoSnapshot();
-    }
-  }, [settings?.autoSnapshot]);
 
   // Apply theme reactively whenever settings change
   useEffect(() => {

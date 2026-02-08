@@ -12,8 +12,6 @@ import NetWorthHero from "@/components/dashboard/NetWorthHero";
 import NetWorthChart from "@/components/dashboard/NetWorthChart";
 import AllocationPie from "@/components/dashboard/AllocationPie";
 import TopAssets from "@/components/dashboard/TopAssets";
-import RecentActivity from "@/components/dashboard/RecentActivity";
-import SnapshotReminder from "@/components/layout/SnapshotReminder";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 import HintTooltip from "@/components/ui/HintTooltip";
 
@@ -26,8 +24,8 @@ export default function DashboardPage() {
     db.assets.filter((a) => !a.isArchived).toArray()
   );
   const categories = useLiveQuery(() => db.categories.toArray());
-  const snapshots = useLiveQuery(() =>
-    db.snapshots.orderBy("date").reverse().toArray()
+  const history = useLiveQuery(() =>
+    db.history.orderBy("createdAt").reverse().toArray()
   );
   const settings = useLiveQuery(() => db.settings.get("settings"));
 
@@ -35,10 +33,9 @@ export default function DashboardPage() {
   const currency: Currency = settings?.primaryCurrency ?? "CZK";
   const totalNetWorth = assets ? sumConverted(assets, currency, rates) : 0;
   const hasAssets = assets && assets.length > 0;
-  const hasSnapshots = snapshots && snapshots.length > 0;
 
   // Still loading from IndexedDB — show branded splash
-  if (assets === undefined || snapshots === undefined) {
+  if (assets === undefined || history === undefined) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#09090b]">
         <div className="animate-pulse text-center">
@@ -51,7 +48,7 @@ export default function DashboardPage() {
   }
 
   // New user flow
-  if (!hasAssets && !hasSnapshots) {
+  if (!hasAssets) {
     if (view === "onboarding") {
       return <OnboardingWizard onComplete={() => setView("dashboard")} />;
     }
@@ -61,7 +58,6 @@ export default function DashboardPage() {
   return (
     <div className="p-6 md:p-10">
       <InstallPrompt />
-      <SnapshotReminder />
 
       {/* Hero */}
       <div className="flex items-center gap-1">
@@ -70,14 +66,14 @@ export default function DashboardPage() {
       <NetWorthHero
         totalNetWorth={totalNetWorth}
         currency={currency}
-        lastSnapshot={snapshots?.[0]}
-        previousSnapshot={snapshots?.[1]}
+        lastEntry={history?.[0]}
+        previousEntry={history?.[1]}
       />
 
       {/* Charts */}
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        {snapshots && (
-          <NetWorthChart snapshots={snapshots} currency={currency} rates={rates} />
+        {history && (
+          <NetWorthChart history={history} currency={currency} />
         )}
         {assets && categories && (
           <AllocationPie
@@ -93,9 +89,6 @@ export default function DashboardPage() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {assets && categories && (
           <TopAssets assets={assets} categories={categories} currency={currency} rates={rates} />
-        )}
-        {snapshots && (
-          <RecentActivity snapshots={snapshots} currency={currency} />
         )}
       </div>
     </div>

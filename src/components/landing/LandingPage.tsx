@@ -136,13 +136,13 @@ const STEPS = [
   },
   {
     num: "2",
-    title: "Take snapshots",
-    desc: "Save your portfolio\u2019s value at any time. Or let auto-snapshots do it for you.",
+    title: "Set live prices",
+    desc: "Connect to CoinGecko and Yahoo for auto-updating crypto and stock prices.",
   },
   {
     num: "3",
     title: "Watch it grow",
-    desc: "Track trends, see allocation, and make smarter decisions.",
+    desc: "Your net worth is tracked automatically. See trends and make smarter decisions.",
   },
 ];
 
@@ -285,7 +285,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           See what Dashworth looks like in action
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-center text-sm text-zinc-500">
-          Your portfolio dashboard, asset tracking, and snapshot history &mdash; all in one place.
+          Your portfolio dashboard, asset tracking, and automatic history &mdash; all in one place.
         </p>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
@@ -354,9 +354,9 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
             </div>
           </div>
 
-          {/* Mockup 3: Snapshot History */}
+          {/* Mockup 3: History */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1 sm:-translate-y-1">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Snapshot History</p>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">History</p>
             <div className="mt-4 space-y-3">
               {[
                 { date: "Feb 2026", value: "$847,230", change: "+5.2%" },

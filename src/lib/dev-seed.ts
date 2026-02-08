@@ -1,17 +1,11 @@
 import { db } from "./db";
 import { seedDatabase } from "./seed";
 import { uuid } from "./utils";
-import type { Asset, Category, Snapshot, SnapshotEntry, Currency } from "@/types";
+import type { Asset, Category, HistoryEntry, Currency } from "@/types";
 
 function monthsAgo(months: number): Date {
   const d = new Date();
   d.setMonth(d.getMonth() - months);
-  return d;
-}
-
-function daysAgo(days: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
   return d;
 }
 
@@ -82,40 +76,20 @@ export async function devSeedDatabase(): Promise<void> {
     };
   });
 
-  // Create 6 monthly snapshots (most recent is 10 days ago — triggers reminder & auto-snapshot)
-  const snapshotDates = [monthsAgo(5), monthsAgo(4), monthsAgo(3), monthsAgo(2), monthsAgo(1), daysAgo(10)];
-  const snapshots: Snapshot[] = Array.from({ length: 6 }, (_, i) => {
-    const date = snapshotDates[i];
-    const entries: SnapshotEntry[] = assets.map((asset, ai) => {
-      const def = ASSET_DEFS[ai];
-      return {
-        assetId: asset.id,
-        assetName: asset.name,
-        categoryId: asset.categoryId,
-        group: def.group,
-        value: VALUE_HISTORY[def.key][i],
-        currency: def.currency,
-      };
-    });
-
-    const totalNetWorth = entries.reduce((sum, e) => sum + e.value, 0);
-
+  // Create 6 monthly history entries from total values
+  const historyDates = [monthsAgo(5), monthsAgo(4), monthsAgo(3), monthsAgo(2), monthsAgo(1), now];
+  const historyEntries: Omit<HistoryEntry, "id">[] = Array.from({ length: 6 }, (_, i) => {
+    // Sum all asset values at this point in time
+    const totalValue = ASSET_DEFS.reduce((sum, def) => sum + VALUE_HISTORY[def.key][i], 0);
     return {
-      id: uuid(),
-      date,
-      entries,
-      totalNetWorth,
-      primaryCurrency: "CZK" as Currency,
-      createdAt: date,
+      totalValue,
+      currency: "CZK" as Currency,
+      createdAt: historyDates[i],
     };
   });
 
-  await db.transaction("rw", db.assets, db.snapshots, db.settings, async () => {
+  await db.transaction("rw", [db.assets, db.history], async () => {
     await db.assets.bulkAdd(assets);
-    await db.snapshots.bulkAdd(snapshots);
-    await db.settings.update("settings", {
-      snapshotReminder: "weekly",
-      lastSnapshotDate: snapshots[snapshots.length - 1].date,
-    });
+    await db.history.bulkAdd(historyEntries);
   });
 }

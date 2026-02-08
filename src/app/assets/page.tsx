@@ -17,7 +17,6 @@ import AssetCard from "@/components/assets/AssetCard";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
 import type { Selection } from "@/components/assets/detail/DetailPanel";
 import BottomSheet from "@/components/ui/BottomSheet";
-import SnapshotReminder from "@/components/layout/SnapshotReminder";
 
 interface GroupedSection {
   categoryId: string;
@@ -110,7 +109,7 @@ export default function AssetsPage() {
   );
   const categories = useLiveQuery(() => db.categories.toArray());
   const settings = useLiveQuery(() => db.settings.get("settings"));
-  const snapshots = useLiveQuery(() => db.snapshots.orderBy("date").toArray());
+  const history = useLiveQuery(() => db.history.orderBy("createdAt").toArray());
 
   const [editingAsset, setEditingAsset] = useState<Asset | undefined>();
   const [modalOpen, setModalOpen] = useState(false);
@@ -154,8 +153,6 @@ export default function AssetsPage() {
 
   return (
     <div className="p-6 md:p-10">
-      <SnapshotReminder />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -315,7 +312,7 @@ export default function AssetsPage() {
                 selection={selection}
                 assets={assets ?? []}
                 categories={categories ?? []}
-                snapshots={snapshots ?? []}
+                history={history ?? []}
                 currency={primaryCurrency}
                 rates={rates}
               />
@@ -362,7 +359,7 @@ export default function AssetsPage() {
           selection={mobileSelection}
           assets={assets ?? []}
           categories={categories ?? []}
-          snapshots={snapshots ?? []}
+          history={history ?? []}
           currency={primaryCurrency}
           rates={rates}
         />
