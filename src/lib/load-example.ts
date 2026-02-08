@@ -1,45 +1,33 @@
 import { db } from "./db";
 import { uuid } from "./utils";
-import { DEFAULT_CATEGORIES } from "@/constants/categories";
 import type { ExamplePortfolio } from "@/constants/example-portfolios";
 import type { Category, Asset, Snapshot, SnapshotEntry } from "@/types";
 
-/** Map category names to DEFAULT_CATEGORIES icon/color */
-const CAT_DEFAULTS: Record<string, { icon: string; color: string; sortOrder: number }> = {};
-for (const cat of DEFAULT_CATEGORIES) {
-  CAT_DEFAULTS[cat.name] = { icon: cat.icon, color: cat.color, sortOrder: cat.sortOrder };
-}
-
 /**
  * Clear the DB and populate it with a celebrity example portfolio.
- * Creates categories, assets (from latest snapshot), and historical snapshots.
+ * Creates custom categories (with icons/colors from portfolio data),
+ * assets with groups, and historical snapshots.
  */
 export async function loadExamplePortfolio(portfolio: ExamplePortfolio): Promise<void> {
   const now = new Date();
   const latest = portfolio.snapshots[portfolio.snapshots.length - 1];
 
-  // 1. Build categories from all unique category names across all snapshots
-  const catNames = new Set<string>();
-  for (const snap of portfolio.snapshots) {
-    for (const a of snap.assets) catNames.add(a.category);
-  }
-
-  const categoryMap = new Map<string, string>(); // name → id
-  const categories: Category[] = [];
-  for (const name of catNames) {
+  // 1. Build categories from the portfolio's custom category definitions
+  const categoryMap = new Map<string, string>(); // category name → id
+  const categories: Category[] = portfolio.categories.map((cat, i) => {
     const id = uuid();
-    categoryMap.set(name, id);
-    categories.push({
+    categoryMap.set(cat.name, id);
+    return {
       id,
-      name,
-      icon: CAT_DEFAULTS[name]?.icon ?? "box",
-      color: CAT_DEFAULTS[name]?.color ?? "zinc",
-      sortOrder: CAT_DEFAULTS[name]?.sortOrder ?? 99,
+      name: cat.name,
+      icon: cat.icon,
+      color: cat.color,
+      sortOrder: i,
       createdAt: now,
-    });
-  }
+    };
+  });
 
-  // 2. Build assets from the latest snapshot
+  // 2. Build assets from the latest snapshot (with groups)
   const assetMap = new Map<string, string>(); // asset name → id
   const assets: Asset[] = latest.assets.map((a) => {
     const id = uuid();
@@ -48,6 +36,7 @@ export async function loadExamplePortfolio(portfolio: ExamplePortfolio): Promise
       id,
       name: a.name,
       categoryId: categoryMap.get(a.category) ?? "",
+      group: a.group,
       currency: "USD" as const,
       currentValue: (latest.totalUsd * a.percentage) / 100,
       priceSource: "manual" as const,
@@ -57,19 +46,20 @@ export async function loadExamplePortfolio(portfolio: ExamplePortfolio): Promise
     };
   });
 
-  // 3. Build historical snapshots
+  // 3. Build historical snapshots (with groups on entries)
   const snapshots: Snapshot[] = portfolio.snapshots.map((s) => {
     const entries: SnapshotEntry[] = s.assets.map((a) => ({
       assetId: assetMap.get(a.name) ?? `unknown-${a.name}`,
       assetName: a.name,
       categoryId: categoryMap.get(a.category) ?? "",
+      group: a.group,
       value: (s.totalUsd * a.percentage) / 100,
       currency: "USD",
     }));
 
     return {
       id: uuid(),
-      date: new Date(s.year, 5, 15), // June 15 of each year
+      date: new Date(s.year, 5, 15),
       entries,
       totalNetWorth: s.totalUsd,
       primaryCurrency: "USD" as const,
@@ -88,7 +78,6 @@ export async function loadExamplePortfolio(portfolio: ExamplePortfolio): Promise
     await db.assets.bulkAdd(assets);
     await db.snapshots.bulkAdd(snapshots);
 
-    // Upsert settings with sample data flag
     await db.settings.put({
       id: "settings",
       primaryCurrency: "USD",
