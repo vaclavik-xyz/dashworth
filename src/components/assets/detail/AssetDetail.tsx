@@ -9,7 +9,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Pencil, RefreshCw } from "lucide-react";
 import type { Asset, AssetChangeEntry, Category, Currency } from "@/types";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
@@ -201,9 +201,10 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                         <span className="text-xs text-zinc-500 truncate">
                           {formatDate(entry.createdAt)}
                         </span>
-                        <span className="text-[10px] text-zinc-600 dark:text-zinc-500">
-                          {entry.source === "auto" ? "auto" : "manual"}
-                        </span>
+                        {entry.source === "auto"
+                          ? <RefreshCw className="h-2.5 w-2.5 text-blue-400/60" />
+                          : <Pencil className="h-2.5 w-2.5 text-zinc-500/60" />
+                        }
                       </div>
                       {entry.note && (
                         <span className="text-[11px] text-zinc-400 dark:text-zinc-500 italic truncate block">

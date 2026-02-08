@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Pencil, RefreshCw } from "lucide-react";
 import type { Asset, Category, Currency, HistoryEntry, AssetChangeEntry } from "@/types";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
@@ -100,9 +100,9 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                       {formatDate(entry.createdAt)}
                     </span>
                     {entry.source && (
-                      <span className={`text-[10px] ${entry.source === "auto" ? "text-blue-400" : "text-zinc-500"}`}>
-                        {entry.source}
-                      </span>
+                      entry.source === "auto"
+                        ? <RefreshCw className="h-3 w-3 text-blue-400/60" />
+                        : <Pencil className="h-3 w-3 text-zinc-500/60" />
                     )}
                   </div>
                   <div className="shrink-0 text-right">
@@ -147,12 +147,12 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                       <span className="text-sm text-zinc-900 dark:text-white truncate block">
                         {entry.assetName}
                       </span>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
                         {formatDate(entry.createdAt)}
-                        {" "}
-                        <span className={entry.source === "auto" ? "text-blue-400" : "text-zinc-500"}>
-                          {entry.source}
-                        </span>
+                        {entry.source === "auto"
+                          ? <RefreshCw className="h-3 w-3 text-blue-400/60" />
+                          : <Pencil className="h-3 w-3 text-zinc-500/60" />
+                        }
                       </span>
                       {entry.note && (
                         <span className="text-xs text-zinc-400 dark:text-zinc-500 italic truncate block">
