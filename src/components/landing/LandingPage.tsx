@@ -214,10 +214,10 @@ function HeroCarousel() {
   }, []);
 
   const card =
-    "shrink-0 w-[75vw] max-w-[280px] rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-lg shadow-black/20 md:w-auto md:max-w-none";
+    "shrink-0 w-[75vw] max-w-[280px] rounded-2xl border border-zinc-800 bg-zinc-900 p-3 md:p-4 shadow-lg shadow-black/20 md:w-auto md:max-w-none";
 
   return (
-    <div className="w-screen -mx-6 mt-8 sm:mt-8 md:mx-0 md:w-full">
+    <div className="w-screen -mx-6 mt-5 sm:mt-8 md:mx-0 md:w-full">
       <div
         ref={scrollRef}
         className="overflow-x-auto snap-x snap-mandatory scrollbar-hide md:overflow-visible"
@@ -460,7 +460,7 @@ function HeroCarousel() {
       </div>
 
       {/* Dot indicators — mobile only */}
-      <div className="mt-3 flex justify-center gap-1.5 md:hidden">
+      <div className="mt-1 flex justify-center gap-1.5 md:hidden">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
@@ -527,7 +527,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
       <div
         className={`relative flex min-h-[100dvh] flex-col items-center px-6 text-center${
           showInstallCard
-            ? " justify-between pt-[8vh] pb-6 md:justify-center md:pt-0 md:pb-0"
+            ? " pb-3 md:justify-center md:pb-0"
             : " justify-center"
         }`}
       >
@@ -536,9 +536,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           <div className="absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.07] blur-[120px]" />
         </div>
 
-        {/* Top spacer removed — pt-[12vh] handles positioning */}
-
-        <div className="relative">
+        <div className={`relative${showInstallCard ? " flex flex-1 flex-col items-center justify-center pt-[5vh] md:flex-none md:pt-0" : ""}`}>
           {/* Logo */}
           <div className="mb-3 sm:mb-6 flex items-center justify-center gap-4">
             <img src="/icons/icon-192x192.png" alt="Dashworth" className="h-14 w-14 rounded-2xl sm:h-16 sm:w-16" />
@@ -556,7 +554,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           </h1>
 
           {/* Feature badges */}
-          <div className="mx-auto mt-6 grid max-w-xs grid-cols-3 gap-x-2 sm:mt-8 sm:max-w-md sm:gap-x-6">
+          <div className="mx-auto mt-5 grid max-w-xs grid-cols-3 gap-x-2 sm:mt-8 sm:max-w-md sm:gap-x-6">
             <div className="flex flex-col items-center gap-1.5">
               <Shield className="h-5 w-5 text-emerald-500" />
               <p className="text-sm font-semibold text-white">100% Private</p>
