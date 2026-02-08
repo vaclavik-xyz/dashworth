@@ -516,7 +516,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
 
   const handleSkip = () => {
     localStorage.setItem("dashworth-install-skipped", "1");
-    setInstallSkipped(true);
+    handleStart();
   };
 
   const handleAndroidInstall = async () => {
