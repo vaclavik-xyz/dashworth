@@ -139,6 +139,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                   width={70}
                 />
                 <Tooltip
+                  allowEscapeViewBox={{ x: false, y: false }}
                   contentStyle={{
                     backgroundColor: "var(--tooltip-bg, #18181b)",
                     border: "1px solid var(--tooltip-border, #27272a)",
