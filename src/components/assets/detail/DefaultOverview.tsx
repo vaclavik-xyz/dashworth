@@ -61,13 +61,14 @@ export default function DefaultOverview({ assets, categories, history, currency,
     return [...grouped.values()].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
   })();
 
-  // Line chart data: net worth over time from history
-  const lineData = [...history]
+  // Line chart data: net worth over time from history (deduped by date label)
+  const rawLineData = [...history]
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     .map((h) => ({
       date: new Date(h.createdAt).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
       value: h.totalValue,
     }));
+  const lineData = [...new Map(rawLineData.map((d) => [d.date, d])).values()];
 
   const pieSize = Math.min(pieWidth, 180);
 

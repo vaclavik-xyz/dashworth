@@ -41,13 +41,13 @@ export default function AssetCard({ asset, category, onEdit, onDelete, primaryCu
 
         <div className="flex shrink-0 items-center gap-1">
           <button
-            onClick={onEdit}
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            onClick={onDelete}
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
           >
             <Trash2 className="h-4 w-4" />

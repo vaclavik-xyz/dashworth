@@ -64,7 +64,12 @@ export async function importData(data: ImportDataV2): Promise<void> {
       await db.history.clear();
       await db.settings.clear();
 
-      await db.categories.bulkAdd(data.data.categories);
+      // Ensure every category has a sortOrder (missing from older exports)
+      const categories = data.data.categories.map((cat, i) => ({
+        ...cat,
+        sortOrder: cat.sortOrder ?? i,
+      }));
+      await db.categories.bulkAdd(categories);
       await db.assets.bulkAdd(data.data.assets);
       if (historyEntries.length > 0) {
         await db.history.bulkAdd(historyEntries);

@@ -31,15 +31,17 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
   const lastYear = new Date(sorted[sorted.length - 1].createdAt).getFullYear();
   const spansYears = lastYear - firstYear >= 1;
 
-  const data = sorted.map((h) => {
+  // Map to { date, value } and deduplicate by date label (keep latest per bucket)
+  const raw = sorted.map((h) => {
     const d = new Date(h.createdAt);
     return {
       date: spansYears
-        ? d.getFullYear().toString()
+        ? d.toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
         : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
       value: h.totalValue,
     };
   });
+  const data = [...new Map(raw.map((d) => [d.date, d])).values()];
 
   return (
     <Card>

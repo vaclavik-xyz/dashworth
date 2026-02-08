@@ -14,6 +14,16 @@ export function useAutoHistory(): void {
 
   const lastValueRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initRef = useRef(false);
+
+  // Initialize lastValueRef from DB on first mount to avoid duplicate recording
+  useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+    db.history.orderBy("createdAt").last().then((entry) => {
+      if (entry) lastValueRef.current = Math.round(entry.totalValue);
+    });
+  }, []);
 
   useEffect(() => {
     if (!assets || assets.length === 0 || !settings) return;

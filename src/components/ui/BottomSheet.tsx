@@ -77,7 +77,7 @@ export default function BottomSheet({ open, onClose, children }: BottomSheetProp
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 max-h-[85vh] rounded-t-2xl border-t border-[var(--dw-border)] bg-[var(--dw-card)] shadow-xl translate-y-0 transition-transform duration-300 ease-out"
+        className="absolute bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 max-h-[70vh] rounded-t-2xl border-t border-[var(--dw-border)] bg-[var(--dw-card)] shadow-xl translate-y-0 transition-transform duration-300 ease-out"
         style={{ animation: "slideUp 300ms ease-out" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -98,7 +98,7 @@ export default function BottomSheet({ open, onClose, children }: BottomSheetProp
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto px-5 pb-20" style={{ maxHeight: "calc(85vh - 48px)" }}>
+        <div className="overflow-y-auto px-5 pb-6" style={{ maxHeight: "calc(70vh - 48px)" }}>
           {children}
         </div>
       </div>

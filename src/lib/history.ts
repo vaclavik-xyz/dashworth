@@ -15,6 +15,10 @@ export async function recordHistory(): Promise<void> {
   const { rates } = await getExchangeRates();
   const totalValue = sumConverted(assets, currency, rates);
 
+  // Skip if value hasn't changed since last entry
+  const lastEntry = await db.history.orderBy("createdAt").last();
+  if (lastEntry && Math.round(lastEntry.totalValue) === Math.round(totalValue)) return;
+
   await db.history.add({
     totalValue,
     currency,
