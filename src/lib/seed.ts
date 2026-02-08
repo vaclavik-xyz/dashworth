@@ -21,6 +21,7 @@ export async function seedDatabase(): Promise<void> {
     theme: "dark",
     snapshotReminder: "none",
     autoSnapshot: "off",
+    showHints: true,
   };
 
   await db.transaction("rw", db.categories, db.settings, async () => {

@@ -18,6 +18,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import CategoryForm from "@/components/settings/CategoryForm";
+import HintTooltip from "@/components/ui/HintTooltip";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -342,7 +343,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-white">
-                Snapshot Reminder
+                <HintTooltip text="Shows a reminder on the dashboard when you haven't taken a snapshot recently.">Snapshot Reminder</HintTooltip>
               </p>
               <p className="text-xs text-zinc-500">
                 How often to remind you to take a snapshot
@@ -367,7 +368,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-white">
-                Auto-Snapshot
+                <HintTooltip text="Automatically saves your portfolio value on a schedule when you open the app.">Auto-Snapshot</HintTooltip>
               </p>
               <p className="text-xs text-zinc-500">
                 Automatically take snapshots on a schedule
@@ -565,6 +566,62 @@ export default function SettingsPage() {
               <p className="text-xs text-zinc-500 mt-0.5">
                 All data is stored locally in your browser. Nothing is sent to any server. Use <span className="text-zinc-400">Export</span> below to create backups. You can install Dashworth as an app from your browser for quick access.
               </p>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Help */}
+      <section className="mt-8">
+        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+          Help
+        </h2>
+        <Card className="mt-3 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">Show Hints</p>
+              <p className="text-xs text-zinc-500">
+                Display contextual help icons throughout the app
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => db.settings.update("settings", { showHints: !(settings.showHints !== false) })}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+                settings.showHints !== false ? "bg-emerald-500" : "bg-zinc-600"
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                  settings.showHints !== false ? "translate-x-5.5" : "translate-x-0.5"
+                } mt-0.5`}
+              />
+            </button>
+          </div>
+
+          <div className="border-t border-[var(--dw-border)] pt-4">
+            <p className="text-sm font-medium text-zinc-900 dark:text-white mb-3">FAQ</p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-zinc-300">How do I track crypto prices automatically?</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Set price source to CoinGecko and enter the coin ID (e.g. bitcoin, ethereum).</p>
+              </div>
+              <div>
+                <p className="text-sm text-zinc-300">How do I track stock prices?</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Set price source to Yahoo Finance and enter the ticker symbol (e.g. AAPL, TSLA).</p>
+              </div>
+              <div>
+                <p className="text-sm text-zinc-300">Where is my data stored?</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Everything is stored locally in your browser. Nothing is sent to any server.</p>
+              </div>
+              <div>
+                <p className="text-sm text-zinc-300">How do I move data to another device?</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Export a JSON backup in Settings → Data, then import it on the other device.</p>
+              </div>
+              <div>
+                <p className="text-sm text-zinc-300">What are groups?</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Groups let you organize related assets within a category, e.g. multiple crypto wallets under &quot;Bitcoin&quot;.</p>
+              </div>
             </div>
           </div>
         </Card>

@@ -69,6 +69,7 @@ export interface UserSettings {
   snapshotReminder: SnapshotReminder;
   autoSnapshot: AutoSnapshot;
   lastSnapshotDate?: Date;
+  showHints?: boolean;
 }
 
 export interface ExchangeRateCache {

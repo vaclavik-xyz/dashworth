@@ -6,6 +6,7 @@ import { Camera, Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import type { Snapshot } from "@/types";
 import Button from "@/components/ui/Button";
+import HintTooltip from "@/components/ui/HintTooltip";
 import Modal from "@/components/ui/Modal";
 import TakeSnapshotForm from "@/components/snapshots/TakeSnapshotForm";
 import SnapshotCard from "@/components/snapshots/SnapshotCard";
@@ -28,7 +29,9 @@ export default function SnapshotsPage() {
     <div className="p-6 md:p-10">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Snapshots</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+          <HintTooltip text="Snapshots capture your portfolio at a point in time. Compare them to track progress.">Snapshots</HintTooltip>
+        </h1>
         {snapshots && snapshots.length > 0 && (
           <Button onClick={() => setModalOpen(true)}>
             <Plus className="h-4 w-4" />

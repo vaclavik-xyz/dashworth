@@ -15,6 +15,7 @@ import TopAssets from "@/components/dashboard/TopAssets";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import SnapshotReminder from "@/components/layout/SnapshotReminder";
 import InstallPrompt from "@/components/ui/InstallPrompt";
+import HintTooltip from "@/components/ui/HintTooltip";
 
 type View = "landing" | "onboarding" | "dashboard";
 
@@ -63,6 +64,9 @@ export default function DashboardPage() {
       <SnapshotReminder />
 
       {/* Hero */}
+      <div className="flex items-center gap-1">
+        <HintTooltip text="Net worth is the total value of all your assets converted to your primary currency." />
+      </div>
       <NetWorthHero
         totalNetWorth={totalNetWorth}
         currency={currency}

@@ -8,6 +8,7 @@ import { uuid, formatCurrency } from "@/lib/utils";
 import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
 import type { Asset, Currency, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
+import HintTooltip from "@/components/ui/HintTooltip";
 
 interface AssetFormProps {
   asset?: Asset;
@@ -194,7 +195,9 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
       {showTicker && (
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            {isCrypto ? "CoinGecko ID" : "Ticker Symbol"}
+            <HintTooltip text="Manual: you update the price. CoinGecko/Yahoo: price updates automatically.">
+              {isCrypto ? "CoinGecko ID" : "Ticker Symbol"}
+            </HintTooltip>
           </label>
           <div className="relative">
             <input
@@ -221,7 +224,9 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
 
       <div>
         <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          Group <span className="text-zinc-400 dark:text-zinc-500 font-normal">(optional)</span>
+          <HintTooltip text="Group related assets together, e.g. multiple Bitcoin wallets under one group.">
+            Group <span className="text-zinc-400 dark:text-zinc-500 font-normal">(optional)</span>
+          </HintTooltip>
         </label>
         <input
           type="text"
@@ -243,7 +248,9 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
         <>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Quantity</label>
+              <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                <HintTooltip text="For auto-priced assets, enter how much you own. Value = quantity x price.">Quantity</HintTooltip>
+              </label>
               <input
                 type="number"
                 value={quantity}

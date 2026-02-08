@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Wallet, Camera, Settings } from "lucide-react";
+import { LayoutDashboard, Wallet, Camera, Settings, HelpCircle } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db";
 import { useSnapshotOverdue } from "@/hooks/useSnapshotOverdue";
 
 const NAV_ITEMS = [
@@ -15,6 +17,12 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { isOverdue } = useSnapshotOverdue();
+  const settings = useLiveQuery(() => db.settings.get("settings"));
+  const hintsOn = settings?.showHints !== false;
+
+  async function toggleHints() {
+    await db.settings.update("settings", { showHints: !hintsOn });
+  }
 
   return (
     <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 border-r border-[var(--dw-border)] bg-[var(--dw-nav)]">
@@ -50,6 +58,21 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="px-3 py-4">
+        <button
+          type="button"
+          onClick={toggleHints}
+          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors w-full ${
+            hintsOn
+              ? "text-emerald-500 hover:bg-emerald-500/10"
+              : "text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-200"
+          }`}
+        >
+          <HelpCircle className="h-5 w-5" />
+          Hints
+        </button>
+      </div>
     </aside>
   );
 }
