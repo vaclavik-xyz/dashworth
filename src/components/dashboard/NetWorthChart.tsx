@@ -34,17 +34,17 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
   const spansYears = lastDate.getFullYear() - firstDate.getFullYear() >= 1;
   const manyPoints = sorted.length > 20;
 
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
   // Every entry is a separate equidistant point
   const data = sorted.map((h) => {
     const d = new Date(h.createdAt);
+    const mon = MONTHS[d.getMonth()];
+    const yr = String(d.getFullYear()).slice(2);
+    const day = d.getDate();
     return {
-      label: spansYears
-        ? d.toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
-        : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
-      fullLabel: d.toLocaleDateString("cs-CZ", {
-        day: "numeric", month: "long", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
-      }),
+      label: spansYears ? `${mon} ${yr}` : `${day} ${mon}`,
+      fullLabel: `${day} ${mon} ${d.getFullYear()}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`,
       value: h.totalValue,
     };
   });
