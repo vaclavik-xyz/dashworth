@@ -149,6 +149,10 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                       </span>
                       <span className="text-xs text-zinc-500">
                         {formatDate(entry.createdAt)}
+                        {" "}
+                        <span className={entry.source === "auto" ? "text-blue-400" : "text-zinc-500"}>
+                          {entry.source}
+                        </span>
                       </span>
                       {entry.note && (
                         <span className="text-xs text-zinc-400 dark:text-zinc-500 italic truncate block">
