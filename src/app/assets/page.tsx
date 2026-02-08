@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Plus, Wallet } from "lucide-react";
+import { Plus, Wallet, Eye, EyeOff } from "lucide-react";
 import { db } from "@/lib/db";
-import { formatCurrency, sumConverted } from "@/lib/utils";
+import { formatCurrency, sumConverted, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { getIcon } from "@/lib/icons";
@@ -17,6 +17,7 @@ import AssetCard from "@/components/assets/AssetCard";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
 import type { Selection } from "@/components/assets/detail/DetailPanel";
 import BottomSheet from "@/components/ui/BottomSheet";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface GroupedSection {
   categoryId: string;
@@ -111,6 +112,8 @@ export default function AssetsPage() {
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const history = useLiveQuery(() => db.history.orderBy("createdAt").toArray());
 
+  const { hidden, toggle } = usePrivacy();
+
   const [editingAsset, setEditingAsset] = useState<Asset | undefined>();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
@@ -157,9 +160,19 @@ export default function AssetsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Assets</h1>
-          <p className="mt-1 text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            {formatCurrency(totalNetWorth, primaryCurrency)}
-          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              {hidden ? HIDDEN_VALUE : formatCurrency(totalNetWorth, primaryCurrency)}
+            </p>
+            <button
+              type="button"
+              onClick={toggle}
+              className="rounded-md p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+              aria-label={hidden ? "Show values" : "Hide values"}
+            >
+              {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           <p className="text-sm text-zinc-500">Total net worth</p>
         </div>
         {assets && assets.length > 0 && (
@@ -221,7 +234,7 @@ export default function AssetsPage() {
                       </h2>
                     </div>
                     <p className="mt-0.5 text-sm text-zinc-400">
-                      {formatCurrency(section.subtotal, primaryCurrency)}
+                      {hidden ? HIDDEN_VALUE : formatCurrency(section.subtotal, primaryCurrency)}
                       <span className="text-zinc-500"> · {section.assetCount} {section.assetCount === 1 ? "asset" : "assets"}</span>
                     </p>
                   </div>
@@ -260,7 +273,7 @@ export default function AssetsPage() {
                               </span>
                               {grp.assets.length > 1 && (
                                 <p className="text-xs text-zinc-500">
-                                  {formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
+                                  {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
                                 </p>
                               )}
                             </div>

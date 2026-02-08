@@ -9,9 +9,10 @@ import {
   CartesianGrid,
 } from "recharts";
 import type { Currency, HistoryEntry } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import Card from "@/components/ui/Card";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface NetWorthChartProps {
   history: HistoryEntry[];
@@ -20,6 +21,7 @@ interface NetWorthChartProps {
 
 export default function NetWorthChart({ history, currency }: NetWorthChartProps) {
   const { ref, width } = useContainerWidth();
+  const { hidden } = usePrivacy();
 
   if (history.length < 2) return null;
 
@@ -64,7 +66,7 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
               className="[&_.recharts-text]:fill-zinc-500"
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v: number) => formatCurrency(v, currency)}
+              tickFormatter={(v: number) => hidden ? HIDDEN_VALUE : formatCurrency(v, currency)}
               width={90}
             />
             <Tooltip
@@ -76,7 +78,7 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
                 color: "var(--tooltip-text, #fafafa)",
               }}
               labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
-              formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), "Net Worth"]}
+              formatter={(value: number | undefined) => [hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency), "Net Worth"]}
             />
             <Line
               type="monotone"

@@ -10,6 +10,7 @@ import { seedDatabase } from "@/lib/seed";
 import { applyTheme, watchSystemTheme } from "@/lib/theme";
 import { refreshAutoPrices } from "@/lib/auto-update";
 import { useAutoHistory } from "@/hooks/useAutoHistory";
+import { PrivacyProvider } from "@/contexts/PrivacyContext";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -71,29 +72,33 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Server always renders this. Client renders this on first pass too (mounted=false).
   if (!mounted || ready === null) {
     return (
-      <main className="min-h-screen">
-        {children}
-      </main>
+      <PrivacyProvider>
+        <main className="min-h-screen">
+          {children}
+        </main>
+      </PrivacyProvider>
     );
   }
 
   // User has data → show full app shell with nav
   if (ready) {
     return (
-      <>
+      <PrivacyProvider>
         <Sidebar />
         <main className="min-h-screen pb-safe md:pl-60 md:!pb-0">
           {children}
         </main>
         <BottomNav />
-      </>
+      </PrivacyProvider>
     );
   }
 
   // New user → just content, no nav (landing page / onboarding handles its own layout)
   return (
-    <main className="min-h-screen">
-      {children}
-    </main>
+    <PrivacyProvider>
+      <main className="min-h-screen">
+        {children}
+      </main>
+    </PrivacyProvider>
   );
 }

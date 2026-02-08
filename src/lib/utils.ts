@@ -17,6 +17,8 @@ const CURRENCY_LOCALE: Record<Currency, string> = {
   USD: "en-US",
 };
 
+export const HIDDEN_VALUE = "•••••";
+
 export function formatCurrency(value: number, currency: Currency): string {
   return new Intl.NumberFormat(CURRENCY_LOCALE[currency], {
     style: "currency",

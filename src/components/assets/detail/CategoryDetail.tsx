@@ -7,11 +7,12 @@ import {
   Tooltip,
 } from "recharts";
 import type { Asset, Category, Currency } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 const ASSET_COLORS = [
   "#10b981", "#3b82f6", "#f97316", "#a855f7", "#ef4444",
@@ -37,6 +38,7 @@ interface CategoryDetailProps {
 
 export default function CategoryDetail({ category, assets, currency, rates }: CategoryDetailProps) {
   const { ref: pieRef, width: pieWidth } = useContainerWidth();
+  const { hidden } = usePrivacy();
   const Icon = category ? getIcon(category.icon) : null;
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
   const total = assets.reduce((sum, a) => sum + convertCurrency(a.currentValue, a.currency, currency, rates), 0);
@@ -66,7 +68,7 @@ export default function CategoryDetail({ category, assets, currency, rates }: Ca
           </h3>
         </div>
         <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
-          {formatCurrency(total, currency)}
+          {hidden ? HIDDEN_VALUE : formatCurrency(total, currency)}
         </p>
         <p className="text-xs text-zinc-500">{assets.length} {assets.length === 1 ? "asset" : "assets"}</p>
       </div>
@@ -94,7 +96,7 @@ export default function CategoryDetail({ category, assets, currency, rates }: Ca
                 <Tooltip
                   contentStyle={tooltipStyle}
                   itemStyle={tooltipItemStyle}
-                  formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
+                  formatter={(value: number | undefined) => hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency)}
                 />
               </PieChart>
             )}

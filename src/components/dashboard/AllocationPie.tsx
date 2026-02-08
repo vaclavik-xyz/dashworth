@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import type { Asset, Category, Currency } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { COLOR_HEX } from "@/constants/colors";
 import Card from "@/components/ui/Card";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 // Distinct colors for groups when not tied to a category color
 const GROUP_COLORS = [
@@ -27,6 +28,7 @@ type ViewMode = "categories" | "groups";
 export default function AllocationPie({ assets, categories, currency, rates }: AllocationPieProps) {
   const [view, setView] = useState<ViewMode>("categories");
   const { ref, width } = useContainerWidth();
+  const { hidden } = usePrivacy();
 
   if (assets.length === 0) return null;
 
@@ -130,7 +132,7 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
                 color: "var(--tooltip-text, #fafafa)",
               }}
               itemStyle={{ color: "var(--tooltip-text, #fafafa)" }}
-              formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
+              formatter={(value: number | undefined) => hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency)}
             />
           </PieChart>
         )}

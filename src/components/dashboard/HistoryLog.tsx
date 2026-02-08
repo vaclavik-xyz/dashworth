@@ -2,8 +2,9 @@
 
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { Currency, HistoryEntry } from "@/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import Card from "@/components/ui/Card";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface HistoryLogProps {
   history: HistoryEntry[];
@@ -11,6 +12,8 @@ interface HistoryLogProps {
 }
 
 export default function HistoryLog({ history, currency }: HistoryLogProps) {
+  const { hidden } = usePrivacy();
+
   if (history.length === 0) return null;
 
   // history is already sorted newest-first from the parent
@@ -46,11 +49,14 @@ export default function HistoryLog({ history, currency }: HistoryLogProps) {
               </div>
               <div className="shrink-0 text-right">
                 <span className="text-sm font-medium text-zinc-900 dark:text-white">
-                  {formatCurrency(entry.totalValue, currency)}
+                  {hidden ? HIDDEN_VALUE : formatCurrency(entry.totalValue, currency)}
                 </span>
                 {prev && delta !== 0 && (
                   <p className={`text-xs ${delta > 0 ? "text-emerald-500" : "text-red-500"}`}>
-                    {delta > 0 ? "+" : ""}{formatCurrency(delta, currency)} ({pct > 0 ? "+" : ""}{pct.toFixed(1)}%)
+                    {hidden
+                      ? <>{pct > 0 ? "+" : ""}{pct.toFixed(1)}%</>
+                      : <>{delta > 0 ? "+" : ""}{formatCurrency(delta, currency)} ({pct > 0 ? "+" : ""}{pct.toFixed(1)}%)</>
+                    }
                   </p>
                 )}
               </div>

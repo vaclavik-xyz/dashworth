@@ -2,11 +2,12 @@
 
 import { Pencil, Trash2, RefreshCw } from "lucide-react";
 import type { Asset, Category, Currency } from "@/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface AssetCardProps {
   asset: Asset;
@@ -18,6 +19,7 @@ interface AssetCardProps {
 }
 
 export default function AssetCard({ asset, category, onEdit, onDelete, primaryCurrency, rates }: AssetCardProps) {
+  const { hidden } = usePrivacy();
   const Icon = category ? getIcon(category.icon) : null;
   const colorClass = category ? (COLOR_BADGE_CLASSES[category.color] ?? COLOR_BADGE_CLASSES.zinc) : COLOR_BADGE_CLASSES.zinc;
 
@@ -58,14 +60,14 @@ export default function AssetCard({ asset, category, onEdit, onDelete, primaryCu
       <div className="mt-3 flex items-end justify-between">
         <div>
           <p className="text-xl font-bold text-zinc-900 dark:text-white">
-            {formatCurrency(asset.currentValue, asset.currency)}
+            {hidden ? HIDDEN_VALUE : formatCurrency(asset.currentValue, asset.currency)}
           </p>
-          {asset.quantity != null && asset.unitPrice != null && (
+          {asset.quantity != null && asset.unitPrice != null && !hidden && (
             <p className="text-xs text-zinc-500">
               {asset.quantity} × {formatCurrency(asset.unitPrice, asset.currency)}
             </p>
           )}
-          {primaryCurrency && rates && asset.currency !== primaryCurrency && (
+          {primaryCurrency && rates && asset.currency !== primaryCurrency && !hidden && (
             <p className="text-xs text-zinc-500">
               ≈ {formatCurrency(convertCurrency(asset.currentValue, asset.currency, primaryCurrency, rates), primaryCurrency)}
             </p>

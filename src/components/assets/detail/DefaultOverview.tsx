@@ -12,10 +12,11 @@ import {
   CartesianGrid,
 } from "recharts";
 import type { Asset, Category, Currency, HistoryEntry } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { COLOR_HEX } from "@/constants/colors";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 const tooltipStyle = {
   backgroundColor: "var(--tooltip-bg, #18181b)",
@@ -38,6 +39,7 @@ interface DefaultOverviewProps {
 export default function DefaultOverview({ assets, categories, history, currency, rates }: DefaultOverviewProps) {
   const { ref: pieRef, width: pieWidth } = useContainerWidth();
   const { ref: lineRef, width: lineWidth } = useContainerWidth();
+  const { hidden } = usePrivacy();
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
   // Pie chart data: allocation by category
@@ -101,7 +103,7 @@ export default function DefaultOverview({ assets, categories, history, currency,
                 <Tooltip
                   contentStyle={tooltipStyle}
                   itemStyle={tooltipItemStyle}
-                  formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
+                  formatter={(value: number | undefined) => hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency)}
                 />
               </PieChart>
             )}
@@ -136,14 +138,14 @@ export default function DefaultOverview({ assets, categories, history, currency,
                   className="[&_.recharts-text]:fill-zinc-500"
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v: number) => formatCurrency(v, currency)}
+                  tickFormatter={(v: number) => hidden ? HIDDEN_VALUE : formatCurrency(v, currency)}
                   width={80}
                 />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   itemStyle={tooltipItemStyle}
                   labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
-                  formatter={(value: number | undefined) => [formatCurrency(value ?? 0, currency), "Net Worth"]}
+                  formatter={(value: number | undefined) => [hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency), "Net Worth"]}
                 />
                 <Line
                   type="monotone"

@@ -1,9 +1,10 @@
 "use client";
 
 import type { Asset, Category, Currency } from "@/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface AssetDetailProps {
   asset: Asset;
@@ -13,6 +14,7 @@ interface AssetDetailProps {
 }
 
 export default function AssetDetail({ asset, category }: AssetDetailProps) {
+  const { hidden } = usePrivacy();
   const Icon = category ? getIcon(category.icon) : null;
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
 
@@ -24,7 +26,7 @@ export default function AssetDetail({ asset, category }: AssetDetailProps) {
           <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{asset.name}</h3>
         </div>
         <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
-          {formatCurrency(asset.currentValue, asset.currency)}
+          {hidden ? HIDDEN_VALUE : formatCurrency(asset.currentValue, asset.currency)}
         </p>
         <div className="mt-2 space-y-1 text-xs text-zinc-500">
           <p>Category: <span className="text-zinc-700 dark:text-zinc-300">{category?.name ?? "Unknown"}</span></p>

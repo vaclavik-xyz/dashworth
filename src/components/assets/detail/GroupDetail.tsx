@@ -1,8 +1,9 @@
 "use client";
 
 import type { Asset, Currency } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface GroupDetailProps {
   group: string;
@@ -12,6 +13,7 @@ interface GroupDetailProps {
 }
 
 export default function GroupDetail({ group, assets, currency, rates }: GroupDetailProps) {
+  const { hidden } = usePrivacy();
   const total = assets.reduce((sum, a) => sum + convertCurrency(a.currentValue, a.currency, currency, rates), 0);
 
   return (
@@ -19,7 +21,7 @@ export default function GroupDetail({ group, assets, currency, rates }: GroupDet
       <div>
         <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{group}</h3>
         <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
-          {formatCurrency(total, currency)}
+          {hidden ? HIDDEN_VALUE : formatCurrency(total, currency)}
         </p>
         <p className="text-xs text-zinc-500">{assets.length} {assets.length === 1 ? "asset" : "assets"}</p>
       </div>
@@ -38,7 +40,7 @@ export default function GroupDetail({ group, assets, currency, rates }: GroupDet
                 <span className="text-sm text-zinc-900 dark:text-white">{asset.name}</span>
                 <div className="text-right">
                   <span className="text-sm font-medium text-zinc-900 dark:text-white">
-                    {formatCurrency(converted, currency)}
+                    {hidden ? HIDDEN_VALUE : formatCurrency(converted, currency)}
                   </span>
                   {total > 0 && (
                     <span className="ml-2 text-xs text-zinc-500">

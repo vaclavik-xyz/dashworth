@@ -1,11 +1,12 @@
 "use client";
 
 import type { Asset, Category, Currency } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_TEXT_MUTED_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface TopAssetsProps {
   assets: Asset[];
@@ -15,6 +16,8 @@ interface TopAssetsProps {
 }
 
 export default function TopAssets({ assets, categories, currency, rates }: TopAssetsProps) {
+  const { hidden } = usePrivacy();
+
   if (assets.length === 0) return null;
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
@@ -43,9 +46,9 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
               </div>
               <div className="shrink-0 text-right">
                 <span className="text-sm font-medium text-zinc-900 dark:text-white">
-                  {formatCurrency(converted, currency)}
+                  {hidden ? HIDDEN_VALUE : formatCurrency(converted, currency)}
                 </span>
-                {asset.currency !== currency && (
+                {asset.currency !== currency && !hidden && (
                   <p className="text-xs text-zinc-500">
                     {formatCurrency(asset.currentValue, asset.currency)}
                   </p>

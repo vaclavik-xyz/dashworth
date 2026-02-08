@@ -11,7 +11,7 @@ import { importData, validateImport, readJsonFile } from "@/lib/import";
 import { seedDatabase } from "@/lib/seed";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
-import { formatDate, formatCurrency, sumConverted } from "@/lib/utils";
+import { formatDate, formatCurrency, sumConverted, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import type { Category, Currency, CustomThemeColors, Theme } from "@/types";
@@ -20,6 +20,7 @@ import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import CategoryForm from "@/components/settings/CategoryForm";
 import HintTooltip from "@/components/ui/HintTooltip";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function SettingsPage() {
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
   const [protectedCategoryHint, setProtectedCategoryHint] = useState<string | null>(null);
 
+  const { hidden } = usePrivacy();
   const activeAssets = assets?.filter((a) => !a.isArchived) ?? [];
   const currency: Currency = settings?.primaryCurrency ?? "USD";
 
@@ -688,7 +690,7 @@ export default function SettingsPage() {
               <span className="font-medium text-emerald-400">{activeAssets.length} asset{activeAssets.length !== 1 ? "s" : ""}</span>
               {" "}worth{" "}
               <span className="font-medium text-emerald-400">
-                {formatCurrency(sumConverted(activeAssets, currency, rates), currency)}
+                {hidden ? HIDDEN_VALUE : formatCurrency(sumConverted(activeAssets, currency, rates), currency)}
               </span>
               . Keep building!
             </p>
