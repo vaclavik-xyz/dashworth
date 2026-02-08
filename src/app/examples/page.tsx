@@ -57,15 +57,17 @@ function MiniDonut({ assets, accentHex }: { assets: { name: string; percentage: 
 
 /* ── Portfolio Card ──────────────────────────────────── */
 
-function PortfolioCard({ portfolio, onClick }: { portfolio: ExamplePortfolio; onClick: () => void }) {
+function PortfolioCard({ portfolio, onClick, readOnly }: { portfolio: ExamplePortfolio; onClick?: () => void; readOnly?: boolean }) {
   const latest = portfolio.snapshots[portfolio.snapshots.length - 1];
   const first = portfolio.snapshots[0];
   const totalGrowth = ((latest.totalUsd - first.totalUsd) / first.totalUsd) * 100;
   const tickers = getLiveTickers(portfolio);
 
+  const Wrapper = readOnly ? "div" : "button";
+
   return (
-    <button onClick={onClick} className="w-full text-left">
-      <Card className="transition-colors hover:border-zinc-600">
+    <Wrapper {...(!readOnly && { onClick })} className={`w-full text-left ${readOnly ? "" : "cursor-pointer"}`}>
+      <Card className={readOnly ? "" : "transition-colors hover:border-zinc-600"}>
         <div className="flex items-center gap-4">
           <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${portfolio.color}`}>
             {portfolio.initials}
@@ -103,7 +105,7 @@ function PortfolioCard({ portfolio, onClick }: { portfolio: ExamplePortfolio; on
           )}
         </div>
       </Card>
-    </button>
+    </Wrapper>
   );
 }
 
@@ -132,17 +134,13 @@ export default function ExamplesPage() {
   }
 
   function handleCardClick(portfolio: ExamplePortfolio) {
+    if (hasRealData) return; // read-only mode
+
     // If already viewing sample data, skip confirmation and just swap
     if (isSampleData) {
       setTarget(portfolio);
       setLoading(true);
       loadExamplePortfolio(portfolio).then(() => router.push("/"));
-      return;
-    }
-
-    // If user has real data, show confirmation
-    if (hasRealData) {
-      setTarget(portfolio);
       return;
     }
 
@@ -155,12 +153,19 @@ export default function ExamplesPage() {
     <div className="p-6 md:p-10">
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Example Portfolios</h1>
       <p className="mt-2 text-sm text-zinc-500">
-        Explore how famous people built their wealth over time. Click on any portfolio to load it into your dashboard.
+        {hasRealData
+          ? "See how famous people built their wealth. These are for reference only — your portfolio is safe."
+          : "Explore how famous people built their wealth over time. Click on any portfolio to load it into your dashboard."}
       </p>
 
       <div className="mt-6 space-y-3">
         {EXAMPLE_PORTFOLIOS.map((p) => (
-          <PortfolioCard key={p.id} portfolio={p} onClick={() => handleCardClick(p)} />
+          <PortfolioCard
+            key={p.id}
+            portfolio={p}
+            readOnly={hasRealData}
+            onClick={() => handleCardClick(p)}
+          />
         ))}
       </div>
 
@@ -169,15 +174,15 @@ export default function ExamplesPage() {
         Actual allocations may differ significantly. This is for illustrative purposes only.
       </p>
 
-      {/* Confirm replace modal */}
+      {/* Confirm replace modal — only for sample data users */}
       <Modal
-        open={target !== null && hasRealData && !loading}
+        open={target !== null && !loading}
         onClose={() => setTarget(null)}
         title="Load Example Portfolio"
       >
         <p className="text-sm text-zinc-400">
           Load <span className="font-medium text-zinc-900 dark:text-white">{target?.name}</span>&apos;s portfolio?
-          This will replace your current data (assets, snapshots, and categories).
+          This will replace the current sample data.
         </p>
         <div className="mt-4 flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setTarget(null)}>
@@ -189,8 +194,8 @@ export default function ExamplesPage() {
         </div>
       </Modal>
 
-      {/* Loading overlay for direct loads */}
-      {loading && !hasRealData && (
+      {/* Loading overlay */}
+      {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="text-center">
             <div className="animate-pulse text-lg font-bold text-white">Loading portfolio...</div>

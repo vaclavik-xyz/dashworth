@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, BookOpen, Wallet, Camera, BarChart3, Shield } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, BookOpen, Wallet, Camera, BarChart3, Shield, Users } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -13,6 +13,7 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate, formatCurrency, sumConverted } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
+import Link from "next/link";
 import type { AutoSnapshot, Category, Currency, CustomThemeColors, Theme, SnapshotReminder } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -729,6 +730,16 @@ export default function SettingsPage() {
               <Github className="h-3.5 w-3.5" />
               vaclavik-xyz/dashworth
             </a>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-zinc-400">Examples</span>
+            <Link
+              href="/examples"
+              className="flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emerald-400 transition-colors"
+            >
+              <Users className="h-3.5 w-3.5" />
+              View example portfolios
+            </Link>
           </div>
           {activeAssets.length > 0 && (
             <p className="pt-2 text-xs text-zinc-500">

@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/assets", label: "Assets", icon: Wallet },
   { href: "/snapshots", label: "Snapshots", icon: Camera },
-  { href: "/examples", label: "Examples", icon: Users },
+  { href: "/examples", label: "Examples", icon: Users, sampleOnly: true },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -19,7 +19,10 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { isOverdue } = useSnapshotOverdue();
   const settings = useLiveQuery(() => db.settings.get("settings"));
+  const assetCount = useLiveQuery(() => db.assets.count());
   const hintsOn = settings?.showHints !== false;
+  const hasRealData = settings?.isSampleData !== true && (assetCount ?? 0) > 0;
+  const visibleItems = NAV_ITEMS.filter((item) => !item.sampleOnly || !hasRealData);
 
   async function toggleHints() {
     await db.settings.update("settings", { showHints: !hintsOn });
@@ -27,7 +30,7 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 flex items-end md:hidden border-t border-[var(--dw-border)] bg-[var(--dw-nav)] pb-[env(safe-area-inset-bottom)]">
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {visibleItems.map(({ href, label, icon: Icon }) => {
         const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
         const showDot = href === "/snapshots" && isOverdue;
 
