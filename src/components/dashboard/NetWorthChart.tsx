@@ -34,26 +34,20 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
   const spansYears = lastDate.getFullYear() - firstDate.getFullYear() >= 1;
   const manyPoints = sorted.length > 20;
 
-  // Every entry gets a unique timestamp — no dedup
-  const data = sorted.map((h) => ({
-    ts: new Date(h.createdAt).getTime(),
-    value: h.totalValue,
-  }));
-
-  function formatTick(ts: number) {
-    const d = new Date(ts);
-    return spansYears
-      ? d.toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
-      : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" });
-  }
-
-  function formatTooltipLabel(ts: number) {
-    const d = new Date(ts);
-    return d.toLocaleDateString("cs-CZ", {
-      day: "numeric", month: "long", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
-    });
-  }
+  // Every entry is a separate equidistant point
+  const data = sorted.map((h) => {
+    const d = new Date(h.createdAt);
+    return {
+      label: spansYears
+        ? d.toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
+        : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
+      fullLabel: d.toLocaleDateString("cs-CZ", {
+        day: "numeric", month: "long", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      }),
+      value: h.totalValue,
+    };
+  });
 
   // Show ~6-8 evenly spaced ticks
   const tickInterval = Math.max(1, Math.floor(data.length / 7)) - 1;
@@ -68,15 +62,11 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
           <LineChart width={width} height={250} data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
             <XAxis
-              dataKey="ts"
-              type="number"
-              domain={["dataMin", "dataMax"]}
-              scale="time"
+              dataKey="label"
               tick={{ fontSize: 12 }}
               className="[&_.recharts-text]:fill-zinc-500"
               axisLine={{ stroke: "var(--dw-grid)" }}
               tickLine={false}
-              tickFormatter={formatTick}
               interval={tickInterval}
             />
             <YAxis
@@ -96,7 +86,10 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
                 color: "var(--tooltip-text, #fafafa)",
               }}
               labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
-              labelFormatter={(ts) => formatTooltipLabel(Number(ts))}
+              labelFormatter={(_label, payload) => {
+                const item = payload?.[0]?.payload;
+                return item?.fullLabel ?? _label;
+              }}
               formatter={(value: number | undefined) => [hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency), "Net Worth"]}
             />
             <Line
