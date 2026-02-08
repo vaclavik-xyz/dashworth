@@ -175,7 +175,7 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
     }
 
     // Record net worth history after the save is committed
-    recordHistory().catch(() => {});
+    recordHistory("manual").catch(() => {});
 
     onClose();
   }

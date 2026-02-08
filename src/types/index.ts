@@ -43,6 +43,7 @@ export interface HistoryEntry {
   id?: number;
   totalValue: number;
   currency: Currency;
+  source?: "manual" | "auto";
   createdAt: Date;
 }
 

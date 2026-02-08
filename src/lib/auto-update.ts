@@ -50,5 +50,5 @@ export async function refreshAutoPrices(): Promise<void> {
   }
 
   // Record net worth history after all price updates
-  await recordHistory().catch(() => {});
+  await recordHistory("auto").catch(() => {});
 }

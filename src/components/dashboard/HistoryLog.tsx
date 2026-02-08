@@ -99,6 +99,11 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                     <span className="text-sm text-zinc-500 truncate">
                       {formatDate(entry.createdAt)}
                     </span>
+                    {entry.source && (
+                      <span className={`text-[10px] ${entry.source === "auto" ? "text-blue-400" : "text-zinc-500"}`}>
+                        {entry.source}
+                      </span>
+                    )}
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-sm font-medium text-zinc-900 dark:text-white">

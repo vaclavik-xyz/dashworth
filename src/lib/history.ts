@@ -3,7 +3,7 @@ import { sumConverted } from "./utils";
 import { getExchangeRates } from "./exchange-rates";
 import type { Currency } from "@/types";
 
-export async function recordHistory(): Promise<void> {
+export async function recordHistory(source?: "manual" | "auto"): Promise<void> {
   const [assets, settings] = await Promise.all([
     db.assets.filter((a) => !a.isArchived).toArray(),
     db.settings.get("settings"),
@@ -22,6 +22,7 @@ export async function recordHistory(): Promise<void> {
   await db.history.add({
     totalValue,
     currency,
+    source,
     createdAt: new Date(),
   });
 }
