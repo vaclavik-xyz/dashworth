@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { seedDatabase } from "./seed";
 import { uuid } from "./utils";
-import type { Asset, Category, HistoryEntry, Currency } from "@/types";
+import type { Asset, AssetChangeEntry, Category, HistoryEntry, Currency } from "@/types";
 
 function monthsAgo(months: number): Date {
   const d = new Date();
@@ -88,8 +88,29 @@ export async function devSeedDatabase(): Promise<void> {
     };
   });
 
-  await db.transaction("rw", [db.assets, db.history], async () => {
+  // Generate sample asset change entries from value history transitions
+  const changeEntries: Omit<AssetChangeEntry, "id">[] = [];
+  for (const def of ASSET_DEFS) {
+    const hist = VALUE_HISTORY[def.key];
+    const assetObj = assets.find((a) => a.name === def.name)!;
+    for (let i = 1; i < hist.length; i++) {
+      if (hist[i] !== hist[i - 1]) {
+        changeEntries.push({
+          assetId: assetObj.id,
+          assetName: def.name,
+          oldValue: hist[i - 1],
+          newValue: hist[i],
+          currency: def.currency,
+          source: i % 2 === 0 ? "manual" : "auto",
+          createdAt: historyDates[i],
+        });
+      }
+    }
+  }
+
+  await db.transaction("rw", [db.assets, db.history, db.assetChanges], async () => {
     await db.assets.bulkAdd(assets);
     await db.history.bulkAdd(historyEntries);
+    await db.assetChanges.bulkAdd(changeEntries);
   });
 }

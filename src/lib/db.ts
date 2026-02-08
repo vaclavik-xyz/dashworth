@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Asset, Category, ExchangeRateCache, HistoryEntry, PriceCache, UserSettings } from "@/types";
+import type { Asset, AssetChangeEntry, Category, ExchangeRateCache, HistoryEntry, PriceCache, UserSettings } from "@/types";
 
 const db = new Dexie("dashworth") as Dexie & {
   categories: EntityTable<Category, "id">;
@@ -8,6 +8,7 @@ const db = new Dexie("dashworth") as Dexie & {
   exchangeRates: EntityTable<ExchangeRateCache, "id">;
   priceCache: EntityTable<PriceCache, "id">;
   history: EntityTable<HistoryEntry, "id">;
+  assetChanges: EntityTable<AssetChangeEntry, "id">;
 };
 
 db.version(1).stores({
@@ -85,6 +86,10 @@ db.version(8).stores({
       delete s.lastSnapshotDate;
     });
   });
+});
+
+db.version(9).stores({
+  assetChanges: "++id, assetId, createdAt",
 });
 
 export { db };

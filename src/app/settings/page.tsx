@@ -149,11 +149,12 @@ export default function SettingsPage() {
   async function confirmDeleteAll() {
     await db.transaction(
       "rw",
-      [db.categories, db.assets, db.history, db.settings, db.exchangeRates, db.priceCache],
+      [db.categories, db.assets, db.history, db.assetChanges, db.settings, db.exchangeRates, db.priceCache],
       async () => {
         await db.categories.clear();
         await db.assets.clear();
         await db.history.clear();
+        await db.assetChanges.clear();
         await db.settings.clear();
         await db.exchangeRates.clear();
         await db.priceCache.clear();

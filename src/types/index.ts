@@ -59,6 +59,17 @@ export interface ExchangeRateCache {
   fetchedAt: Date;
 }
 
+export interface AssetChangeEntry {
+  id?: number;
+  assetId: string;
+  assetName: string;
+  oldValue: number;
+  newValue: number;
+  currency: Currency;
+  source: "manual" | "auto";
+  createdAt: Date;
+}
+
 export interface PriceCache {
   id: string;              // "coingecko:{ticker}" or "yahoo:{ticker}"
   price: Record<string, number>; // { usd: 100000, czk: 2350000, eur: 92000 }

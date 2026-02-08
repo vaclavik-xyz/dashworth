@@ -1,5 +1,5 @@
 import { db } from "./db";
-import type { Asset, Category, HistoryEntry, UserSettings } from "@/types";
+import type { Asset, AssetChangeEntry, Category, HistoryEntry, UserSettings } from "@/types";
 
 interface ImportDataV2 {
   app: "dashworth";
@@ -8,6 +8,7 @@ interface ImportDataV2 {
     categories: Category[];
     assets: Asset[];
     history?: HistoryEntry[];
+    assetChanges?: AssetChangeEntry[];
     snapshots?: Array<{
       totalNetWorth: number;
       primaryCurrency: string;
@@ -57,11 +58,12 @@ export async function importData(data: ImportDataV2): Promise<void> {
 
   await db.transaction(
     "rw",
-    [db.categories, db.assets, db.history, db.settings],
+    [db.categories, db.assets, db.history, db.assetChanges, db.settings],
     async () => {
       await db.categories.clear();
       await db.assets.clear();
       await db.history.clear();
+      await db.assetChanges.clear();
       await db.settings.clear();
 
       // Ensure every category has a sortOrder (missing from older exports)
@@ -80,6 +82,9 @@ export async function importData(data: ImportDataV2): Promise<void> {
       await db.assets.bulkAdd(assets);
       if (historyEntries.length > 0) {
         await db.history.bulkAdd(historyEntries);
+      }
+      if (data.data.assetChanges && data.data.assetChanges.length > 0) {
+        await db.assetChanges.bulkAdd(data.data.assetChanges);
       }
       await db.settings.add(cleanSettings);
     }

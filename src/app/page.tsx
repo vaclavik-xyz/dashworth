@@ -28,6 +28,9 @@ export default function DashboardPage() {
   const history = useLiveQuery(() =>
     db.history.orderBy("createdAt").reverse().toArray()
   );
+  const assetChanges = useLiveQuery(() =>
+    db.assetChanges.orderBy("createdAt").reverse().toArray()
+  );
   const settings = useLiveQuery(() => db.settings.get("settings"));
 
   const { rates } = useExchangeRates();
@@ -91,8 +94,8 @@ export default function DashboardPage() {
         {assets && categories && (
           <TopAssets assets={assets} categories={categories} currency={currency} rates={rates} />
         )}
-        {history && history.length > 0 && (
-          <HistoryLog history={history} currency={currency} />
+        {history && assetChanges && (history.length > 0 || assetChanges.length > 0) && (
+          <HistoryLog history={history} assetChanges={assetChanges} currency={currency} />
         )}
       </div>
     </div>

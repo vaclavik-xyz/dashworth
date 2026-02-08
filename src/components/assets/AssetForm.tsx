@@ -144,6 +144,18 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
     };
 
     if (asset) {
+      const prev = await db.assets.get(asset.id);
+      if (prev && prev.currentValue !== finalValue) {
+        await db.assetChanges.add({
+          assetId: asset.id,
+          assetName: name.trim(),
+          oldValue: prev.currentValue,
+          newValue: finalValue,
+          currency,
+          source: "manual",
+          createdAt: now,
+        });
+      }
       await db.assets.update(asset.id, common);
     } else {
       await db.assets.add({

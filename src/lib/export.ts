@@ -8,15 +8,17 @@ interface ExportData {
     categories: unknown[];
     assets: unknown[];
     history: unknown[];
+    assetChanges: unknown[];
     settings: unknown;
   };
 }
 
 export async function exportData(): Promise<void> {
-  const [categories, assets, history, settings] = await Promise.all([
+  const [categories, assets, history, assetChanges, settings] = await Promise.all([
     db.categories.toArray(),
     db.assets.toArray(),
     db.history.toArray(),
+    db.assetChanges.toArray(),
     db.settings.get("settings"),
   ]);
 
@@ -28,6 +30,7 @@ export async function exportData(): Promise<void> {
       categories,
       assets,
       history,
+      assetChanges,
       settings: settings ?? {},
     },
   };
