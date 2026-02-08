@@ -58,7 +58,7 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
       <h2 className="mb-4 text-sm font-medium text-zinc-400">
         Net Worth Over Time
       </h2>
-      <div ref={ref}>
+      <div ref={ref} className="overflow-hidden">
         {width > 0 && (
           <LineChart width={width} height={250} data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />

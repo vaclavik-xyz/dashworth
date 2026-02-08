@@ -113,7 +113,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
       {chartData.length >= 2 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-400">Value Over Time</h4>
-          <div ref={ref}>
+          <div ref={ref} className="overflow-hidden">
             {width > 0 && (
               <LineChart width={width} height={160} data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
