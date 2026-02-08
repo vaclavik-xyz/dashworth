@@ -16,15 +16,16 @@ import IconPicker from "@/components/ui/IconPicker";
 
 interface AssetFormProps {
   asset?: Asset;
+  defaultCategoryId?: string;
   onClose: () => void;
 }
 
-export default function AssetForm({ asset, onClose }: AssetFormProps) {
+export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFormProps) {
   const categories = useLiveQuery(() => db.categories.orderBy("sortOrder").toArray());
   const allAssets = useLiveQuery(() => db.assets.toArray());
 
   const [name, setName] = useState(asset?.name ?? "");
-  const [categoryId, setCategoryId] = useState(asset?.categoryId ?? "");
+  const [categoryId, setCategoryId] = useState(asset?.categoryId ?? defaultCategoryId ?? "");
   const [group, setGroup] = useState(asset?.group ?? "");
   const [currentValue, setCurrentValue] = useState(asset?.currentValue?.toString() ?? "");
   const [currency, setCurrency] = useState<Currency>(asset?.currency ?? "CZK");

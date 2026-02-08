@@ -115,6 +115,7 @@ export default function AssetsPage() {
   const { hidden, toggle } = usePrivacy();
 
   const [editingAsset, setEditingAsset] = useState<Asset | undefined>();
+  const [defaultCategoryId, setDefaultCategoryId] = useState<string | undefined>();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
@@ -129,19 +130,22 @@ export default function AssetsPage() {
     [assets, categories, rates, primaryCurrency],
   );
 
-  function openAdd() {
+  function openAdd(categoryId?: string) {
     setEditingAsset(undefined);
+    setDefaultCategoryId(categoryId);
     setModalOpen(true);
   }
 
   function openEdit(asset: Asset) {
     setEditingAsset(asset);
+    setDefaultCategoryId(undefined);
     setModalOpen(true);
   }
 
   function closeModal() {
     setModalOpen(false);
     setEditingAsset(undefined);
+    setDefaultCategoryId(undefined);
   }
 
   async function confirmDelete() {
@@ -176,7 +180,7 @@ export default function AssetsPage() {
           <p className="text-sm text-zinc-500">Total net worth</p>
         </div>
         {assets && assets.length > 0 && (
-          <Button onClick={openAdd}>
+          <Button onClick={() => openAdd()}>
             <Plus className="h-4 w-4" />
             Add Asset
           </Button>
@@ -193,7 +197,7 @@ export default function AssetsPage() {
           <p className="mt-1 max-w-xs text-sm text-zinc-500">
             Start tracking your net worth by adding your first asset.
           </p>
-          <Button onClick={openAdd} className="mt-6">
+          <Button onClick={() => openAdd()} className="mt-6">
             <Plus className="h-4 w-4" />
             Add Your First Asset
           </Button>
@@ -232,6 +236,17 @@ export default function AssetsPage() {
                       <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
                         {section.category?.name ?? "Unknown"}
                       </h2>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAdd(section.categoryId);
+                        }}
+                        className="ml-auto rounded-md p-1 text-zinc-500 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                        aria-label={`Add asset to ${section.category?.name ?? "category"}`}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
                     </div>
                     <p className="mt-0.5 text-sm text-zinc-400">
                       {hidden ? HIDDEN_VALUE : formatCurrency(section.subtotal, primaryCurrency)}
@@ -340,7 +355,7 @@ export default function AssetsPage() {
         onClose={closeModal}
         title={editingAsset ? "Edit Asset" : "Add Asset"}
       >
-        <AssetForm asset={editingAsset} onClose={closeModal} />
+        <AssetForm asset={editingAsset} defaultCategoryId={defaultCategoryId} onClose={closeModal} />
       </Modal>
 
       {/* Delete confirmation modal */}
