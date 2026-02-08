@@ -70,6 +70,7 @@ export interface UserSettings {
   autoSnapshot: AutoSnapshot;
   lastSnapshotDate?: Date;
   showHints?: boolean;
+  isSampleData?: boolean;
 }
 
 export interface ExchangeRateCache {

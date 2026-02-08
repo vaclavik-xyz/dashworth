@@ -11,8 +11,8 @@ import Card from "@/components/ui/Card";
 interface AssetCardProps {
   asset: Asset;
   category?: Category;
-  onEdit?: () => void;
-  onDelete?: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   primaryCurrency?: Currency;
   rates?: Record<string, number>;
 }
@@ -39,26 +39,20 @@ export default function AssetCard({ asset, category, onEdit, onDelete, primaryCu
           </div>
         </div>
 
-        {(onEdit || onDelete) && (
-          <div className="flex shrink-0 items-center gap-1">
-            {onEdit && (
-              <button
-                onClick={onEdit}
-                className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            onClick={onEdit}
+            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onDelete}
+            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="mt-3 flex items-end justify-between">

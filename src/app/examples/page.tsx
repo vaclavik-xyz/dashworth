@@ -1,10 +1,16 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { TrendingUp } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useLiveQuery } from "dexie-react-hooks";
 import { EXAMPLE_PORTFOLIOS, type ExamplePortfolio } from "@/constants/example-portfolios";
+import { db } from "@/lib/db";
+import { loadExamplePortfolio } from "@/lib/load-example";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
 import ClientOnly from "@/components/ui/ClientOnly";
 
 /* ── Helpers ─────────────────────────────────────────── */
@@ -43,13 +49,13 @@ function MiniDonut({ assets, accentHex }: { assets: { name: string; percentage: 
 
 /* ── Portfolio Card ──────────────────────────────────── */
 
-function PortfolioCard({ portfolio }: { portfolio: ExamplePortfolio }) {
+function PortfolioCard({ portfolio, onClick }: { portfolio: ExamplePortfolio; onClick: () => void }) {
   const latest = portfolio.snapshots[portfolio.snapshots.length - 1];
   const first = portfolio.snapshots[0];
   const totalGrowth = ((latest.totalUsd - first.totalUsd) / first.totalUsd) * 100;
 
   return (
-    <Link href={`/examples/${portfolio.id}`} className="block">
+    <button onClick={onClick} className="w-full text-left">
       <Card className="transition-colors hover:border-zinc-600">
         <div className="flex items-center gap-4">
           <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${portfolio.color}`}>
@@ -80,23 +86,64 @@ function PortfolioCard({ portfolio }: { portfolio: ExamplePortfolio }) {
           )}
         </div>
       </Card>
-    </Link>
+    </button>
   );
 }
 
 /* ── Examples Page ───────────────────────────────────── */
 
 export default function ExamplesPage() {
+  const router = useRouter();
+  const settings = useLiveQuery(() => db.settings.get("settings"));
+  const assetCount = useLiveQuery(() => db.assets.count());
+
+  const [target, setTarget] = useState<ExamplePortfolio | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isSampleData = settings?.isSampleData === true;
+  const hasRealData = !isSampleData && (assetCount ?? 0) > 0;
+
+  async function handleConfirm() {
+    if (!target) return;
+    setLoading(true);
+    try {
+      await loadExamplePortfolio(target);
+      router.push("/");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleCardClick(portfolio: ExamplePortfolio) {
+    // If already viewing sample data, skip confirmation and just swap
+    if (isSampleData) {
+      setTarget(portfolio);
+      setLoading(true);
+      loadExamplePortfolio(portfolio).then(() => router.push("/"));
+      return;
+    }
+
+    // If user has real data, show confirmation
+    if (hasRealData) {
+      setTarget(portfolio);
+      return;
+    }
+
+    // New user, no data — load directly
+    setLoading(true);
+    loadExamplePortfolio(portfolio).then(() => router.push("/"));
+  }
+
   return (
     <div className="p-6 md:p-10">
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Example Portfolios</h1>
       <p className="mt-2 text-sm text-zinc-500">
-        Explore how famous people built their wealth over time. Click on any portfolio to see their Dashworth.
+        Explore how famous people built their wealth over time. Click on any portfolio to load it into your dashboard.
       </p>
 
       <div className="mt-6 space-y-3">
         {EXAMPLE_PORTFOLIOS.map((p) => (
-          <PortfolioCard key={p.id} portfolio={p} />
+          <PortfolioCard key={p.id} portfolio={p} onClick={() => handleCardClick(p)} />
         ))}
       </div>
 
@@ -104,6 +151,35 @@ export default function ExamplesPage() {
         All portfolio data is estimated based on public sources (Forbes, Bloomberg Billionaires Index).
         Actual allocations may differ significantly. This is for illustrative purposes only.
       </p>
+
+      {/* Confirm replace modal */}
+      <Modal
+        open={target !== null && hasRealData && !loading}
+        onClose={() => setTarget(null)}
+        title="Load Example Portfolio"
+      >
+        <p className="text-sm text-zinc-400">
+          Load <span className="font-medium text-zinc-900 dark:text-white">{target?.name}</span>&apos;s portfolio?
+          This will replace your current data (assets, snapshots, and categories).
+        </p>
+        <div className="mt-4 flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setTarget(null)}>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirm} disabled={loading}>
+            {loading ? "Loading..." : "Load Portfolio"}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Loading overlay for direct loads */}
+      {loading && !hasRealData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="text-center">
+            <div className="animate-pulse text-lg font-bold text-white">Loading portfolio...</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
