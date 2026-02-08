@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { TrendingUp, Radio } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useLiveQuery } from "dexie-react-hooks";
 import { EXAMPLE_PORTFOLIOS, type ExamplePortfolio } from "@/constants/example-portfolios";
@@ -19,6 +19,14 @@ function formatUsd(value: number): string {
   if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(value >= 10_000_000_000 ? 0 : 1)}B`;
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(0)}M`;
   return `$${value.toLocaleString("en-US")}`;
+}
+
+/** Derive live ticker labels from the latest snapshot's auto-fetch assets */
+function getLiveTickers(portfolio: ExamplePortfolio): string[] {
+  const latest = portfolio.snapshots[portfolio.snapshots.length - 1];
+  return latest.assets
+    .filter((a) => a.ticker)
+    .map((a) => a.ticker!);
 }
 
 const PIE_COLORS = [
@@ -53,6 +61,7 @@ function PortfolioCard({ portfolio, onClick }: { portfolio: ExamplePortfolio; on
   const latest = portfolio.snapshots[portfolio.snapshots.length - 1];
   const first = portfolio.snapshots[0];
   const totalGrowth = ((latest.totalUsd - first.totalUsd) / first.totalUsd) * 100;
+  const tickers = getLiveTickers(portfolio);
 
   return (
     <button onClick={onClick} className="w-full text-left">
@@ -62,15 +71,7 @@ function PortfolioCard({ portfolio, onClick }: { portfolio: ExamplePortfolio; on
             {portfolio.initials}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{portfolio.name}</p>
-              {portfolio.livePrices && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-400">
-                  <Radio className="h-2.5 w-2.5" />
-                  Live prices
-                </span>
-              )}
-            </div>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{portfolio.name}</p>
             <p className="text-xs text-zinc-500 truncate">{portfolio.description}</p>
           </div>
           <MiniDonut assets={latest.assets} accentHex={portfolio.accentHex} />
@@ -82,15 +83,23 @@ function PortfolioCard({ portfolio, onClick }: { portfolio: ExamplePortfolio; on
             +{totalGrowth.toFixed(0)}% since {first.year}
           </div>
         </div>
-        <div className="mt-2 flex items-center gap-1 text-xs text-zinc-500 flex-wrap">
-          {latest.assets.slice(0, 3).map((a, i) => (
-            <span key={a.name}>
-              {i > 0 && <span className="text-zinc-600 mx-0.5">&middot;</span>}
-              {a.name} {a.percentage}%
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-1 text-xs text-zinc-500 flex-wrap">
+            {latest.assets.slice(0, 3).map((a, i) => (
+              <span key={a.name}>
+                {i > 0 && <span className="text-zinc-600 mx-0.5">&middot;</span>}
+                {a.name} {a.percentage}%
+              </span>
+            ))}
+            {latest.assets.length > 3 && (
+              <span className="text-zinc-600">+{latest.assets.length - 3} more</span>
+            )}
+          </div>
+          {tickers.length > 0 && (
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium text-emerald-500/80">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {tickers.join(" · ")}
             </span>
-          ))}
-          {latest.assets.length > 3 && (
-            <span className="text-zinc-600">+{latest.assets.length - 3} more</span>
           )}
         </div>
       </Card>
