@@ -15,7 +15,7 @@ interface GroupedEntries {
 interface SnapshotCardProps {
   snapshot: Snapshot;
   previousSnapshot?: Snapshot;
-  onDelete: () => void;
+  onDelete?: () => void;
 }
 
 export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: SnapshotCardProps) {
@@ -101,23 +101,25 @@ export default function SnapshotCard({ snapshot, previousSnapshot, onDelete }: S
         </div>
 
         <div className="flex shrink-0 items-center gap-1 pt-1">
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
+          {onDelete && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
-              }
-            }}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </span>
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.stopPropagation();
+                  onDelete();
+                }
+              }}
+              className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </span>
+          )}
           {expanded ? (
             <ChevronUp className="h-4 w-4 text-zinc-600" />
           ) : (
