@@ -12,6 +12,7 @@ import NetWorthHero from "@/components/dashboard/NetWorthHero";
 import NetWorthChart from "@/components/dashboard/NetWorthChart";
 import AllocationPie from "@/components/dashboard/AllocationPie";
 import TopAssets from "@/components/dashboard/TopAssets";
+import HistoryLog from "@/components/dashboard/HistoryLog";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 import HintTooltip from "@/components/ui/HintTooltip";
 
@@ -89,6 +90,9 @@ export default function DashboardPage() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {assets && categories && (
           <TopAssets assets={assets} categories={categories} currency={currency} rates={rates} />
+        )}
+        {history && history.length > 0 && (
+          <HistoryLog history={history} currency={currency} />
         )}
       </div>
     </div>
