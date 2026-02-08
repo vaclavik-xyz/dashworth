@@ -1,25 +1,91 @@
 "use client";
 
-import type { Asset, Category, Currency } from "@/types";
+import { useMemo } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import type { Asset, AssetChangeEntry, Category, Currency } from "@/types";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { usePrivacy } from "@/contexts/PrivacyContext";
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 interface AssetDetailProps {
   asset: Asset;
   category: Category | undefined;
+  changes: AssetChangeEntry[];
   currency: Currency;
   rates: Record<string, number>;
 }
 
-export default function AssetDetail({ asset, category }: AssetDetailProps) {
+export default function AssetDetail({ asset, category, changes }: AssetDetailProps) {
   const { hidden } = usePrivacy();
+  const { ref, width } = useContainerWidth();
   const Icon = getIcon(asset.icon ?? category?.icon ?? "box");
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
 
+  // Build chart data from changes (oldest first) + current value
+  const chartData = useMemo(() => {
+    if (changes.length === 0) return [];
+
+    // changes are newest-first from the query
+    const sorted = [...changes].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    // Start with the oldest known value (oldValue of first change)
+    const points: { label: string; fullLabel: string; value: number }[] = [];
+
+    // Add the initial value before first change
+    const firstDate = new Date(sorted[0].createdAt);
+    points.push({
+      label: `${firstDate.getDate()} ${MONTHS[firstDate.getMonth()]}`,
+      fullLabel: formatFullLabel(firstDate),
+      value: sorted[0].oldValue,
+    });
+
+    // Add each change's new value
+    for (const c of sorted) {
+      const d = new Date(c.createdAt);
+      points.push({
+        label: `${d.getDate()} ${MONTHS[d.getMonth()]}`,
+        fullLabel: formatFullLabel(d),
+        value: c.newValue,
+      });
+    }
+
+    // If the current value differs from the last change, add current
+    const lastPoint = points[points.length - 1];
+    if (lastPoint && Math.round(lastPoint.value) !== Math.round(asset.currentValue)) {
+      const now = new Date(asset.updatedAt);
+      points.push({
+        label: `${now.getDate()} ${MONTHS[now.getMonth()]}`,
+        fullLabel: formatFullLabel(now),
+        value: asset.currentValue,
+      });
+    }
+
+    return points;
+  }, [changes, asset.currentValue, asset.updatedAt]);
+
+  const manyPoints = chartData.length > 10;
+  const maxTicks = width < 300 ? 3 : 5;
+  const tickInterval = chartData.length > maxTicks
+    ? Math.max(1, Math.floor(chartData.length / maxTicks)) - 1
+    : 0;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
       <div>
         <div className="flex items-center gap-2">
           <Icon className="h-5 w-5" style={{ color: catColor }} />
@@ -42,6 +108,124 @@ export default function AssetDetail({ asset, category }: AssetDetailProps) {
           </p>
         )}
       </div>
+
+      {/* Value chart */}
+      {chartData.length >= 2 && (
+        <div>
+          <h4 className="mb-2 text-xs font-medium text-zinc-400">Value Over Time</h4>
+          <div ref={ref}>
+            {width > 0 && (
+              <LineChart width={width} height={160} data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10 }}
+                  className="[&_.recharts-text]:fill-zinc-500"
+                  axisLine={{ stroke: "var(--dw-grid)" }}
+                  tickLine={false}
+                  interval={tickInterval}
+                />
+                <YAxis
+                  tick={{ fontSize: 10 }}
+                  className="[&_.recharts-text]:fill-zinc-500"
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v: number) =>
+                    hidden ? HIDDEN_VALUE : formatCurrency(v, asset.currency)
+                  }
+                  width={70}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--tooltip-bg, #18181b)",
+                    border: "1px solid var(--tooltip-border, #27272a)",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    color: "var(--tooltip-text, #fafafa)",
+                  }}
+                  labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
+                  labelFormatter={(_label, payload) => {
+                    const item = payload?.[0]?.payload;
+                    return item?.fullLabel ?? _label;
+                  }}
+                  formatter={(value: number | undefined) => [
+                    hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, asset.currency),
+                    "Value",
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={catColor}
+                  strokeWidth={2}
+                  dot={manyPoints ? false : { fill: catColor, r: 3 }}
+                  activeDot={{ r: 5, stroke: catColor, strokeWidth: 2, fill: "#18181b" }}
+                />
+              </LineChart>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Changes timeline */}
+      {changes.length > 0 && (
+        <div>
+          <h4 className="mb-2 text-xs font-medium text-zinc-400">
+            Changes
+            <span className="ml-1.5 text-[10px] text-emerald-500">{changes.length}</span>
+          </h4>
+          <div className="space-y-1.5">
+            {changes.slice(0, 20).map((entry, i) => {
+              const delta = entry.newValue - entry.oldValue;
+              const pct = entry.oldValue > 0 ? (delta / entry.oldValue) * 100 : 0;
+
+              return (
+                <div
+                  key={entry.id ?? i}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {delta > 0 ? (
+                      <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                    ) : delta < 0 ? (
+                      <TrendingDown className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                    ) : (
+                      <Minus className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                    )}
+                    <span className="text-xs text-zinc-500 truncate">
+                      {formatDate(entry.createdAt)}
+                    </span>
+                    <span className="text-[10px] text-zinc-600 dark:text-zinc-500">
+                      {entry.source === "auto" ? "auto" : "manual"}
+                    </span>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="text-xs font-medium text-zinc-900 dark:text-white">
+                      {hidden ? HIDDEN_VALUE : formatCurrency(entry.newValue, entry.currency)}
+                    </span>
+                    {delta !== 0 && (
+                      <p className={`text-[10px] ${delta > 0 ? "text-emerald-500" : "text-red-500"}`}>
+                        {delta > 0 ? "+" : ""}
+                        {hidden ? "" : formatCurrency(delta, entry.currency)}{" "}
+                        ({pct > 0 ? "+" : ""}{pct.toFixed(1)}%)
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {changes.length === 0 && (
+        <p className="text-xs text-zinc-500 text-center py-2">No changes recorded yet</p>
+      )}
     </div>
   );
+}
+
+function formatFullLabel(d: Date): string {
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
 }

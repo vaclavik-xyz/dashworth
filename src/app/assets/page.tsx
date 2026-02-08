@@ -111,6 +111,7 @@ export default function AssetsPage() {
   const categories = useLiveQuery(() => db.categories.toArray());
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const history = useLiveQuery(() => db.history.orderBy("createdAt").toArray());
+  const assetChanges = useLiveQuery(() => db.assetChanges.orderBy("createdAt").reverse().toArray());
 
   const { hidden, toggle } = usePrivacy();
 
@@ -341,6 +342,7 @@ export default function AssetsPage() {
                 assets={assets ?? []}
                 categories={categories ?? []}
                 history={history ?? []}
+                assetChanges={assetChanges ?? []}
                 currency={primaryCurrency}
                 rates={rates}
               />
@@ -388,6 +390,7 @@ export default function AssetsPage() {
           assets={assets ?? []}
           categories={categories ?? []}
           history={history ?? []}
+          assetChanges={assetChanges ?? []}
           currency={primaryCurrency}
           rates={rates}
         />

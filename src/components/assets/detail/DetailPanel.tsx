@@ -1,6 +1,6 @@
 "use client";
 
-import type { Asset, Category, Currency, HistoryEntry } from "@/types";
+import type { Asset, AssetChangeEntry, Category, Currency, HistoryEntry } from "@/types";
 import Card from "@/components/ui/Card";
 import DefaultOverview from "./DefaultOverview";
 import CategoryDetail from "./CategoryDetail";
@@ -18,11 +18,12 @@ interface DetailPanelProps {
   assets: Asset[];
   categories: Category[];
   history: HistoryEntry[];
+  assetChanges: AssetChangeEntry[];
   currency: Currency;
   rates: Record<string, number>;
 }
 
-export default function DetailPanel({ selection, assets, categories, history, currency, rates }: DetailPanelProps) {
+export default function DetailPanel({ selection, assets, categories, history, assetChanges, currency, rates }: DetailPanelProps) {
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
   function renderContent() {
@@ -68,10 +69,12 @@ export default function DetailPanel({ selection, assets, categories, history, cu
       const asset = assets.find((a) => a.id === selection.assetId);
       if (!asset) return null;
       const category = categoryMap.get(asset.categoryId);
+      const changes = assetChanges.filter((c) => c.assetId === asset.id);
       return (
         <AssetDetail
           asset={asset}
           category={category}
+          changes={changes}
           currency={currency}
           rates={rates}
         />
