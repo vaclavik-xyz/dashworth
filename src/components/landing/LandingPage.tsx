@@ -11,6 +11,12 @@ import {
   Github,
   ArrowRight,
   Share,
+  TrendingUp,
+  TrendingDown,
+  Pencil,
+  Bitcoin,
+  Home,
+  Banknote,
 } from "lucide-react";
 
 /* ───────────────────────── Fade-in on scroll ───────────────────────── */
@@ -145,6 +151,244 @@ const STEPS = [
     desc: "Your net worth is tracked automatically. See trends and make smarter decisions.",
   },
 ];
+
+/* ───────────────────────── Mockup Data ───────────────────────── */
+
+const CHART_POINTS = [
+  { x: 0,   y: 85200,  label: "Jul 2025" },
+  { x: 28,  y: 88400,  label: "Aug 2025" },
+  { x: 57,  y: 86100,  label: "Sep 2025" },
+  { x: 85,  y: 91700,  label: "Oct 2025" },
+  { x: 114, y: 94300,  label: "Nov 2025" },
+  { x: 142, y: 92800,  label: "Dec 2025" },
+  { x: 171, y: 98600,  label: "Jan 2026" },
+  { x: 200, y: 102480, label: "Feb 2026" },
+];
+
+const TOP_ASSETS = [
+  { name: "Bitcoin",         icon: Bitcoin,    color: "text-orange-400", value: "$38,500" },
+  { name: "AAPL",            icon: TrendingUp, color: "text-blue-400",   value: "$27,400" },
+  { name: "Apartment",       icon: Home,       color: "text-emerald-400", value: "$18,200" },
+  { name: "Ethereum",        icon: Bitcoin,    color: "text-orange-400", value: "$12,400" },
+  { name: "Savings Account", icon: Banknote,   color: "text-green-400",  value: "$5,980" },
+];
+
+const NW_ENTRIES = [
+  { date: "Feb 8, 2026",  value: "$102,480", delta: "+$3,240",  pct: "+3.3%",  up: true,  source: "auto" as const },
+  { date: "Feb 1, 2026",  value: "$99,240",  delta: "+$1,440",  pct: "+1.5%",  up: true,  source: "manual" as const },
+  { date: "Jan 25, 2026", value: "$97,800",  delta: "-$980",    pct: "-1.0%",  up: false, source: "auto" as const },
+];
+
+const CHANGE_ENTRIES = [
+  {
+    name: "Bitcoin", icon: Bitcoin, color: "text-orange-400",
+    date: "Feb 8, 2026", source: "auto" as const,
+    old: "$36,100", new_: "$38,500", delta: "+$2,400", pct: "+6.6%", up: true,
+  },
+  {
+    name: "AAPL", icon: TrendingUp, color: "text-blue-400",
+    date: "Feb 5, 2026", source: "auto" as const,
+    old: "$28,200", new_: "$27,400", delta: "-$800", pct: "-2.8%", up: false,
+    note: "post-earnings dip",
+  },
+  {
+    name: "Apartment", icon: Home, color: "text-emerald-400",
+    date: "Feb 2, 2026", source: "manual" as const,
+    old: "$17,800", new_: "$18,200", delta: "+$400", pct: "+2.2%", up: true,
+    note: "annual reassessment",
+  },
+];
+
+/* ───────────────────────── Mockup Components ───────────────────────── */
+
+function MockupGrid() {
+  const [activePoint, setActivePoint] = useState<number | null>(null);
+  const [historyTab, setHistoryTab] = useState<"networth" | "changes">("networth");
+
+  // Chart scaling
+  const svgW = 200, svgH = 70, padTop = 10, padBot = 10;
+  const minY = Math.min(...CHART_POINTS.map((p) => p.y));
+  const maxY = Math.max(...CHART_POINTS.map((p) => p.y));
+  const scaleY = (v: number) => padTop + ((maxY - v) / (maxY - minY)) * (svgH - padTop - padBot);
+  const polyline = CHART_POINTS.map((p) => `${p.x},${scaleY(p.y)}`).join(" ");
+  const fill = `${polyline} ${svgW},${svgH} 0,${svgH}`;
+
+  return (
+    <div className="mt-12 grid gap-6 sm:grid-cols-3">
+      {/* Mockup 1: Dashboard (Net Worth + Chart) */}
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1">
+        <p className="text-sm text-zinc-500">Total net worth</p>
+        <p className="mt-1 text-2xl font-bold tracking-tight text-white">$102,480</p>
+        <div className="mt-1.5 flex items-center gap-1.5">
+          <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+          <span className="text-xs font-medium text-emerald-400">
+            +$3,240 (+3.3%)
+          </span>
+          <span className="text-[10px] text-zinc-600">vs previous</span>
+        </div>
+
+        {/* Interactive chart */}
+        <div className="relative mt-4">
+          <svg viewBox={`0 0 ${svgW} ${svgH}`} className="h-16 w-full" preserveAspectRatio="none">
+            <linearGradient id="mockChartFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+            </linearGradient>
+            <polygon points={fill} fill="url(#mockChartFill)" />
+            <polyline
+              points={polyline}
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {CHART_POINTS.map((p, i) => (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={scaleY(p.y)}
+                r={activePoint === i ? 5 : 3}
+                fill={activePoint === i ? "#10b981" : "#09090b"}
+                stroke="#10b981"
+                strokeWidth="1.5"
+                className="cursor-pointer"
+                onClick={() => setActivePoint(activePoint === i ? null : i)}
+              />
+            ))}
+          </svg>
+
+          {/* Tooltip */}
+          {activePoint !== null && (
+            <div
+              className="absolute z-10 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs shadow-lg pointer-events-none"
+              style={{
+                left: `${(CHART_POINTS[activePoint].x / svgW) * 100}%`,
+                top: -4,
+                transform: "translate(-50%, -100%)",
+              }}
+            >
+              <p className="text-zinc-400">{CHART_POINTS[activePoint].label}</p>
+              <p className="font-medium text-white">${CHART_POINTS[activePoint].y.toLocaleString()}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-3 flex gap-2 text-[10px] text-zinc-500">
+          <span>Crypto 38%</span>
+          <span className="text-zinc-700">&middot;</span>
+          <span>Stocks 27%</span>
+          <span className="text-zinc-700">&middot;</span>
+          <span>Real Estate 24%</span>
+          <span className="text-zinc-700">&middot;</span>
+          <span>Other 11%</span>
+        </div>
+      </div>
+
+      {/* Mockup 2: Top Assets */}
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:rotate-1 sm:translate-y-2">
+        <h2 className="mb-3 text-sm font-medium text-zinc-400">Top Assets</h2>
+        <div className="space-y-2">
+          {TOP_ASSETS.map((a) => (
+            <div key={a.name} className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <a.icon className={`h-4 w-4 shrink-0 ${a.color}`} />
+                <span className="text-sm text-white truncate">{a.name}</span>
+              </div>
+              <span className="shrink-0 text-sm font-medium text-white">{a.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mockup 3: History / Changes */}
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1 sm:-translate-y-1">
+        {/* Pill switcher */}
+        <div className="mb-3 flex items-center gap-1 rounded-lg bg-zinc-800/60 p-1">
+          <button
+            onClick={() => setHistoryTab("networth")}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              historyTab === "networth"
+                ? "bg-zinc-700 text-white shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            Net Worth
+            <span className={`ml-1.5 text-[10px] ${historyTab === "networth" ? "text-emerald-500" : "text-zinc-400"}`}>3</span>
+          </button>
+          <button
+            onClick={() => setHistoryTab("changes")}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              historyTab === "changes"
+                ? "bg-zinc-700 text-white shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            Changes
+            <span className={`ml-1.5 text-[10px] ${historyTab === "changes" ? "text-emerald-500" : "text-zinc-400"}`}>3</span>
+          </button>
+        </div>
+
+        {/* Tab content */}
+        <div className="space-y-2">
+          {historyTab === "networth"
+            ? NW_ENTRIES.map((e) => (
+                <div key={e.date} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {e.up ? (
+                      <TrendingUp className="h-4 w-4 shrink-0 text-emerald-500" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 shrink-0 text-red-500" />
+                    )}
+                    <span className="text-sm text-zinc-500 truncate">{e.date}</span>
+                    {e.source === "auto" ? (
+                      <RefreshCw className="h-3 w-3 text-blue-400/60" />
+                    ) : (
+                      <Pencil className="h-3 w-3 text-zinc-500/60" />
+                    )}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="text-sm font-medium text-white">{e.value}</span>
+                    <p className={`text-xs ${e.up ? "text-emerald-500" : "text-red-500"}`}>
+                      {e.delta} ({e.pct})
+                    </p>
+                  </div>
+                </div>
+              ))
+            : CHANGE_ENTRIES.map((e) => (
+                <div key={e.name} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <e.icon className={`h-4 w-4 shrink-0 ${e.color}`} />
+                    <div className="min-w-0">
+                      <span className="text-sm text-white truncate block">{e.name}</span>
+                      <span className="text-xs text-zinc-500 flex items-center gap-1">
+                        {e.date}
+                        {e.source === "auto" ? (
+                          <RefreshCw className="h-3 w-3 text-blue-400/60" />
+                        ) : (
+                          <Pencil className="h-3 w-3 text-zinc-500/60" />
+                        )}
+                      </span>
+                      {e.note && (
+                        <span className="text-xs text-zinc-500 italic truncate block">{e.note}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="text-sm font-medium text-white">
+                      {e.old} → {e.new_}
+                    </span>
+                    <p className={`text-xs ${e.up ? "text-emerald-500" : "text-red-500"}`}>
+                      {e.delta} ({e.pct})
+                    </p>
+                  </div>
+                </div>
+              ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ───────────────────────── Landing Page ───────────────────────── */
 
@@ -288,94 +532,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           Your portfolio dashboard, asset tracking, and automatic history &mdash; all in one place.
         </p>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-3">
-          {/* Mockup 1: Dashboard */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Net Worth Over Time</p>
-            <p className="mt-2 text-2xl font-bold text-emerald-400">$847,230</p>
-            <p className="text-xs text-emerald-500/70">+12.4% this year</p>
-            {/* Mini sparkline */}
-            <svg viewBox="0 0 200 60" className="mt-4 h-12 w-full" preserveAspectRatio="none">
-              <polyline
-                points="0,55 25,50 50,45 75,42 100,38 125,30 150,22 175,18 200,10"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-              </linearGradient>
-              <polygon
-                points="0,55 25,50 50,45 75,42 100,38 125,30 150,22 175,18 200,10 200,60 0,60"
-                fill="url(#sparkFill)"
-              />
-            </svg>
-            <div className="mt-4 flex gap-2 text-[10px] text-zinc-500">
-              <span>Crypto 45%</span>
-              <span className="text-zinc-700">&middot;</span>
-              <span>Stocks 30%</span>
-              <span className="text-zinc-700">&middot;</span>
-              <span>Real Estate 25%</span>
-            </div>
-          </div>
-
-          {/* Mockup 2: Asset List */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:rotate-1 sm:translate-y-2">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Assets</p>
-            <div className="mt-4 space-y-3">
-              {[
-                { name: "Bitcoin", value: "$142,500", change: "+12.3%", live: true },
-                { name: "AAPL", value: "$89,200", change: "+3.1%", live: true },
-                { name: "Apartment", value: "$350,000", change: null, live: false },
-                { name: "ETH", value: "$28,400", change: "+8.7%", live: true },
-              ].map((a) => (
-                <div key={a.name} className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-white">{a.name}</span>
-                      {a.live && (
-                        <span className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-400">
-                          Live
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-sm font-medium text-white">{a.value}</span>
-                    {a.change && (
-                      <p className="text-[10px] text-emerald-500">{a.change}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Mockup 3: History */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1 sm:-translate-y-1">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">History</p>
-            <div className="mt-4 space-y-3">
-              {[
-                { date: "Feb 2026", value: "$847,230", change: "+5.2%" },
-                { date: "Jan 2026", value: "$805,100", change: "+2.1%" },
-                { date: "Dec 2025", value: "$788,500", change: null },
-              ].map((s) => (
-                <div key={s.date} className="flex items-center justify-between border-b border-zinc-800/60 pb-3 last:border-0 last:pb-0">
-                  <span className="text-sm text-zinc-300">{s.date}</span>
-                  <div className="text-right">
-                    <span className="text-sm font-medium text-white">{s.value}</span>
-                    {s.change && (
-                      <p className="text-[10px] text-emerald-500">{s.change}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <MockupGrid />
 
         <div className="mt-10 flex justify-center">
           <button
