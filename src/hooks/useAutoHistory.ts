@@ -33,11 +33,11 @@ export function useAutoHistory(): void {
 
     // Skip if value hasn't changed
     if (lastValueRef.current === rounded) return;
-    lastValueRef.current = rounded;
 
     // Debounce: record after 2 seconds of stability
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
+      lastValueRef.current = rounded;
       recordHistory();
     }, 2000);
 
