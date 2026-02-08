@@ -5,6 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Loader2, ChevronDown, RotateCcw } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency } from "@/lib/utils";
+import { recordHistory } from "@/lib/history";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
@@ -171,6 +172,9 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
         createdAt: now,
       });
     }
+
+    // Record net worth history after the save is committed
+    recordHistory().catch(() => {});
 
     onClose();
   }

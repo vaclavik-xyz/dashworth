@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
+import { recordHistory } from "@/lib/history";
 import type { Currency } from "@/types";
 
 export async function refreshAutoPrices(): Promise<void> {
@@ -47,4 +48,7 @@ export async function refreshAutoPrices(): Promise<void> {
       // Skip failed individual assets
     }
   }
+
+  // Record net worth history after all price updates
+  await recordHistory().catch(() => {});
 }
