@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield, Info } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield, Info, Eye, Layers, Smartphone } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -21,6 +21,28 @@ import Modal from "@/components/ui/Modal";
 import CategoryForm from "@/components/settings/CategoryForm";
 import HintTooltip from "@/components/ui/HintTooltip";
 import { usePrivacy } from "@/contexts/PrivacyContext";
+import type { LucideIcon } from "lucide-react";
+
+function GuideItem({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-[var(--dw-border)] last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:text-emerald-400"
+      >
+        <Icon className="h-4 w-4 shrink-0 text-emerald-500" />
+        <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-white">{title}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      <div className={`grid transition-all duration-200 ${open ? "grid-rows-[1fr] pb-3" : "grid-rows-[0fr]"}`}>
+        <div className="overflow-hidden">
+          <p className="pl-7 text-xs leading-relaxed text-zinc-500">{children}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -458,80 +480,12 @@ export default function SettingsPage() {
         )}
       </section>
 
-      {/* How to Use */}
+      {/* Guide */}
       <section className="mt-8">
         <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          How to Use
+          Guide
         </h2>
-        <Card className="mt-3 space-y-5">
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-              <Wallet className="h-4 w-4 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">1. Add your assets</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Go to <span className="text-zinc-400">Assets</span> and tap <span className="text-zinc-400">+ Add Asset</span>. Enter a name, pick a category, set the currency and current value. For crypto and stocks, select a price source to get automatic updates.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-              <RefreshCw className="h-4 w-4 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">2. Set live prices</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Connect to <span className="text-zinc-400">CoinGecko</span> and <span className="text-zinc-400">Yahoo Finance</span> for auto-updating crypto and stock prices. The app tracks your net worth automatically.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-              <BarChart3 className="h-4 w-4 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">3. Watch it grow</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Your net worth is tracked automatically. The <span className="text-zinc-400">Dashboard</span> shows trends, allocation breakdowns, and your top assets.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-              <RefreshCw className="h-4 w-4 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">Auto price updates</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Assets in the <span className="text-zinc-400">Crypto</span> and <span className="text-zinc-400">Stocks</span> categories can pull live prices automatically. When adding an asset, choose <span className="text-zinc-400">CoinGecko</span> or <span className="text-zinc-400">Yahoo Finance</span> as the price source and enter the ticker symbol.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-              <Shield className="h-4 w-4 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">Your data stays private</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                All data is stored locally in your browser. Nothing is sent to any server. Use <span className="text-zinc-400">Export</span> below to create backups. You can install Dashworth as an app from your browser for quick access.
-              </p>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      {/* Help */}
-      <section className="mt-8">
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          Help
-        </h2>
-        <Card className="mt-3 space-y-4">
+        <Card className="mt-3">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-white">Show Hints</p>
@@ -554,30 +508,25 @@ export default function SettingsPage() {
             </button>
           </div>
 
-          <div className="border-t border-[var(--dw-border)] pt-4">
-            <p className="text-sm font-medium text-zinc-900 dark:text-white mb-3">FAQ</p>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-zinc-300">How do I track crypto prices automatically?</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Set price source to CoinGecko and enter the coin ID (e.g. bitcoin, ethereum).</p>
-              </div>
-              <div>
-                <p className="text-sm text-zinc-300">How do I track stock prices?</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Set price source to Yahoo Finance and enter the ticker symbol (e.g. AAPL, TSLA).</p>
-              </div>
-              <div>
-                <p className="text-sm text-zinc-300">Where is my data stored?</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Everything is stored locally in your browser. Nothing is sent to any server.</p>
-              </div>
-              <div>
-                <p className="text-sm text-zinc-300">How do I move data to another device?</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Export a JSON backup in Settings → Data, then import it on the other device.</p>
-              </div>
-              <div>
-                <p className="text-sm text-zinc-300">What are groups?</p>
-                <p className="text-xs text-zinc-500 mt-0.5">Groups let you organize related assets within a category, e.g. multiple crypto wallets under &quot;Bitcoin&quot;.</p>
-              </div>
-            </div>
+          <div className="mt-4 border-t border-[var(--dw-border)] pt-1 -mb-4">
+            <GuideItem icon={Wallet} title="Getting Started">
+              Go to <span className="text-zinc-300">Assets</span> and tap <span className="text-zinc-300">+ Add Asset</span>. Enter a name, pick a category, set the currency and current value. Your net worth is calculated and tracked automatically on the <span className="text-zinc-300">Dashboard</span>.
+            </GuideItem>
+            <GuideItem icon={RefreshCw} title="Live Price Tracking">
+              Assets in <span className="text-zinc-300">Crypto</span> and <span className="text-zinc-300">Stocks</span> categories support auto-updating prices. When adding an asset, set the price source to <span className="text-zinc-300">CoinGecko</span> (crypto) or <span className="text-zinc-300">Yahoo Finance</span> (stocks) and enter the ticker symbol (e.g. bitcoin, AAPL).
+            </GuideItem>
+            <GuideItem icon={Layers} title="Categories & Groups">
+              Categories organize your assets by type (Crypto, Stocks, Real Estate, etc.). Groups are sub-folders within a category — e.g. multiple wallets under a &quot;Bitcoin&quot; group. Manage categories in Settings above.
+            </GuideItem>
+            <GuideItem icon={Eye} title="Privacy Mode">
+              Tap the <span className="text-zinc-300">eye icon</span> on the Dashboard or Assets page to hide all financial values. Percentages remain visible. Useful when checking your portfolio in public.
+            </GuideItem>
+            <GuideItem icon={Download} title="Data & Backups">
+              All data is stored locally in your browser (IndexedDB). Nothing is sent to any server. Use <span className="text-zinc-300">Export</span> below to create JSON backups. Use <span className="text-zinc-300">Import</span> to restore data or move to another device.
+            </GuideItem>
+            <GuideItem icon={Smartphone} title="Installing the App">
+              Install Dashworth to your home screen for the best experience — it works offline, launches instantly, and keeps your data longer. On iOS Safari, tap <span className="text-zinc-300">Share → Add to Home Screen</span>.
+            </GuideItem>
           </div>
         </Card>
       </section>
