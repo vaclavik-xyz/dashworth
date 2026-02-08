@@ -94,8 +94,8 @@ export default function DashboardPage() {
         {assets && categories && (
           <TopAssets assets={assets} categories={categories} currency={currency} rates={rates} />
         )}
-        {history && assetChanges && (history.length > 0 || assetChanges.length > 0) && (
-          <HistoryLog history={history} assetChanges={assetChanges} currency={currency} />
+        {history && assetChanges && assets && categories && (history.length > 0 || assetChanges.length > 0) && (
+          <HistoryLog history={history} assetChanges={assetChanges} assets={assets} categories={categories} currency={currency} />
         )}
       </div>
     </div>
