@@ -69,6 +69,11 @@
   --tooltip-border: #064e3b;
 }
 
+/* ── Recharts: remove tap focus outline on pie sectors ──── */
+.recharts-surface *:focus {
+  outline: none;
+}
+
 /* ── Base styles ─────────────────────────────────────────── */
 
 body {
