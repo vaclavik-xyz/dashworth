@@ -29,21 +29,34 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
-  const firstYear = new Date(sorted[0].createdAt).getFullYear();
-  const lastYear = new Date(sorted[sorted.length - 1].createdAt).getFullYear();
-  const spansYears = lastYear - firstYear >= 1;
+  const firstDate = new Date(sorted[0].createdAt);
+  const lastDate = new Date(sorted[sorted.length - 1].createdAt);
+  const spansYears = lastDate.getFullYear() - firstDate.getFullYear() >= 1;
+  const manyPoints = sorted.length > 20;
 
-  // Map to { date, value } and deduplicate by date label (keep latest per bucket)
-  const raw = sorted.map((h) => {
-    const d = new Date(h.createdAt);
-    return {
-      date: spansYears
-        ? d.toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
-        : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
-      value: h.totalValue,
-    };
-  });
-  const data = [...new Map(raw.map((d) => [d.date, d])).values()];
+  // Every entry gets a unique timestamp — no dedup
+  const data = sorted.map((h) => ({
+    ts: new Date(h.createdAt).getTime(),
+    value: h.totalValue,
+  }));
+
+  function formatTick(ts: number) {
+    const d = new Date(ts);
+    return spansYears
+      ? d.toLocaleDateString("cs-CZ", { month: "short", year: "2-digit" })
+      : d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short" });
+  }
+
+  function formatTooltipLabel(ts: number) {
+    const d = new Date(ts);
+    return d.toLocaleDateString("cs-CZ", {
+      day: "numeric", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  // Show ~6-8 evenly spaced ticks
+  const tickInterval = Math.max(1, Math.floor(data.length / 7)) - 1;
 
   return (
     <Card>
@@ -55,11 +68,16 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
           <LineChart width={width} height={250} data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
             <XAxis
-              dataKey="date"
+              dataKey="ts"
+              type="number"
+              domain={["dataMin", "dataMax"]}
+              scale="time"
               tick={{ fontSize: 12 }}
               className="[&_.recharts-text]:fill-zinc-500"
               axisLine={{ stroke: "var(--dw-grid)" }}
               tickLine={false}
+              tickFormatter={formatTick}
+              interval={tickInterval}
             />
             <YAxis
               tick={{ fontSize: 12 }}
@@ -78,6 +96,7 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
                 color: "var(--tooltip-text, #fafafa)",
               }}
               labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
+              labelFormatter={(ts) => formatTooltipLabel(Number(ts))}
               formatter={(value: number | undefined) => [hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency), "Net Worth"]}
             />
             <Line
@@ -85,8 +104,8 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
               dataKey="value"
               stroke="#10b981"
               strokeWidth={2}
-              dot={{ fill: "#10b981", r: 4 }}
-              activeDot={{ r: 7, stroke: "#10b981", strokeWidth: 2, fill: "#065f46" }}
+              dot={manyPoints ? false : { fill: "#10b981", r: 4 }}
+              activeDot={{ r: 6, stroke: "#10b981", strokeWidth: 2, fill: "#065f46" }}
             />
           </LineChart>
         )}
