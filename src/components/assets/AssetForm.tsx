@@ -28,7 +28,10 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
   const [ticker, setTicker] = useState(asset?.ticker ?? "");
   const [priceSource, setPriceSource] = useState<PriceSource>(asset?.priceSource ?? "manual");
   const [quantity, setQuantity] = useState(asset?.quantity?.toString() ?? "1");
-  const [unitPrice, setUnitPrice] = useState(asset?.unitPrice?.toString() ?? "");
+  const [unitPrice, setUnitPrice] = useState(
+    asset?.unitPrice?.toString()
+    ?? (asset?.currentValue && asset?.quantity ? (asset.currentValue / asset.quantity).toString() : ""),
+  );
   const [saving, setSaving] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -120,7 +123,10 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
     setSaving(true);
     const now = new Date();
 
-    const finalValue = isAutoFetch ? computedTotal : (Number(currentValue) || 0);
+    const useAutoPrice = isAutoFetch && !!ticker.trim();
+    const finalValue = useAutoPrice
+      ? (computedTotal || asset?.currentValue || 0)
+      : (Number(currentValue) || 0);
 
     const common = {
       name: name.trim(),
@@ -130,9 +136,9 @@ export default function AssetForm({ asset, onClose }: AssetFormProps) {
       currency,
       notes: notes.trim() || undefined,
       ticker: showTicker && ticker.trim() ? ticker.trim() : undefined,
-      priceSource: showTicker ? priceSource : ("manual" as PriceSource),
-      quantity: isAutoFetch ? (Number(quantity) || 1) : undefined,
-      unitPrice: isAutoFetch ? (Number(unitPrice) || 0) : undefined,
+      priceSource: showTicker && ticker.trim() ? priceSource : ("manual" as PriceSource),
+      quantity: useAutoPrice ? (Number(quantity) || 1) : undefined,
+      unitPrice: useAutoPrice ? (Number(unitPrice) || 0) : undefined,
       lastPriceUpdate: showTicker && ticker.trim() ? now : undefined,
       updatedAt: now,
     };

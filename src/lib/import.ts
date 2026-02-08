@@ -70,7 +70,14 @@ export async function importData(data: ImportDataV2): Promise<void> {
         sortOrder: cat.sortOrder ?? i,
       }));
       await db.categories.bulkAdd(categories);
-      await db.assets.bulkAdd(data.data.assets);
+      // Ensure auto-fetch assets have quantity/unitPrice
+      const assets = data.data.assets.map((a) => {
+        if (a.priceSource !== "manual" && a.quantity == null) {
+          return { ...a, quantity: 1, unitPrice: a.currentValue };
+        }
+        return a;
+      });
+      await db.assets.bulkAdd(assets);
       if (historyEntries.length > 0) {
         await db.history.bulkAdd(historyEntries);
       }
