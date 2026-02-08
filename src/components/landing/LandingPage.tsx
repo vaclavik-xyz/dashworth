@@ -607,7 +607,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
                     </span>
                   </p>
                   <p className="mt-1 text-xs text-zinc-500">
-                    Your data stays on-device
+                    Works offline, data stays on-device
                   </p>
                 </>
               ) : deferredPrompt ? (
@@ -757,7 +757,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
                 </button>
               ) : null}
               <p className="mt-1.5 text-xs text-zinc-500">
-                Your data stays on-device
+                Works offline, data stays on-device
               </p>
             </div>
             <button
