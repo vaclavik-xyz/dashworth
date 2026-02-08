@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Shield,
   Layers,
@@ -280,40 +279,112 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
         </div>
       </Section>
 
-      {/* ── Examples ── */}
-      <Section className="mx-auto max-w-3xl px-6 py-24">
+      {/* ── App Preview Mockups ── */}
+      <Section className="mx-auto max-w-5xl px-6 py-24">
         <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">
-          See how the world&apos;s richest track their wealth
+          See what Dashworth looks like in action
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-center text-sm text-zinc-500">
-          Explore real portfolio examples from billionaires and celebrities
+          Your portfolio dashboard, asset tracking, and snapshot history &mdash; all in one place.
         </p>
 
-        <div className="mt-10 flex justify-center gap-3">
-          {[
-            { initials: "EM", color: "bg-blue-600" },
-            { initials: "WB", color: "bg-amber-600" },
-            { initials: "DD", color: "bg-red-600" },
-            { initials: "LJ", color: "bg-purple-600" },
-            { initials: "DK", color: "bg-emerald-600" },
-          ].map(({ initials, color }) => (
-            <div
-              key={initials}
-              className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white ${color}`}
-            >
-              {initials}
+        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          {/* Mockup 1: Dashboard */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Net Worth Over Time</p>
+            <p className="mt-2 text-2xl font-bold text-emerald-400">$847,230</p>
+            <p className="text-xs text-emerald-500/70">+12.4% this year</p>
+            {/* Mini sparkline */}
+            <svg viewBox="0 0 200 60" className="mt-4 h-12 w-full" preserveAspectRatio="none">
+              <polyline
+                points="0,55 25,50 50,45 75,42 100,38 125,30 150,22 175,18 200,10"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+              </linearGradient>
+              <polygon
+                points="0,55 25,50 50,45 75,42 100,38 125,30 150,22 175,18 200,10 200,60 0,60"
+                fill="url(#sparkFill)"
+              />
+            </svg>
+            <div className="mt-4 flex gap-2 text-[10px] text-zinc-500">
+              <span>Crypto 45%</span>
+              <span className="text-zinc-700">&middot;</span>
+              <span>Stocks 30%</span>
+              <span className="text-zinc-700">&middot;</span>
+              <span>Real Estate 25%</span>
             </div>
-          ))}
+          </div>
+
+          {/* Mockup 2: Asset List */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:rotate-1 sm:translate-y-2">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Assets</p>
+            <div className="mt-4 space-y-3">
+              {[
+                { name: "Bitcoin", value: "$142,500", change: "+12.3%", live: true },
+                { name: "AAPL", value: "$89,200", change: "+3.1%", live: true },
+                { name: "Apartment", value: "$350,000", change: null, live: false },
+                { name: "ETH", value: "$28,400", change: "+8.7%", live: true },
+              ].map((a) => (
+                <div key={a.name} className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium text-white">{a.name}</span>
+                      {a.live && (
+                        <span className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-400">
+                          Live
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-sm font-medium text-white">{a.value}</span>
+                    {a.change && (
+                      <p className="text-[10px] text-emerald-500">{a.change}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mockup 3: Snapshot History */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-lg shadow-black/20 sm:-rotate-1 sm:-translate-y-1">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Snapshot History</p>
+            <div className="mt-4 space-y-3">
+              {[
+                { date: "Feb 2026", value: "$847,230", change: "+5.2%" },
+                { date: "Jan 2026", value: "$805,100", change: "+2.1%" },
+                { date: "Dec 2025", value: "$788,500", change: null },
+              ].map((s) => (
+                <div key={s.date} className="flex items-center justify-between border-b border-zinc-800/60 pb-3 last:border-0 last:pb-0">
+                  <span className="text-sm text-zinc-300">{s.date}</span>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-white">{s.value}</span>
+                    {s.change && (
+                      <p className="text-[10px] text-emerald-500">{s.change}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <Link
-            href="/examples"
-            className="group inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/50 px-6 py-3 text-sm font-semibold text-white transition-all hover:border-emerald-500/50 hover:bg-emerald-500/5"
+        <div className="mt-10 flex justify-center">
+          <button
+            onClick={handleStart}
+            className="group inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-500 hover:shadow-emerald-500/30 active:scale-[0.98]"
           >
-            View Examples
+            Start Tracking &mdash; It&apos;s Free
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          </button>
         </div>
       </Section>
 

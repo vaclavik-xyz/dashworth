@@ -17,7 +17,7 @@ export default function BottomNav() {
   const { isOverdue } = useSnapshotOverdue();
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 flex items-end md:hidden border-t border-[var(--dw-border)] bg-[var(--dw-nav)] pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 inset-x-0 z-40 flex items-end md:hidden border-t border-[var(--dw-border)] bg-[var(--dw-nav)] pb-[env(safe-area-inset-bottom)]">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
         const showDot = href === "/snapshots" && isOverdue;

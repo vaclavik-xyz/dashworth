@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { COLOR_HEX } from "@/constants/colors";
 import Card from "@/components/ui/Card";
-import ClientOnly from "@/components/ui/ClientOnly";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 
 // Distinct colors for groups when not tied to a category color
 const GROUP_COLORS = [
@@ -26,6 +26,7 @@ type ViewMode = "categories" | "groups";
 
 export default function AllocationPie({ assets, categories, currency, rates }: AllocationPieProps) {
   const [view, setView] = useState<ViewMode>("categories");
+  const { ref, width } = useContainerWidth();
 
   if (assets.length === 0) return null;
 
@@ -70,6 +71,8 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
   const data = view === "categories" ? buildCategoryData() : buildGroupData();
   if (data.length === 0) return null;
 
+  const pieSize = Math.min(width, 220);
+
   return (
     <Card>
       <div className="mb-4 flex items-center justify-between">
@@ -101,9 +104,9 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
           </button>
         </div>
       </div>
-      <ClientOnly>
-        <ResponsiveContainer width="100%" height={220} minWidth={0}>
-          <PieChart>
+      <div ref={ref} className="flex justify-center">
+        {width > 0 && (
+          <PieChart width={pieSize} height={220}>
             <Pie
               data={data}
               dataKey="value"
@@ -130,8 +133,8 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
               formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
             />
           </PieChart>
-        </ResponsiveContainer>
-      </ClientOnly>
+        )}
+      </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         {data.map((d) => (
           <div key={d.name} className="flex items-center gap-1.5 text-xs">

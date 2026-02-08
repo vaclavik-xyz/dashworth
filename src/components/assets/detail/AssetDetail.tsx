@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
@@ -14,7 +13,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
-import ClientOnly from "@/components/ui/ClientOnly";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 
 const tooltipStyle = {
   backgroundColor: "var(--tooltip-bg, #18181b)",
@@ -35,6 +34,7 @@ interface AssetDetailProps {
 }
 
 export default function AssetDetail({ asset, category, snapshots, currency, rates }: AssetDetailProps) {
+  const { ref, width } = useContainerWidth();
   const Icon = category ? getIcon(category.icon) : null;
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
 
@@ -79,9 +79,9 @@ export default function AssetDetail({ asset, category, snapshots, currency, rate
       {lineData.length >= 2 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
-          <ClientOnly>
-            <ResponsiveContainer width="100%" height={160} minWidth={0}>
-              <LineChart data={lineData}>
+          <div ref={ref}>
+            {width > 0 && (
+              <LineChart width={width} height={160} data={lineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
                 <XAxis
                   dataKey="date"
@@ -113,8 +113,8 @@ export default function AssetDetail({ asset, category, snapshots, currency, rate
                   activeDot={{ r: 5 }}
                 />
               </LineChart>
-            </ResponsiveContainer>
-          </ClientOnly>
+            )}
+          </div>
         </div>
       )}
     </div>

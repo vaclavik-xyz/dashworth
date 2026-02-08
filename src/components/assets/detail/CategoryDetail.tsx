@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
@@ -17,7 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
-import ClientOnly from "@/components/ui/ClientOnly";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 
 const ASSET_COLORS = [
   "#10b981", "#3b82f6", "#f97316", "#a855f7", "#ef4444",
@@ -44,6 +43,8 @@ interface CategoryDetailProps {
 }
 
 export default function CategoryDetail({ categoryId, category, assets, snapshots, currency, rates }: CategoryDetailProps) {
+  const { ref: lineRef, width: lineWidth } = useContainerWidth();
+  const { ref: pieRef, width: pieWidth } = useContainerWidth();
   const Icon = category ? getIcon(category.icon) : null;
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
   const total = assets.reduce((sum, a) => sum + convertCurrency(a.currentValue, a.currency, currency, rates), 0);
@@ -75,6 +76,8 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
       color: ASSET_COLORS[i % ASSET_COLORS.length],
     }));
 
+  const pieSize = Math.min(pieWidth, 180);
+
   return (
     <div className="space-y-6">
       <div>
@@ -93,9 +96,9 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
       {lineData.length >= 2 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
-          <ClientOnly>
-            <ResponsiveContainer width="100%" height={160} minWidth={0}>
-              <LineChart data={lineData}>
+          <div ref={lineRef}>
+            {lineWidth > 0 && (
+              <LineChart width={lineWidth} height={160} data={lineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
                 <XAxis
                   dataKey="date"
@@ -127,40 +130,38 @@ export default function CategoryDetail({ categoryId, category, assets, snapshots
                   activeDot={{ r: 5 }}
                 />
               </LineChart>
-            </ResponsiveContainer>
-          </ClientOnly>
+            )}
+          </div>
         </div>
       )}
 
       {donutData.length > 1 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Asset Allocation</h4>
-          <div className="h-[150px] md:h-[180px]">
-            <ClientOnly>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <PieChart>
-                  <Pie
-                    data={donutData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={65}
-                    strokeWidth={0}
-                  >
-                    {donutData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    itemStyle={tooltipItemStyle}
-                    formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </ClientOnly>
+          <div ref={pieRef} className="flex justify-center">
+            {pieWidth > 0 && (
+              <PieChart width={pieSize} height={pieSize}>
+                <Pie
+                  data={donutData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={pieSize * 0.22}
+                  outerRadius={pieSize * 0.36}
+                  strokeWidth={0}
+                >
+                  {donutData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  itemStyle={tooltipItemStyle}
+                  formatter={(value: number | undefined) => formatCurrency(value ?? 0, currency)}
+                />
+              </PieChart>
+            )}
           </div>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {donutData.map((d) => (

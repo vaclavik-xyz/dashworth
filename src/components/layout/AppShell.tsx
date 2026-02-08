@@ -11,7 +11,6 @@ import { devSeedDatabase } from "@/lib/dev-seed";
 import { applyTheme, watchSystemTheme } from "@/lib/theme";
 import { refreshAutoPrices } from "@/lib/auto-update";
 import { checkAutoSnapshot } from "@/lib/auto-snapshot";
-import SampleDataBanner from "./SampleDataBanner";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -36,9 +35,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [mounted, assetCount]);
 
-  // Redirect to landing if no data and not on home page or examples
+  // Redirect to landing if no data and not on home page
   useEffect(() => {
-    if (ready === false && pathname !== "/" && pathname !== "/examples") {
+    if (ready === false && pathname !== "/") {
       router.push("/");
     }
   }, [ready, pathname, router]);
@@ -89,13 +88,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // User has data OR viewing examples → show full app shell with nav
-  if (ready || pathname === "/examples") {
+  // User has data → show full app shell with nav
+  if (ready) {
     return (
       <>
         <Sidebar />
         <main className="min-h-screen pb-safe md:pl-60 md:!pb-0">
-          <SampleDataBanner />
           {children}
         </main>
         <BottomNav />

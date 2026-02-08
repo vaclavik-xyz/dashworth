@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
@@ -12,7 +11,7 @@ import {
 import type { Asset, Currency, Snapshot } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
-import ClientOnly from "@/components/ui/ClientOnly";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 
 const tooltipStyle = {
   backgroundColor: "var(--tooltip-bg, #18181b)",
@@ -34,6 +33,7 @@ interface GroupDetailProps {
 }
 
 export default function GroupDetail({ group, categoryId, assets, snapshots, currency, rates }: GroupDetailProps) {
+  const { ref, width } = useContainerWidth();
   const total = assets.reduce((sum, a) => sum + convertCurrency(a.currentValue, a.currency, currency, rates), 0);
 
   // Line chart: sum of entries with matching group + categoryId per snapshot
@@ -63,9 +63,9 @@ export default function GroupDetail({ group, categoryId, assets, snapshots, curr
       {lineData.length >= 2 && (
         <div>
           <h4 className="mb-2 text-xs font-medium text-zinc-500">Value Over Time</h4>
-          <ClientOnly>
-            <ResponsiveContainer width="100%" height={160} minWidth={0}>
-              <LineChart data={lineData}>
+          <div ref={ref}>
+            {width > 0 && (
+              <LineChart width={width} height={160} data={lineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
                 <XAxis
                   dataKey="date"
@@ -97,8 +97,8 @@ export default function GroupDetail({ group, categoryId, assets, snapshots, curr
                   activeDot={{ r: 5 }}
                 />
               </LineChart>
-            </ResponsiveContainer>
-          </ClientOnly>
+            )}
+          </div>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -12,6 +12,20 @@ interface ModalProps {
 
 export default function Modal({ open, onClose, title, children }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Keep an invisible overlay briefly after close to absorb ghost clicks on mobile
+  const [shieldActive, setShieldActive] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setShieldActive(false);
+    } else {
+      // When modal closes, activate ghost-click shield
+      setShieldActive(true);
+      const t = setTimeout(() => setShieldActive(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -26,12 +40,17 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
     };
   }, [open, onClose]);
 
+  // Invisible full-screen shield that absorbs ghost clicks after modal closes
+  if (!open && shieldActive) {
+    return <div className="fixed inset-0 z-[60]" />;
+  }
+
   if (!open) return null;
 
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 pb-16 sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 pb-16 sm:p-4"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
