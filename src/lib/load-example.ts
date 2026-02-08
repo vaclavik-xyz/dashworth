@@ -27,19 +27,24 @@ export async function loadExamplePortfolio(portfolio: ExamplePortfolio): Promise
     };
   });
 
-  // 2. Build assets from the latest snapshot (with groups)
+  // 2. Build assets from the latest snapshot (with groups + auto-fetch)
   const assetMap = new Map<string, string>(); // asset name → id
   const assets: Asset[] = latest.assets.map((a) => {
     const id = uuid();
     assetMap.set(a.name, id);
+    const value = (latest.totalUsd * a.percentage) / 100;
+    const source = a.priceSource ?? "manual";
     return {
       id,
       name: a.name,
       categoryId: categoryMap.get(a.category) ?? "",
       group: a.group,
       currency: "USD" as const,
-      currentValue: (latest.totalUsd * a.percentage) / 100,
-      priceSource: "manual" as const,
+      currentValue: value,
+      priceSource: source as Asset["priceSource"],
+      ticker: a.ticker,
+      quantity: a.quantity,
+      unitPrice: a.quantity ? value / a.quantity : undefined,
       isArchived: false,
       createdAt: now,
       updatedAt: now,

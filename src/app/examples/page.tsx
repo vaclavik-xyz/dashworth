@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Radio } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useLiveQuery } from "dexie-react-hooks";
 import { EXAMPLE_PORTFOLIOS, type ExamplePortfolio } from "@/constants/example-portfolios";
@@ -62,7 +62,15 @@ function PortfolioCard({ portfolio, onClick }: { portfolio: ExamplePortfolio; on
             {portfolio.initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{portfolio.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{portfolio.name}</p>
+              {portfolio.livePrices && (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-400">
+                  <Radio className="h-2.5 w-2.5" />
+                  Live prices
+                </span>
+              )}
+            </div>
             <p className="text-xs text-zinc-500 truncate">{portfolio.description}</p>
           </div>
           <MiniDonut assets={latest.assets} accentHex={portfolio.accentHex} />

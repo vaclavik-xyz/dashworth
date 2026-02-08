@@ -3,6 +3,12 @@ export interface ExampleAsset {
   percentage: number;
   category: string;
   group?: string;
+  /** Auto-fetch price source (defaults to "manual" if omitted) */
+  priceSource?: "coingecko" | "yahoo";
+  /** Ticker / CoinGecko ID for auto-fetch */
+  ticker?: string;
+  /** Number of units held (e.g. BTC count, share count) */
+  quantity?: number;
 }
 
 export interface ExampleCategory {
@@ -27,6 +33,8 @@ export interface ExamplePortfolio {
   description: string;
   categories: ExampleCategory[];
   snapshots: ExampleSnapshot[];
+  /** When true, shows "Live prices" badge on the examples page */
+  livePrices?: boolean;
 }
 
 export const EXAMPLE_PORTFOLIOS: ExamplePortfolio[] = [
@@ -580,6 +588,133 @@ export const EXAMPLE_PORTFOLIOS: ExamplePortfolio[] = [
           { name: "West Ham", percentage: 4, category: "Sports", group: "Football" },
           { name: "Sparta Praha", percentage: 2, category: "Sports", group: "Football" },
           { name: "Cash", percentage: 9, category: "Cash & Savings" },
+        ],
+      },
+    ],
+  },
+
+  /* ── Michael Saylor ──────────────────────────────────── */
+  {
+    id: "michael-saylor",
+    name: "Michael Saylor",
+    initials: "MS",
+    color: "bg-orange-600",
+    accentHex: "#f97316",
+    description: "Executive Chairman of Strategy (formerly MicroStrategy). Legendary Bitcoin maximalist.",
+    livePrices: true,
+    categories: [
+      { name: "Bitcoin Holdings", icon: "coins", color: "orange" },
+      { name: "Public Equities", icon: "trending-up", color: "blue" },
+      { name: "Real Estate", icon: "home", color: "amber" },
+      { name: "Other", icon: "circle-dot", color: "zinc" },
+    ],
+    snapshots: [
+      {
+        year: 2000,
+        totalUsd: 7_000_000_000,
+        label: "Dot-com peak — MicroStrategy soars",
+        assets: [
+          { name: "MicroStrategy", percentage: 95, category: "Public Equities" },
+          { name: "Real Estate", percentage: 3, category: "Real Estate" },
+          { name: "Cash", percentage: 2, category: "Other" },
+        ],
+      },
+      {
+        year: 2002,
+        totalUsd: 500_000_000,
+        label: "SEC scandal, stock crashes -99%",
+        assets: [
+          { name: "MicroStrategy", percentage: 80, category: "Public Equities" },
+          { name: "Real Estate", percentage: 15, category: "Real Estate" },
+          { name: "Cash", percentage: 5, category: "Other" },
+        ],
+      },
+      {
+        year: 2010,
+        totalUsd: 1_000_000_000,
+        label: "Slow rebuild, enterprise software",
+        assets: [
+          { name: "MicroStrategy", percentage: 75, category: "Public Equities" },
+          { name: "Real Estate", percentage: 15, category: "Real Estate" },
+          { name: "Patents & Other", percentage: 5, category: "Other" },
+          { name: "Cash", percentage: 5, category: "Other" },
+        ],
+      },
+      {
+        year: 2015,
+        totalUsd: 1_200_000_000,
+        label: "Steady recovery",
+        assets: [
+          { name: "MicroStrategy", percentage: 70, category: "Public Equities" },
+          { name: "Real Estate", percentage: 15, category: "Real Estate" },
+          { name: "Other", percentage: 10, category: "Other" },
+          { name: "Cash", percentage: 5, category: "Other" },
+        ],
+      },
+      {
+        year: 2019,
+        totalUsd: 500_000_000,
+        label: "Pre-Bitcoin era",
+        assets: [
+          { name: "MicroStrategy", percentage: 70, category: "Public Equities" },
+          { name: "Real Estate", percentage: 15, category: "Real Estate" },
+          { name: "Other", percentage: 10, category: "Other" },
+          { name: "Cash", percentage: 5, category: "Other" },
+        ],
+      },
+      {
+        year: 2020,
+        totalUsd: 1_500_000_000,
+        label: "First BTC purchase — 17,732 BTC at $9,882 avg",
+        assets: [
+          { name: "MicroStrategy", percentage: 50, category: "Public Equities" },
+          { name: "Bitcoin (Personal)", percentage: 30, category: "Bitcoin Holdings" },
+          { name: "Real Estate", percentage: 10, category: "Real Estate" },
+          { name: "Cash", percentage: 10, category: "Other" },
+        ],
+      },
+      {
+        year: 2021,
+        totalUsd: 2_500_000_000,
+        label: "BTC hits $69K, MSTR soars",
+        assets: [
+          { name: "Strategy (MSTR)", percentage: 60, category: "Public Equities" },
+          { name: "Bitcoin (Personal)", percentage: 25, category: "Bitcoin Holdings" },
+          { name: "Real Estate", percentage: 10, category: "Real Estate" },
+          { name: "Cash", percentage: 5, category: "Other" },
+        ],
+      },
+      {
+        year: 2022,
+        totalUsd: 1_200_000_000,
+        label: "Crypto winter, BTC drops to $16K",
+        assets: [
+          { name: "Strategy (MSTR)", percentage: 55, category: "Public Equities" },
+          { name: "Bitcoin (Personal)", percentage: 25, category: "Bitcoin Holdings" },
+          { name: "Real Estate", percentage: 12, category: "Real Estate" },
+          { name: "Cash", percentage: 8, category: "Other" },
+        ],
+      },
+      {
+        year: 2024,
+        totalUsd: 3_000_000_000,
+        label: "BTC recovery, MSTR +300%",
+        assets: [
+          { name: "Strategy (MSTR)", percentage: 65, category: "Public Equities" },
+          { name: "Bitcoin (Personal)", percentage: 20, category: "Bitcoin Holdings" },
+          { name: "Real Estate", percentage: 10, category: "Real Estate" },
+          { name: "Cash", percentage: 5, category: "Other" },
+        ],
+      },
+      {
+        year: 2025,
+        totalUsd: 8_000_000_000,
+        label: "BTC at $100K+, Strategy holds 500K+ BTC",
+        assets: [
+          { name: "Strategy (MSTR)", percentage: 70, category: "Public Equities", priceSource: "yahoo", ticker: "MSTR", quantity: 19_998_580, group: "Crypto Exposure" },
+          { name: "Bitcoin (Personal)", percentage: 20, category: "Bitcoin Holdings", priceSource: "coingecko", ticker: "bitcoin", quantity: 17_732, group: "Crypto Exposure" },
+          { name: "Real Estate", percentage: 5, category: "Real Estate" },
+          { name: "Other Assets", percentage: 5, category: "Other" },
         ],
       },
     ],
