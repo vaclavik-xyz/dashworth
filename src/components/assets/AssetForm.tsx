@@ -83,6 +83,19 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
     return [...groups].sort();
   }, [allAssets, categoryId]);
 
+  // Auto-convert value when currency changes (manual assets only; auto-price re-fetches)
+  function handleCurrencyChange(newCur: Currency) {
+    if (newCur === currency) return;
+    if (!isAutoFetch) {
+      const numVal = Number(currentValue);
+      if (numVal > 0) {
+        const converted = convertCurrency(numVal, currency, newCur, rates);
+        setCurrentValue(Math.round(converted).toString());
+      }
+    }
+    setCurrency(newCur);
+  }
+
   const fetchPrice = useCallback(async () => {
     if (!ticker.trim()) return;
     setFetchingPrice(true);
@@ -159,10 +172,16 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
       const prev = await db.assets.get(asset.id);
       if (prev) {
         // Convert old value to the new currency so comparison is apples-to-apples
-        const oldConverted = prev.currency !== currency
+        const currencyChanged = prev.currency !== currency;
+        const oldConverted = currencyChanged
           ? convertCurrency(prev.currentValue, prev.currency, currency, rates)
           : prev.currentValue;
-        if (Math.round(oldConverted) !== Math.round(finalValue)) {
+        // Use 5% tolerance when currency changed to absorb exchange rate spread noise
+        const pctDiff = oldConverted > 0
+          ? Math.abs(finalValue - oldConverted) / oldConverted
+          : (finalValue > 0 ? 1 : 0);
+        const threshold = currencyChanged ? 0.05 : 0;
+        if (pctDiff > threshold && Math.round(oldConverted) !== Math.round(finalValue)) {
           await db.assetChanges.add({
             assetId: asset.id,
             assetName: name.trim(),
@@ -354,7 +373,7 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
               <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
               <select
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value as Currency)}
+                onChange={(e) => handleCurrencyChange(e.target.value as Currency)}
                 className={inputClass}
               >
                 <option value="CZK">CZK</option>
@@ -404,7 +423,7 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
             <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
             <select
               value={currency}
-              onChange={(e) => setCurrency(e.target.value as Currency)}
+              onChange={(e) => handleCurrencyChange(e.target.value as Currency)}
               className={inputClass}
             >
               <option value="CZK">CZK</option>
