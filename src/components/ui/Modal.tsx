@@ -7,10 +7,11 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  size?: "sm" | "default";
   children: React.ReactNode;
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+export default function Modal({ open, onClose, title, size = "default", children }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Keep an invisible overlay briefly after close to absorb ghost clicks on mobile
@@ -50,19 +51,19 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 pb-16 sm:p-4"
+      className={`fixed inset-0 z-[60] flex justify-center bg-black/60 ${size === "sm" ? "items-center p-4" : "items-end sm:items-center pb-16 sm:p-4"}`}
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="w-full sm:max-w-lg max-h-[calc(100vh-5rem)] sm:max-h-[85vh] rounded-t-2xl sm:rounded-2xl bg-[var(--dw-card)] border border-[var(--dw-border)] shadow-xl flex flex-col">
+      <div className={`w-full ${size === "sm" ? "max-w-sm sm:max-w-md rounded-2xl" : "sm:max-w-lg rounded-t-2xl sm:rounded-2xl"} max-h-[calc(100vh-5rem)] sm:max-h-[85vh] bg-[var(--dw-card)] border border-[var(--dw-border)] shadow-xl flex flex-col`}>
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--dw-border)] px-5 py-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">{title}</h2>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="px-5 py-4 overflow-y-auto">{children}</div>
+        <div className="px-5 py-4 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:theme(colors.zinc.600)_transparent]">{children}</div>
       </div>
     </div>
   );

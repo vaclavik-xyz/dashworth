@@ -388,11 +388,9 @@ export default function AssetsPage() {
                                 <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
                                   {grp.name}
                                 </span>
-                                {grp.assets.length > 1 && (
-                                  <p className="text-xs text-zinc-500">
-                                    {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
-                                  </p>
-                                )}
+                                <p className="text-xs text-zinc-500">
+                                  {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} {grp.assets.length === 1 ? "asset" : "assets"}
+                                </p>
                               </div>
                             )}
                             <div className={`grid ${"gap-1.5"}`}>

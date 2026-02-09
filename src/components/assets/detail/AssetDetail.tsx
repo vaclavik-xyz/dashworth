@@ -18,9 +18,10 @@ import {
   Trash2,
   Zap,
   StickyNote,
-  ChevronDown,
   RotateCcw,
   Settings,
+  Plus,
+  X,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
@@ -33,6 +34,8 @@ import Button from "@/components/ui/Button";
 import TickerInput, { type TickerResult } from "@/components/shared/TickerInput";
 import CollapsibleSection from "@/components/shared/CollapsibleSection";
 import IconPicker from "@/components/ui/IconPicker";
+import Modal from "@/components/ui/Modal";
+import CategoryForm from "@/components/settings/CategoryForm";
 import type { Asset, AssetChangeEntry, Category, Currency, PriceSource } from "@/types";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -101,6 +104,8 @@ export default function AssetDetail({
   const [editCurrency, setEditCurrency] = useState<Currency>(asset.currency);
   const [editPriceSource, setEditPriceSource] = useState<PriceSource>(asset.priceSource);
   const [editNotes, setEditNotes] = useState(asset.notes ?? "");
+  const [editNewGroup, setEditNewGroup] = useState(false);
+  const [editNewCategoryOpen, setEditNewCategoryOpen] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
 
   // Reset form state when entering edit mode
@@ -119,6 +124,8 @@ export default function AssetDetail({
       setEditCurrency(asset.currency);
       setEditPriceSource(asset.priceSource);
       setEditNotes(asset.notes ?? "");
+      setEditNewGroup(false);
+      setEditNewCategoryOpen(false);
       setEditSaving(false);
     }
   }
@@ -141,8 +148,6 @@ export default function AssetDetail({
     }
     return [...groups].sort();
   }, [allAssets, editCategoryId]);
-
-  const listId = `edit-groups-${editCategoryId}`;
 
   function handleTickerResult(r: TickerResult | null) {
     if (r) {
@@ -230,6 +235,7 @@ export default function AssetDetail({
   /* ═════════════════════════ EDIT MODE ═════════════════════════ */
   if (isEditing) {
     return (
+    <>
       <div className="space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between gap-2">
@@ -255,34 +261,142 @@ export default function AssetDetail({
           <h4 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Basics</h4>
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-500">Name</label>
-            <input
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className={inputClass}
-              autoFocus
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className={inputClass}
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setEditIconOpen(!editIconOpen)}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] transition-colors ${editIconOpen ? "border-emerald-500" : ""}`}
+              >
+                {(() => {
+                  const Preview = getIcon(editIcon || editSelectedCategory?.icon || "box");
+                  return <Preview className="h-4 w-4 text-zinc-400" />;
+                })()}
+              </button>
+            </div>
+            {editIconOpen && (
+              <div className="mt-2">
+                <IconPicker
+                  value={editIcon || editSelectedCategory?.icon || "box"}
+                  onChange={(v) => setEditIcon(v === editSelectedCategory?.icon ? "" : v)}
+                  color={
+                    editSelectedCategory
+                      ? (COLOR_BADGE_CLASSES[editSelectedCategory.color] ?? COLOR_BADGE_CLASSES.zinc)
+                      : undefined
+                  }
+                />
+                {editIcon && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditIcon("");
+                      setEditIconOpen(false);
+                    }}
+                    className="mt-1.5 flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset to default
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-500">Category</label>
-            <select
-              value={editCategoryId}
-              onChange={(e) => setEditCategoryId(e.target.value)}
-              className={inputClass}
-            >
-              {allCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={editCategoryId}
+                onChange={(e) => setEditCategoryId(e.target.value)}
+                className={inputClass}
+              >
+                {allCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setEditNewCategoryOpen(true)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] text-zinc-400 hover:text-zinc-200 transition-colors"
+                title="New category"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-500">Group</label>
+            {editNewGroup ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editGroup}
+                  onChange={(e) => setEditGroup(e.target.value)}
+                  placeholder="New group name"
+                  className={inputClass}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditGroup("");
+                    setEditNewGroup(false);
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <select
+                  value={editGroup}
+                  onChange={(e) => setEditGroup(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">No group</option>
+                  {existingGroups.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditGroup("");
+                    setEditNewGroup(true);
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] text-zinc-400 hover:text-zinc-200 transition-colors"
+                  title="New group"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Notes ── */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-zinc-500">Notes</label>
+          <textarea
+            value={editNotes}
+            onChange={(e) => setEditNotes(e.target.value)}
+            placeholder="Optional notes..."
+            className={`${inputClass} resize-none`}
+            rows={2}
+          />
         </div>
 
         {/* ── Price Source (auto-price only) ── */}
         {editShowTicker && (
-          <div className="space-y-3">
-            <h4 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Price Source</h4>
+          <CollapsibleSection label="Price Source">
             <p className="text-xs text-zinc-500">
               Source:{" "}
               <span className="text-zinc-700 dark:text-zinc-300">
@@ -319,110 +433,38 @@ export default function AssetDetail({
                 Auto-update price on app open
               </span>
             </label>
-          </div>
-        )}
-
-        {/* ── Optional ── */}
-        <CollapsibleSection label="Optional">
-          {/* Icon */}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">Icon</label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setEditIconOpen(!editIconOpen)}
-                className={`flex h-9 items-center gap-2 rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 text-sm transition-colors ${
-                  editIconOpen ? "border-emerald-500" : ""
-                }`}
-              >
-                {(() => {
-                  const effectiveIcon = editIcon || editSelectedCategory?.icon || "box";
-                  const Preview = getIcon(effectiveIcon);
-                  return <Preview className="h-4 w-4 text-zinc-400" />;
-                })()}
-                <span className="text-zinc-500 text-xs">
-                  {editIcon ? "Custom" : "Category default"}
-                </span>
-                <ChevronDown
-                  className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${editIconOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-              {editIcon && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditIcon("");
-                    setEditIconOpen(false);
-                  }}
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            {editIsAutoPrice && (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-500">Currency</label>
+                <select
+                  value={editCurrency}
+                  onChange={(e) => setEditCurrency(e.target.value as Currency)}
+                  className={inputClass}
                 >
-                  <RotateCcw className="h-3 w-3" />
-                  Reset
-                </button>
-              )}
-            </div>
-            {editIconOpen && (
-              <div className="mt-2">
-                <IconPicker
-                  value={editIcon || editSelectedCategory?.icon || "box"}
-                  onChange={(v) => setEditIcon(v === editSelectedCategory?.icon ? "" : v)}
-                  color={
-                    editSelectedCategory
-                      ? (COLOR_BADGE_CLASSES[editSelectedCategory.color] ?? COLOR_BADGE_CLASSES.zinc)
-                      : undefined
-                  }
-                />
+                  <option value="CZK">CZK</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                </select>
               </div>
             )}
-          </div>
+          </CollapsibleSection>
+        )}
 
-          {/* Group */}
+        {/* ── Currency (non-ticker assets) ── */}
+        {!editShowTicker && (
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">Group</label>
-            <input
-              type="text"
-              value={editGroup}
-              onChange={(e) => setEditGroup(e.target.value)}
-              placeholder="e.g. Bitcoin, US Tech"
+            <label className="mb-1 block text-xs font-medium text-zinc-500">Currency</label>
+            <select
+              value={editCurrency}
+              onChange={(e) => setEditCurrency(e.target.value as Currency)}
               className={inputClass}
-              list={listId}
-            />
-            <datalist id={listId}>
-              {existingGroups.map((g) => (
-                <option key={g} value={g} />
-              ))}
-            </datalist>
+            >
+              <option value="CZK">CZK</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </select>
           </div>
-
-          {/* Currency */}
-          {(editIsAutoPrice || !editShowTicker) && (
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-500">Currency</label>
-              <select
-                value={editCurrency}
-                onChange={(e) => setEditCurrency(e.target.value as Currency)}
-                className={inputClass}
-              >
-                <option value="CZK">CZK</option>
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">Notes</label>
-            <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              placeholder="Optional notes..."
-              className={`${inputClass} resize-none`}
-              rows={2}
-            />
-          </div>
-
-        </CollapsibleSection>
+        )}
 
         {/* Bottom save/cancel */}
         <div className="flex justify-end gap-2 pt-2">
@@ -450,6 +492,16 @@ export default function AssetDetail({
           </button>
         </div>
       </div>
+
+      <Modal
+        open={editNewCategoryOpen}
+        onClose={() => setEditNewCategoryOpen(false)}
+        title="New Category"
+        size="sm"
+      >
+        <CategoryForm onClose={() => setEditNewCategoryOpen(false)} />
+      </Modal>
+    </>
     );
   }
 
