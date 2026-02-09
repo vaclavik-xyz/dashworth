@@ -9,6 +9,8 @@ import { recordHistory } from "@/lib/history";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
+import { convertCurrency } from "@/lib/exchange-rates";
+import { useExchangeRates } from "@/lib/useExchangeRates";
 import type { Asset, Currency, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
 import HintTooltip from "@/components/ui/HintTooltip";
@@ -23,6 +25,7 @@ interface AssetFormProps {
 export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFormProps) {
   const categories = useLiveQuery(() => db.categories.orderBy("sortOrder").toArray());
   const allAssets = useLiveQuery(() => db.assets.toArray());
+  const { rates } = useExchangeRates();
 
   const [name, setName] = useState(asset?.name ?? "");
   const [categoryId, setCategoryId] = useState(asset?.categoryId ?? defaultCategoryId ?? "");
@@ -154,17 +157,23 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
 
     if (asset) {
       const prev = await db.assets.get(asset.id);
-      if (prev && prev.currentValue !== finalValue) {
-        await db.assetChanges.add({
-          assetId: asset.id,
-          assetName: name.trim(),
-          oldValue: prev.currentValue,
-          newValue: finalValue,
-          currency,
-          source: "manual",
-          note: updateNote.trim() || undefined,
-          createdAt: now,
-        });
+      if (prev) {
+        // Convert old value to the new currency so comparison is apples-to-apples
+        const oldConverted = prev.currency !== currency
+          ? convertCurrency(prev.currentValue, prev.currency, currency, rates)
+          : prev.currentValue;
+        if (Math.round(oldConverted) !== Math.round(finalValue)) {
+          await db.assetChanges.add({
+            assetId: asset.id,
+            assetName: name.trim(),
+            oldValue: oldConverted,
+            newValue: finalValue,
+            currency,
+            source: "manual",
+            note: updateNote.trim() || undefined,
+            createdAt: now,
+          });
+        }
       }
       await db.assets.update(asset.id, common);
     } else {
