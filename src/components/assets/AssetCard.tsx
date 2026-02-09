@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { ChevronRight, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import type { Asset, AssetChangeEntry, Category, Currency } from "@/types";
 import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
@@ -55,7 +55,7 @@ export default function AssetCard({
 
   return (
     <Card className="overflow-hidden">
-      {/* Collapsed area — clickable to toggle expand */}
+      {/* Header area — clickable */}
       <div
         className="cursor-pointer"
         onClick={onToggleExpand}
@@ -71,22 +71,47 @@ export default function AssetCard({
             {hidden ? HIDDEN_VALUE : formatCurrency(asset.currentValue, asset.currency)}
           </span>
         </div>
-        {/* Row 2: Quantity/Category + % change */}
+        {/* Row 2: Quantity/Category + actions or % change */}
         <div className="mt-1 flex items-center justify-between pl-11">
           <span className="text-xs text-zinc-500 truncate">
             {isAuto && asset.quantity != null && asset.ticker
               ? `${asset.quantity.toLocaleString()} ${asset.ticker.toUpperCase()}`
               : category?.name ?? "Unknown"}
           </span>
-          {isAuto && pctChange !== null && (
-            <span className={`text-xs font-medium shrink-0 ml-2 ${pctChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-              {pctChange >= 0 ? "+" : ""}{pctChange.toFixed(1)}% {pctChange >= 0 ? "↑" : "↓"}
-            </span>
+          {isExpanded ? (
+            <div className="flex items-center gap-3 shrink-0 ml-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSettings();
+                }}
+                className="text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails();
+                }}
+                className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+              >
+                View details &rsaquo;
+              </button>
+            </div>
+          ) : (
+            isAuto && pctChange !== null && (
+              <span className={`text-xs font-medium shrink-0 ml-2 ${pctChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                {pctChange >= 0 ? "+" : ""}{pctChange.toFixed(1)}% {pctChange >= 0 ? "↑" : "↓"}
+              </span>
+            )
           )}
         </div>
       </div>
 
-      {/* Expanded area — CSS grid-rows animation */}
+      {/* Expanded area — CSS grid-rows animation (desktop only) */}
       <div
         className="grid transition-[grid-template-rows] duration-200 ease-out"
         style={{ gridTemplateRows: isExpanded ? "1fr" : "0fr" }}
@@ -100,39 +125,14 @@ export default function AssetCard({
             }}
           >
             {/* Separator */}
-            <div className="border-t border-[var(--dw-border)] my-3" />
+            <div className="border-t border-[var(--dw-border)] mt-2.5" />
 
             {/* Quick update form */}
-            <QuickUpdateForm asset={asset} currency={currency} rates={rates} />
-
-            {/* Separator */}
-            <div className="border-t border-[var(--dw-border)] my-3" />
-
-            {/* Action links */}
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewDetails();
-                }}
-                className="flex items-center gap-1 text-xs text-zinc-500 hover:text-emerald-500 transition-colors"
-              >
-                View details
-                <ChevronRight className="h-3 w-3" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSettings();
-                }}
-                className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-              >
-                <Settings className="h-3 w-3" />
-                Settings
-              </button>
-            </div>
+            <QuickUpdateForm
+              asset={asset}
+              currency={currency}
+              rates={rates}
+            />
           </div>
         </div>
       </div>

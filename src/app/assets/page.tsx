@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, Wallet, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
@@ -12,6 +12,7 @@ import { COLOR_TEXT_CLASSES } from "@/constants/colors";
 import type { Asset, AssetChangeEntry, Category, Currency } from "@/types";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
+import QuickUpdateModal from "@/components/assets/QuickUpdateModal";
 import AddAssetPanel from "@/components/assets/AddAssetPanel";
 import AssetCard from "@/components/assets/AssetCard";
 import CategoryForm from "@/components/settings/CategoryForm";
@@ -145,6 +146,7 @@ export default function AssetsPage() {
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
+  const [sheetAssetId, setSheetAssetId] = useState<string | null>(null);
   const scrollYRef = useRef(0);
 
   const { rates } = useExchangeRates();
@@ -393,7 +395,7 @@ export default function AssetsPage() {
                                 )}
                               </div>
                             )}
-                            <div className="grid gap-3">
+                            <div className={`grid ${"gap-1.5"}`}>
                               {grp.assets.map((asset) => {
                                 const isAssetSelected =
                                   selection?.type === "asset" && selection.assetId === asset.id;
@@ -414,8 +416,12 @@ export default function AssetsPage() {
                                       latestChange={latestChangeMap.get(asset.id)}
                                       isExpanded={expandedAssetId === asset.id}
                                       onToggleExpand={() => {
-                                        setExpandedAssetId((prev) => prev === asset.id ? null : asset.id);
-                                        toggleSelection(assetSelection);
+                                        if (window.matchMedia("(max-width: 767px)").matches) {
+                                          setSheetAssetId(asset.id);
+                                        } else {
+                                          setExpandedAssetId((prev) => prev === asset.id ? null : asset.id);
+                                          toggleSelection(assetSelection);
+                                        }
                                       }}
                                       onViewDetails={() => {
                                         setExpandedAssetId(null);
@@ -515,6 +521,29 @@ export default function AssetsPage() {
       >
         <CategoryForm onClose={() => setCategoryModalOpen(false)} />
       </Modal>
+
+      {/* Mobile quick update modal */}
+      <QuickUpdateModal
+        asset={sheetAssetId ? (assets ?? []).find((a) => a.id === sheetAssetId) ?? null : null}
+        category={sheetAssetId ? (categories ?? []).find((c) => c.id === (assets ?? []).find((a) => a.id === sheetAssetId)?.categoryId) : undefined}
+        currency={primaryCurrency}
+        rates={rates}
+        onClose={() => setSheetAssetId(null)}
+        onViewDetails={(assetId) => {
+          setSheetAssetId(null);
+          const sel: Selection = { type: "asset", assetId };
+          setSelection(sel);
+          navigateToMobileDetail(sel);
+        }}
+        onSettings={(assetId) => {
+          setSheetAssetId(null);
+          setEditingAssetId(assetId);
+          const sel: Selection = { type: "asset", assetId };
+          setSelection(sel);
+          navigateToMobileDetail(sel);
+        }}
+      />
     </div>
   );
 }
+

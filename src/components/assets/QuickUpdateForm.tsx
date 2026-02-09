@@ -9,25 +9,29 @@ import { recordHistory } from "@/lib/history";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 import type { Asset, Currency } from "@/types";
 
-const inputClass =
-  "w-full rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:text-white dark:placeholder-zinc-500";
+const inputBase =
+  "rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:text-white dark:placeholder-zinc-500";
+const inputClass = `w-full ${inputBase}`;
 
 interface QuickUpdateFormProps {
   asset: Asset;
   currency: Currency;
   rates: Record<string, number>;
+  noteOpen?: boolean;
+  onNoteToggle?: () => void;
 }
 
 type AutoMode = "add" | "set-qty" | "set-value";
 
-export default function QuickUpdateForm({ asset, currency, rates }: QuickUpdateFormProps) {
+export default function QuickUpdateForm({ asset, currency, rates, noteOpen: noteOpenProp, onNoteToggle }: QuickUpdateFormProps) {
   const { hidden } = usePrivacy();
   const isAuto = asset.priceSource !== "manual";
 
   const [mode, setMode] = useState<AutoMode>("add");
   const [inputValue, setInputValue] = useState("");
   const [valueCurrency, setValueCurrency] = useState<Currency>(asset.currency);
-  const [noteOpen, setNoteOpen] = useState(false);
+  const [localNoteOpen, setLocalNoteOpen] = useState(false);
+  const effectiveNoteOpen = onNoteToggle ? (noteOpenProp ?? false) : localNoteOpen;
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -119,7 +123,7 @@ export default function QuickUpdateForm({ asset, currency, rates }: QuickUpdateF
 
     setInputValue("");
     setNote("");
-    setNoteOpen(false);
+    setLocalNoteOpen(false);
     setSaving(false);
     setSuccess(true);
     if (successTimer.current) clearTimeout(successTimer.current);
@@ -149,24 +153,35 @@ export default function QuickUpdateForm({ asset, currency, rates }: QuickUpdateF
     : null;
 
   return (
-    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-      {/* Tab-underline mode selector (auto-price only) */}
+    <div className="space-y-2.5" onClick={(e) => e.stopPropagation()}>
+      {/* Tab-underline mode selector (auto-price only) + Note + gear */}
       {tabs && (
-        <div className="flex gap-4 border-b border-[var(--dw-border)]">
-          {tabs.map((t) => (
+        <div className="flex items-end border-b border-[var(--dw-border)] pt-1.5">
+          <div className="flex gap-4 flex-1">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => switchMode(t.key)}
+                className={`pb-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                  mode === t.key
+                    ? "border-emerald-500 text-emerald-500"
+                    : "border-transparent text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {!onNoteToggle && !localNoteOpen && (
             <button
-              key={t.key}
               type="button"
-              onClick={() => switchMode(t.key)}
-              className={`pb-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
-                mode === t.key
-                  ? "border-emerald-500 text-emerald-500"
-                  : "border-transparent text-zinc-500 hover:text-zinc-300"
-              }`}
+              onClick={() => setLocalNoteOpen(true)}
+              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors pb-1.5 -mb-px shrink-0"
             >
-              {t.label}
+              + Note
             </button>
-          ))}
+          )}
         </div>
       )}
 
@@ -192,14 +207,14 @@ export default function QuickUpdateForm({ asset, currency, rates }: QuickUpdateF
                     : String(Math.round(asset.currentValue))
                 : String(Math.round(asset.currentValue))
             }
-            className={inputClass}
+            className={`${inputBase} min-w-0 flex-1`}
             step="any"
           />
           {(!isAuto || mode === "set-value") && (
             <select
               value={valueCurrency}
               onChange={(e) => setValueCurrency(e.target.value as Currency)}
-              className={`${inputClass} w-20 shrink-0`}
+              className={`${inputBase} w-20 shrink-0`}
             >
               <option value="CZK">CZK</option>
               <option value="EUR">EUR</option>
@@ -252,16 +267,8 @@ export default function QuickUpdateForm({ asset, currency, rates }: QuickUpdateF
         </div>
       )}
 
-      {/* Note toggle/input */}
-      {!noteOpen ? (
-        <button
-          type="button"
-          onClick={() => setNoteOpen(true)}
-          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-        >
-          + Add note
-        </button>
-      ) : (
+      {/* Note input (when open) */}
+      {effectiveNoteOpen && (
         <input
           type="text"
           value={note}
@@ -271,6 +278,17 @@ export default function QuickUpdateForm({ asset, currency, rates }: QuickUpdateF
           className={inputClass}
           autoFocus
         />
+      )}
+
+      {/* Add note for manual assets */}
+      {!onNoteToggle && !tabs && !localNoteOpen && (
+        <button
+          type="button"
+          onClick={() => setLocalNoteOpen(true)}
+          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          + Add note
+        </button>
       )}
     </div>
   );
