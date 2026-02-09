@@ -1,9 +1,7 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
-import type { Asset, Category, Currency } from "@/types";
-import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
-import { convertCurrency } from "@/lib/exchange-rates";
+import type { Asset, AssetChangeEntry, Category } from "@/types";
+import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
@@ -13,80 +11,44 @@ import PriceSourceBadge from "@/components/ui/PriceSourceBadge";
 interface AssetCardProps {
   asset: Asset;
   category?: Category;
-  onEdit: () => void;
-  onEditMobile?: () => void;
-  onDelete: () => void;
-  primaryCurrency?: Currency;
-  rates?: Record<string, number>;
+  latestChange?: AssetChangeEntry;
 }
 
-export default function AssetCard({ asset, category, onEdit, onEditMobile, onDelete, primaryCurrency, rates }: AssetCardProps) {
+export default function AssetCard({ asset, category, latestChange }: AssetCardProps) {
   const { hidden } = usePrivacy();
   const Icon = getIcon(asset.icon ?? category?.icon ?? "box");
   const colorClass = category ? (COLOR_BADGE_CLASSES[category.color] ?? COLOR_BADGE_CLASSES.zinc) : COLOR_BADGE_CLASSES.zinc;
+  const isAuto = asset.priceSource !== "manual";
+
+  const pctChange = latestChange && latestChange.oldValue !== 0
+    ? ((latestChange.newValue - latestChange.oldValue) / latestChange.oldValue) * 100
+    : null;
 
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
-            <Icon className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="font-medium text-zinc-900 dark:text-white truncate">{asset.name}</h3>
-            <p className="text-xs text-zinc-500">
-              {category?.name ?? "Unknown"}
-              {asset.group && <span className="text-zinc-400 dark:text-zinc-600"> · {asset.group}</span>}
-            </p>
-          </div>
+      {/* Row 1: Icon + Name + Badge + Value */}
+      <div className="flex items-center gap-3">
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
+          <Icon className="h-4 w-4" />
         </div>
-
-        <div className="flex shrink-0 items-center gap-1">
-          {/* Desktop: edit in detail panel */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="hidden md:block rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          {/* Mobile: edit in bottom sheet */}
-          <button
-            onClick={(e) => { e.stopPropagation(); (onEditMobile ?? onEdit)(); }}
-            className="md:hidden rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
+        <span className="font-medium text-zinc-900 dark:text-white truncate min-w-0 flex-1">{asset.name}</span>
+        <PriceSourceBadge source={asset.priceSource} size="sm" />
+        <span className="text-base font-bold text-zinc-900 dark:text-white shrink-0">
+          {hidden ? HIDDEN_VALUE : formatCurrency(asset.currentValue, asset.currency)}
+        </span>
       </div>
-
-      <div className="mt-3 flex items-end justify-between">
-        <div>
-          <p className="text-xl font-bold text-zinc-900 dark:text-white">
-            {hidden ? HIDDEN_VALUE : formatCurrency(asset.currentValue, asset.currency)}
-          </p>
-          {asset.quantity != null && asset.unitPrice != null && !hidden && (
-            <p className="text-xs text-zinc-500">
-              {asset.quantity} × {formatCurrency(asset.unitPrice, asset.currency)}
-            </p>
-          )}
-          {primaryCurrency && rates && asset.currency !== primaryCurrency && !hidden && (
-            <p className="text-xs text-zinc-500">
-              ≈ {formatCurrency(convertCurrency(asset.currentValue, asset.currency, primaryCurrency, rates), primaryCurrency)}
-            </p>
-          )}
-        </div>
-        <div className="text-right">
-          <div className="flex items-center gap-1 mb-0.5 justify-end">
-            <PriceSourceBadge source={asset.priceSource} showLabel size="sm" />
-          </div>
-          <p className="text-xs text-zinc-600">{formatDate(asset.updatedAt)}</p>
-        </div>
+      {/* Row 2: Quantity/Category + % change */}
+      <div className="mt-1 flex items-center justify-between pl-11">
+        <span className="text-xs text-zinc-500 truncate">
+          {isAuto && asset.quantity != null && asset.ticker
+            ? `${asset.quantity.toLocaleString()} ${asset.ticker.toUpperCase()}`
+            : category?.name ?? "Unknown"}
+        </span>
+        {isAuto && pctChange !== null && (
+          <span className={`text-xs font-medium shrink-0 ml-2 ${pctChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+            {pctChange >= 0 ? "+" : ""}{pctChange.toFixed(1)}% {pctChange >= 0 ? "↑" : "↓"}
+          </span>
+        )}
       </div>
     </Card>
   );

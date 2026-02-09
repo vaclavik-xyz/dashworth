@@ -9,11 +9,12 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_TEXT_CLASSES } from "@/constants/colors";
-import type { Asset, Category, Currency } from "@/types";
+import type { Asset, AssetChangeEntry, Category, Currency } from "@/types";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import AddAssetPanel from "@/components/assets/AddAssetPanel";
 import AssetCard from "@/components/assets/AssetCard";
+import CategoryForm from "@/components/settings/CategoryForm";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
 import type { Selection } from "@/components/assets/detail/DetailPanel";
 import BottomSheet from "@/components/ui/BottomSheet";
@@ -46,19 +47,30 @@ function buildGroupedSections(
     byCat.set(asset.categoryId, list);
   }
 
-  // Sort categories by sortOrder
-  const sortedCatIds = [...byCat.keys()].sort((a, b) => {
-    const ca = categoryMap.get(a);
-    const cb = categoryMap.get(b);
-    return (ca?.sortOrder ?? 99) - (cb?.sortOrder ?? 99);
-  });
+  // Include ALL categories (even empty ones) + orphan categoryIds
+  const seen = new Set<string>();
+  const allCatIds: string[] = [];
+  for (const cat of categories) {
+    seen.add(cat.id);
+    allCatIds.push(cat.id);
+  }
+  for (const catId of byCat.keys()) {
+    if (!seen.has(catId)) allCatIds.push(catId);
+  }
 
-  return sortedCatIds.map((catId) => {
-    const catAssets = byCat.get(catId)!;
+  const sections = allCatIds.map((catId) => {
+    const catAssets = byCat.get(catId) ?? [];
     const category = categoryMap.get(catId);
 
+    // Sort assets by converted value descending
+    const sorted = [...catAssets].sort((a, b) => {
+      const va = convertCurrency(a.currentValue, a.currency, targetCurrency, rates);
+      const vb = convertCurrency(b.currentValue, b.currency, targetCurrency, rates);
+      return vb - va;
+    });
+
     const byGroup = new Map<string | null, Asset[]>();
-    for (const a of catAssets) {
+    for (const a of sorted) {
       const key = a.group ?? null;
       const list = byGroup.get(key) ?? [];
       list.push(a);
@@ -93,6 +105,16 @@ function buildGroupedSections(
       assetCount: catAssets.length,
     };
   });
+
+  // Sort: non-empty by value desc, empty at bottom by sortOrder
+  sections.sort((a, b) => {
+    if (a.assetCount > 0 && b.assetCount === 0) return -1;
+    if (a.assetCount === 0 && b.assetCount > 0) return 1;
+    if (a.assetCount > 0 && b.assetCount > 0) return b.subtotal - a.subtotal;
+    return (a.category?.sortOrder ?? 99) - (b.category?.sortOrder ?? 99);
+  });
+
+  return sections;
 }
 
 function isSelectionEqual(a: Selection, b: Selection): boolean {
@@ -121,6 +143,7 @@ export default function AssetsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [mobileSelection, setMobileSelection] = useState<Selection>(null);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
 
   const { rates } = useExchangeRates();
   const primaryCurrency: Currency = settings?.primaryCurrency ?? "CZK";
@@ -131,6 +154,18 @@ export default function AssetsPage() {
     [assets, categories, rates, primaryCurrency],
   );
 
+  // Latest change per asset (for percentage display on cards)
+  const latestChangeMap = useMemo(() => {
+    const map = new Map<string, AssetChangeEntry>();
+    if (!assetChanges) return map;
+    for (const change of assetChanges) {
+      if (!map.has(change.assetId)) {
+        map.set(change.assetId, change);
+      }
+    }
+    return map;
+  }, [assetChanges]);
+
   function openAdd(categoryId?: string) {
     setAddPanelCategoryId(categoryId);
     setAddPanelOpen(true);
@@ -139,19 +174,6 @@ export default function AssetsPage() {
   function closeAddPanel() {
     setAddPanelOpen(false);
     setAddPanelCategoryId(undefined);
-  }
-
-  function openEdit(asset: Asset) {
-    // Select the asset and enter edit mode
-    const assetSelection: Selection = { type: "asset", assetId: asset.id };
-    setSelection(assetSelection);
-    setEditingAssetId(asset.id);
-  }
-
-  function openEditMobile(asset: Asset) {
-    const assetSelection: Selection = { type: "asset", assetId: asset.id };
-    setMobileSelection(assetSelection);
-    setEditingAssetId(asset.id);
   }
 
   async function confirmDelete() {
@@ -280,84 +302,96 @@ export default function AssetsPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-4">
-                    {section.groups.map((grp, gi) => {
-                      const isGroupSelected =
-                        grp.name !== null &&
-                        selection?.type === "group" &&
-                        selection.categoryId === section.categoryId &&
-                        selection.group === grp.name;
+                  {section.assetCount === 0 ? (
+                    <p className="ml-1 text-sm text-zinc-500">No assets yet. Tap + to add one.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {section.groups.map((grp, gi) => {
+                        const isGroupSelected =
+                          grp.name !== null &&
+                          selection?.type === "group" &&
+                          selection.categoryId === section.categoryId &&
+                          selection.group === grp.name;
 
-                      const grpSelection: Selection = grp.name
-                        ? { type: "group", categoryId: section.categoryId, group: grp.name }
-                        : null;
+                        const grpSelection: Selection = grp.name
+                          ? { type: "group", categoryId: section.categoryId, group: grp.name }
+                          : null;
 
-                      return (
-                        <div key={grp.name ?? `ungrouped-${gi}`}>
-                          {/* Group header */}
-                          {grp.name && grp.assets.length > 0 && (
-                            <div
-                              className={`mb-2 ml-1 cursor-pointer rounded-lg transition-colors ${
-                                isGroupSelected
-                                  ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-2"
-                                  : "md:border-l-2 md:border-transparent md:pl-2"
-                              }`}
-                              onClick={() => {
-                                if (grpSelection) {
-                                  toggleSelection(grpSelection);
-                                  setMobileSelection(grpSelection);
-                                }
-                              }}
-                            >
-                              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                                {grp.name}
-                              </span>
-                              {grp.assets.length > 1 && (
-                                <p className="text-xs text-zinc-500">
-                                  {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
-                                </p>
-                              )}
+                        return (
+                          <div key={grp.name ?? `ungrouped-${gi}`}>
+                            {/* Group header */}
+                            {grp.name && grp.assets.length > 0 && (
+                              <div
+                                className={`mb-2 ml-1 cursor-pointer rounded-lg transition-colors ${
+                                  isGroupSelected
+                                    ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-2"
+                                    : "md:border-l-2 md:border-transparent md:pl-2"
+                                }`}
+                                onClick={() => {
+                                  if (grpSelection) {
+                                    toggleSelection(grpSelection);
+                                    setMobileSelection(grpSelection);
+                                  }
+                                }}
+                              >
+                                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                                  {grp.name}
+                                </span>
+                                {grp.assets.length > 1 && (
+                                  <p className="text-xs text-zinc-500">
+                                    {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} assets
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            <div className="grid gap-3">
+                              {grp.assets.map((asset) => {
+                                const isAssetSelected =
+                                  selection?.type === "asset" && selection.assetId === asset.id;
+                                const assetSelection: Selection = { type: "asset", assetId: asset.id };
+
+                                return (
+                                  <div
+                                    key={asset.id}
+                                    className={`rounded-lg transition-colors cursor-pointer ${
+                                      isAssetSelected
+                                        ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-1"
+                                        : "md:border-l-2 md:border-transparent md:pl-1"
+                                    }`}
+                                    onClick={() => {
+                                      toggleSelection(assetSelection);
+                                      setMobileSelection(assetSelection);
+                                    }}
+                                  >
+                                    <AssetCard
+                                      asset={asset}
+                                      category={section.category}
+                                      latestChange={latestChangeMap.get(asset.id)}
+                                    />
+                                  </div>
+                                );
+                              })}
                             </div>
-                          )}
-                          <div className="grid gap-3">
-                            {grp.assets.map((asset) => {
-                              const isAssetSelected =
-                                selection?.type === "asset" && selection.assetId === asset.id;
-                              const assetSelection: Selection = { type: "asset", assetId: asset.id };
-
-                              return (
-                                <div
-                                  key={asset.id}
-                                  className={`rounded-lg transition-colors ${
-                                    isAssetSelected
-                                      ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-1"
-                                      : "md:border-l-2 md:border-transparent md:pl-1"
-                                  }`}
-                                  onClick={() => {
-                                    toggleSelection(assetSelection);
-                                    setMobileSelection(assetSelection);
-                                  }}
-                                >
-                                  <AssetCard
-                                    asset={asset}
-                                    category={section.category}
-                                    onEdit={() => openEdit(asset)}
-                                    onEditMobile={() => openEditMobile(asset)}
-                                    onDelete={() => setDeleteTarget(asset)}
-                                    primaryCurrency={primaryCurrency}
-                                    rates={rates}
-                                  />
-                                </div>
-                              );
-                            })}
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
+
+            {/* Add Category */}
+            <div className="border-t border-[var(--dw-border)] pt-4">
+              <button
+                type="button"
+                onClick={() => setCategoryModalOpen(true)}
+                className="flex items-center gap-2 text-sm text-zinc-500 hover:text-emerald-500 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add Category
+              </button>
+            </div>
           </div>
 
           {/* Right: detail panel (desktop only) */}
@@ -427,6 +461,15 @@ export default function AssetsPage() {
           onDeleteAsset={(asset) => setDeleteTarget(asset)}
         />
       </BottomSheet>
+
+      {/* Add Category modal */}
+      <Modal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        title="Add Category"
+      >
+        <CategoryForm onClose={() => setCategoryModalOpen(false)} />
+      </Modal>
     </div>
   );
 }
