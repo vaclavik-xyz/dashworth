@@ -2,7 +2,22 @@ import { db } from "@/lib/db";
 import { getExchangeRates, convertCurrency } from "@/lib/exchange-rates";
 
 const PRICE_TTL = 15 * 60 * 1000; // 15 minutes
-const CORS_PROXY = "https://corsproxy.io/?url=";
+const CORS_PROXIES = [
+  "https://api.allorigins.win/raw?url=",
+  "https://corsproxy.io/?url=",
+];
+
+async function fetchViaProxy(url: string): Promise<Response | null> {
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const res = await fetch(`${proxy}${encodeURIComponent(url)}`);
+      if (res.ok) return res;
+    } catch {
+      // Try next proxy
+    }
+  }
+  return null;
+}
 
 async function getCached(id: string): Promise<Record<string, number> | null> {
   const cached = await db.priceCache.get(id);
@@ -42,21 +57,12 @@ export async function fetchCryptoPrice(
 
   try {
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=usd,czk,eur`;
-    const res = await fetch(url);
+    let res = await fetch(url);
     if (!res.ok) {
       // Rate limited or other API error — try via CORS proxy as fallback
-      const proxyRes = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
-      if (!proxyRes.ok) return null;
-      const proxyData = await proxyRes.json();
-      const proxyPrices = proxyData[id];
-      if (!proxyPrices?.usd) return null;
-      const proxyResult: Record<string, number> = {
-        USD: proxyPrices.usd,
-        CZK: proxyPrices.czk,
-        EUR: proxyPrices.eur,
-      };
-      await setCache(cacheKey, proxyResult);
-      return proxyResult;
+      const proxyRes = await fetchViaProxy(url);
+      if (!proxyRes) return null;
+      res = proxyRes;
     }
     const data = await res.json();
     const prices = data[id];
@@ -93,14 +99,13 @@ export async function fetchCryptoPriceDetailed(
     const url = `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(id)}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
     let data;
 
-    const res = await fetch(url);
+    let res = await fetch(url);
     if (!res.ok) {
-      const proxyRes = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
-      if (!proxyRes.ok) return null;
-      data = await proxyRes.json();
-    } else {
-      data = await res.json();
+      const proxyRes = await fetchViaProxy(url);
+      if (!proxyRes) return null;
+      res = proxyRes;
     }
+    data = await res.json();
 
     const cp = data?.market_data?.current_price;
     if (!cp?.usd) return null;
@@ -134,8 +139,8 @@ export async function fetchStockPriceDetailed(
 
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(upper)}`;
-    const res = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
-    if (!res.ok) return null;
+    const res = await fetchViaProxy(url);
+    if (!res) return null;
     const data = await res.json();
     const meta = data?.chart?.result?.[0]?.meta;
     if (!meta?.regularMarketPrice) return null;
@@ -170,8 +175,8 @@ export async function fetchStockPrice(
 
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker.toUpperCase())}`;
-    const res = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
-    if (!res.ok) return null;
+    const res = await fetchViaProxy(url);
+    if (!res) return null;
     const data = await res.json();
     const meta = data?.chart?.result?.[0]?.meta;
     if (!meta?.regularMarketPrice) return null;
