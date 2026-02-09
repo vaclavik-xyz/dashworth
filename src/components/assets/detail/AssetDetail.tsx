@@ -25,14 +25,12 @@ import {
 import { db } from "@/lib/db";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
-import { recordHistory } from "@/lib/history";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX, COLOR_BADGE_CLASSES } from "@/constants/colors";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 import Button from "@/components/ui/Button";
 import TickerInput, { type TickerResult } from "@/components/shared/TickerInput";
-import QuantityValueToggle from "@/components/shared/QuantityValueToggle";
 import CollapsibleSection from "@/components/shared/CollapsibleSection";
 import IconPicker from "@/components/ui/IconPicker";
 import type { Asset, AssetChangeEntry, Category, Currency, PriceSource } from "@/types";
@@ -100,14 +98,9 @@ export default function AssetDetail({
   const [editTicker, setEditTicker] = useState(asset.ticker ?? "");
   const [editUnitPrice, setEditUnitPrice] = useState(asset.unitPrice ?? 0);
   const [editTickerCurrency, setEditTickerCurrency] = useState<Currency>(asset.currency);
-  const [editMode, setEditMode] = useState<"quantity" | "value">("quantity");
-  const [editQuantity, setEditQuantity] = useState(asset.quantity?.toString() ?? "1");
-  const [editManualValue, setEditManualValue] = useState(asset.currentValue.toString());
-  const [editCurrentValue, setEditCurrentValue] = useState(asset.currentValue.toString());
   const [editCurrency, setEditCurrency] = useState<Currency>(asset.currency);
   const [editPriceSource, setEditPriceSource] = useState<PriceSource>(asset.priceSource);
   const [editNotes, setEditNotes] = useState(asset.notes ?? "");
-  const [editUpdateNote, setEditUpdateNote] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
   // Reset form state when entering edit mode
@@ -123,14 +116,9 @@ export default function AssetDetail({
       setEditTicker(asset.ticker ?? "");
       setEditUnitPrice(asset.unitPrice ?? 0);
       setEditTickerCurrency(asset.currency);
-      setEditMode("quantity");
-      setEditQuantity(asset.quantity?.toString() ?? "1");
-      setEditManualValue(asset.currentValue.toString());
-      setEditCurrentValue(asset.currentValue.toString());
       setEditCurrency(asset.currency);
       setEditPriceSource(asset.priceSource);
       setEditNotes(asset.notes ?? "");
-      setEditUpdateNote("");
       setEditSaving(false);
     }
   }
@@ -156,28 +144,11 @@ export default function AssetDetail({
 
   const listId = `edit-groups-${editCategoryId}`;
 
-  const editComputedTotal =
-    editMode === "quantity"
-      ? (Number(editQuantity) || 0) * editUnitPrice
-      : Number(editManualValue) || 0;
-
   function handleTickerResult(r: TickerResult | null) {
     if (r) {
       setEditUnitPrice(r.price);
       setEditTickerCurrency(r.currency);
     }
-  }
-
-  function handleCurrencyChange(newCur: Currency) {
-    if (newCur === editCurrency) return;
-    if (!editIsAutoPrice) {
-      const numVal = Number(editCurrentValue);
-      if (numVal > 0) {
-        const converted = convertCurrency(numVal, editCurrency, newCur, rates);
-        setEditCurrentValue(Math.round(converted).toString());
-      }
-    }
-    setEditCurrency(newCur);
   }
 
   async function handleSave() {
@@ -186,57 +157,25 @@ export default function AssetDetail({
 
     const now = new Date();
     const useAutoPrice = editIsAutoPrice && !!editTicker.trim();
-    const finalValue = useAutoPrice
-      ? editComputedTotal || asset.currentValue || 0
-      : Number(editCurrentValue) || 0;
     const saveCurrency = useAutoPrice ? editTickerCurrency : editCurrency;
 
-    const common = {
+    const common: Record<string, unknown> = {
       name: editName.trim(),
       categoryId: editCategoryId,
       group: editGroup.trim() || undefined,
       icon: editIcon || undefined,
-      currentValue: finalValue,
       currency: saveCurrency,
       notes: editNotes.trim() || undefined,
       ticker: editShowTicker && editTicker.trim() ? editTicker.trim() : undefined,
       priceSource: (editShowTicker && editTicker.trim() ? editPriceSource : "manual") as PriceSource,
-      quantity: useAutoPrice ? (Number(editQuantity) || 1) : undefined,
+      quantity: useAutoPrice ? (asset.quantity ?? 1) : undefined,
       unitPrice: useAutoPrice ? editUnitPrice : undefined,
+      currentValue: useAutoPrice ? (asset.quantity ?? 1) * editUnitPrice : asset.currentValue,
       lastPriceUpdate: editShowTicker && editTicker.trim() ? now : undefined,
       updatedAt: now,
     };
 
-    // Track value changes
-    const prev = await db.assets.get(asset.id);
-    if (prev) {
-      const currencyChanged = prev.currency !== saveCurrency;
-      const oldConverted = currencyChanged
-        ? convertCurrency(prev.currentValue, prev.currency, saveCurrency, rates)
-        : prev.currentValue;
-      const pctDiff =
-        oldConverted > 0
-          ? Math.abs(finalValue - oldConverted) / oldConverted
-          : finalValue > 0
-            ? 1
-            : 0;
-      const threshold = currencyChanged ? 0.05 : 0;
-      if (pctDiff > threshold && Math.round(oldConverted) !== Math.round(finalValue)) {
-        await db.assetChanges.add({
-          assetId: asset.id,
-          assetName: editName.trim(),
-          oldValue: oldConverted,
-          newValue: finalValue,
-          currency: saveCurrency,
-          source: "manual",
-          note: editUpdateNote.trim() || undefined,
-          createdAt: now,
-        });
-      }
-    }
-
     await db.assets.update(asset.id, common);
-    recordHistory("manual").catch(() => {});
     onEditEnd();
   }
 
@@ -383,52 +322,6 @@ export default function AssetDetail({
           </div>
         )}
 
-        {/* ── Value ── */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Value</h4>
-          {editIsAutoPrice && editTicker.trim() ? (
-            <QuantityValueToggle
-              mode={editMode}
-              onModeChange={setEditMode}
-              quantity={editQuantity}
-              onQuantityChange={setEditQuantity}
-              manualValue={editManualValue}
-              onManualValueChange={setEditManualValue}
-              computedTotal={editComputedTotal}
-              currency={editTickerCurrency}
-              inputClassName={inputClass}
-              toggleInactiveClassName="bg-[var(--dw-input)] text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-              quantityLabel={editIsStocks ? "Shares" : "Quantity"}
-            />
-          ) : (
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="mb-1 block text-xs font-medium text-zinc-500">Value</label>
-                <input
-                  type="number"
-                  value={editCurrentValue}
-                  onChange={(e) => setEditCurrentValue(e.target.value)}
-                  className={inputClass}
-                  min="0"
-                  step="any"
-                />
-              </div>
-              <div className="w-24">
-                <label className="mb-1 block text-xs font-medium text-zinc-500">Currency</label>
-                <select
-                  value={editCurrency}
-                  onChange={(e) => handleCurrencyChange(e.target.value as Currency)}
-                  className={inputClass}
-                >
-                  <option value="CZK">CZK</option>
-                  <option value="EUR">EUR</option>
-                  <option value="USD">USD</option>
-                </select>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* ── Optional ── */}
         <CollapsibleSection label="Optional">
           {/* Icon */}
@@ -501,8 +394,8 @@ export default function AssetDetail({
             </datalist>
           </div>
 
-          {/* Currency (auto-price only — manual already has currency in Value section) */}
-          {editIsAutoPrice && (
+          {/* Currency */}
+          {(editIsAutoPrice || !editShowTicker) && (
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-500">Currency</label>
               <select
@@ -529,18 +422,6 @@ export default function AssetDetail({
             />
           </div>
 
-          {/* Change note */}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">Change note</label>
-            <input
-              type="text"
-              value={editUpdateNote}
-              onChange={(e) => setEditUpdateNote(e.target.value)}
-              placeholder='e.g. "Rebalanced portfolio"'
-              className={inputClass}
-            />
-            <p className="mt-1 text-[10px] text-zinc-500">One-time note attached to this update</p>
-          </div>
         </CollapsibleSection>
 
         {/* Bottom save/cancel */}
@@ -555,6 +436,18 @@ export default function AssetDetail({
           >
             {editSaving ? "Saving..." : "Save"}
           </Button>
+        </div>
+
+        {/* Danger zone */}
+        <div className="border-t border-[var(--dw-border)] pt-4">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="flex items-center gap-2 text-xs text-red-500 hover:text-red-400 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete asset
+          </button>
         </div>
       </div>
     );
@@ -579,13 +472,6 @@ export default function AssetDetail({
               aria-label="Edit settings"
             >
               <Settings className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={onDelete}
-              className="rounded-lg p-1.5 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
-              aria-label="Delete"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
