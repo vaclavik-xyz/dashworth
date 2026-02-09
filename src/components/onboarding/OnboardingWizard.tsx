@@ -1,26 +1,33 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   ArrowLeft,
   ArrowRight,
-  CheckCircle,
-  Plus,
-  Trash2,
+  X,
   Loader2,
+  Bitcoin,
+  TrendingUp,
+  Banknote,
+  Box,
+  Check,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency } from "@/lib/utils";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
-import { fetchCryptoPrice, fetchStockPrice } from "@/lib/price-feeds";
+import {
+  fetchCryptoPriceDetailed,
+  fetchStockPriceDetailed,
+} from "@/lib/price-feeds";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import type { Currency, Asset, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
+import PriceSourceBadge from "@/components/ui/PriceSourceBadge";
 
-const STEPS = ["Currency", "Assets", "Review", "Done"];
+const STEPS = ["Currency", "Assets", "Review"];
 
 function detectCurrency(): Currency {
   try {
@@ -33,39 +40,22 @@ function detectCurrency(): Currency {
   }
 }
 
-const selectClass =
-  "w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2371717a%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat px-3 pr-10 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none";
-
-const smallSelectClass =
-  "w-24 appearance-none rounded-lg border border-zinc-700 bg-zinc-800 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2371717a%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat px-3 pr-10 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none";
-
 const inputClass =
   "w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none";
 
 interface DraftAsset {
   id: string;
   name: string;
+  symbol: string; // Display symbol — "BTC" for crypto, "MSFT" for stocks, "" for manual
   categoryId: string;
   value: string;
   currency: Currency;
-  // Auto-tracking fields
   ticker: string;
   priceSource: PriceSource;
   quantity: string;
   unitPrice: string;
+  subCategory?: string;
 }
-
-const EMPTY_DRAFT = (currency: Currency = "CZK"): DraftAsset => ({
-  id: uuid(),
-  name: "",
-  categoryId: "",
-  value: "",
-  currency,
-  ticker: "",
-  priceSource: "manual",
-  quantity: "1",
-  unitPrice: "",
-});
 
 /* ───────────────────────── Progress Bar ───────────────────────── */
 
@@ -145,300 +135,590 @@ function StepCurrency({
           </button>
         ))}
       </div>
+
+      <p className="text-xs text-zinc-500 mt-6 text-center">
+        You can change this anytime. Each asset can use a different currency.
+      </p>
     </div>
   );
 }
 
-/* ───────────────────────── Single Asset Card ───────────────────────── */
+/* ───────────────────────── Category Picker ───────────────────────── */
 
-function AssetDraftCard({
-  draft,
-  idx,
-  canRemove,
-  categories,
-  onUpdate,
-  onRemove,
+type WizardCategory = "crypto" | "stocks" | "cash" | "other";
+
+const CATEGORY_CARDS: {
+  key: WizardCategory;
+  label: string;
+  subtitle: string;
+  Icon: typeof Bitcoin;
+}[] = [
+  { key: "crypto", label: "Crypto", subtitle: "Auto prices", Icon: Bitcoin },
+  { key: "stocks", label: "Stocks", subtitle: "Auto prices", Icon: TrendingUp },
+  { key: "cash", label: "Cash & Bank", subtitle: "Manual entry", Icon: Banknote },
+  { key: "other", label: "Other", subtitle: "Any asset type", Icon: Box },
+];
+
+function CategoryPicker({ onPick }: { onPick: (cat: WizardCategory) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 w-full">
+      {CATEGORY_CARDS.map(({ key, label, subtitle, Icon }) => (
+        <button
+          key={key}
+          onClick={() => onPick(key)}
+          className="flex flex-col items-center gap-2 rounded-2xl border-2 border-zinc-800 bg-zinc-900/50 p-5 transition-all hover:border-zinc-700 hover:bg-zinc-800/50 active:scale-[0.98]"
+        >
+          <Icon className="h-6 w-6 text-zinc-300" />
+          <span className="text-sm font-semibold text-white">{label}</span>
+          <span className="text-[11px] text-zinc-500">{subtitle}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ───────────────────────── Auto-price form (Crypto / Stocks) ──── */
+
+const OTHER_SUBCATEGORIES = [
+  "Real Estate",
+  "Domains",
+  "Gaming",
+  "Vehicles",
+  "Collectibles",
+  "Other",
+];
+
+function AutoPriceForm({
+  type,
+  currency,
+  categoryId,
+  onAdd,
+  onCancel,
 }: {
-  draft: DraftAsset;
-  idx: number;
-  canRemove: boolean;
-  categories: { id: string; name: string }[];
-  onUpdate: (id: string, patch: Partial<DraftAsset>) => void;
-  onRemove: (id: string) => void;
+  type: "crypto" | "stocks";
+  currency: Currency;
+  categoryId: string;
+  onAdd: (draft: DraftAsset) => void;
+  onCancel: () => void;
 }) {
+  const isCrypto = type === "crypto";
+  const [ticker, setTicker] = useState("");
   const [fetchingPrice, setFetchingPrice] = useState(false);
+  const [priceResult, setPriceResult] = useState<{
+    name: string;
+    symbol: string;
+    price: number;
+    currency: Currency;
+  } | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
-  const tickerDirty = useRef(false);
+  const [mode, setMode] = useState<"quantity" | "value">("quantity");
+  const [quantity, setQuantity] = useState("1");
+  const [manualValue, setManualValue] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const catName =
-    categories.find((c) => c.id === draft.categoryId)?.name?.toLowerCase() ?? "";
-  const isCrypto = catName === "crypto";
-  const isStocks = catName === "stocks";
-  const showTicker = isCrypto || isStocks;
-  const isAutoFetch = showTicker && draft.priceSource !== "manual";
-
-  // Auto-set priceSource + auto-derive ticker when category changes
+  // Debounced price fetch using detailed API
   useEffect(() => {
-    tickerDirty.current = false;
-    if (isCrypto) {
-      const ticker = draft.name.trim().toLowerCase();
-      onUpdate(draft.id, { priceSource: "coingecko", ticker });
-    } else if (isStocks) {
-      const ticker = draft.name.trim().toUpperCase();
-      onUpdate(draft.id, { priceSource: "yahoo", ticker });
-    } else {
-      onUpdate(draft.id, { priceSource: "manual", ticker: "" });
+    if (!ticker.trim()) {
+      setPriceResult(null);
+      setPriceError(null);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.categoryId]);
-
-  // Auto-update ticker when name changes (only if user hasn't manually edited it)
-  useEffect(() => {
-    if (!showTicker || tickerDirty.current) return;
-    const derived = isCrypto
-      ? draft.name.trim().toLowerCase()
-      : draft.name.trim().toUpperCase();
-    if (derived) onUpdate(draft.id, { ticker: derived });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.name]);
-
-  // Auto-fetch price when ticker changes (debounced)
-  const fetchPrice = useCallback(async () => {
-    if (!draft.ticker.trim()) return;
-    setFetchingPrice(true);
-    setPriceError(null);
-
-    try {
-      let prices: Record<string, number> | null = null;
-      if (isCrypto) prices = await fetchCryptoPrice(draft.ticker.trim());
-      else if (isStocks) prices = await fetchStockPrice(draft.ticker.trim());
-
-      if (!prices) {
-        setPriceError("Price not found. Check the ticker.");
-        return;
-      }
-
-      const price = prices[draft.currency] ?? prices["USD"];
-      if (price != null) {
-        const cur = prices[draft.currency] ? draft.currency : "USD" as Currency;
-        onUpdate(draft.id, {
-          unitPrice: price.toString(),
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setFetchingPrice(true);
+      setPriceError(null);
+      setPriceResult(null);
+      try {
+        const result = isCrypto
+          ? await fetchCryptoPriceDetailed(ticker.trim())
+          : await fetchStockPriceDetailed(ticker.trim());
+        if (!result) {
+          setPriceError(isCrypto ? "Coin not found" : "Ticker not found");
+          return;
+        }
+        // Pick price in primary currency, fall back to USD
+        const price = result.prices[currency] ?? result.prices["USD"];
+        const cur = result.prices[currency] ? currency : ("USD" as Currency);
+        setPriceResult({
+          name: result.name,
+          symbol: result.symbol,
+          price,
           currency: cur,
-          value: ((Number(draft.quantity) || 1) * price).toString(),
         });
-      } else {
-        setPriceError("Price not available.");
+      } catch {
+        setPriceError("Failed to fetch price");
+      } finally {
+        setFetchingPrice(false);
       }
-    } catch {
-      setPriceError("Failed to fetch price.");
-    } finally {
-      setFetchingPrice(false);
-    }
-  }, [draft.ticker, draft.currency, draft.quantity, draft.id, isCrypto, isStocks, onUpdate]);
+    }, 500);
+    return () => clearTimeout(debounceRef.current);
+  }, [ticker, currency, isCrypto]);
 
-  useEffect(() => {
-    if (!showTicker || !draft.ticker.trim()) return;
-    const timeout = setTimeout(fetchPrice, 800);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.ticker]);
+  const computedTotal =
+    mode === "quantity" && priceResult
+      ? (Number(quantity) || 0) * priceResult.price
+      : Number(manualValue) || 0;
 
-  // Recompute value when quantity or unitPrice changes (auto-fetch mode)
-  useEffect(() => {
-    if (isAutoFetch && draft.unitPrice) {
-      const total = (Number(draft.quantity) || 0) * (Number(draft.unitPrice) || 0);
-      if (total > 0) onUpdate(draft.id, { value: total.toString() });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.quantity, draft.unitPrice]);
+  const canAdd = ticker.trim() && priceResult && computedTotal > 0;
+
+  function handleAdd() {
+    if (!priceResult) return;
+    const totalVal =
+      mode === "quantity"
+        ? ((Number(quantity) || 0) * priceResult.price).toString()
+        : manualValue;
+    onAdd({
+      id: uuid(),
+      name: priceResult.name,
+      symbol: priceResult.symbol,
+      categoryId,
+      value: totalVal,
+      currency: priceResult.currency,
+      ticker: ticker.trim(),
+      priceSource: isCrypto ? "coingecko" : "yahoo",
+      quantity: mode === "quantity" ? quantity : "1",
+      unitPrice: priceResult.price.toString(),
+    });
+  }
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-zinc-500">
-          Asset {idx + 1}
-        </span>
-        {canRemove && (
-          <button
-            onClick={() => onRemove(draft.id)}
-            className="rounded-lg p-1 text-zinc-600 hover:text-red-400 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+    <div className="w-full space-y-4">
+      <button
+        onClick={onCancel}
+        className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
+      </button>
+
+      <h3 className="text-lg font-semibold text-white">
+        {isCrypto ? "Add Crypto" : "Add Stock"}
+      </h3>
+
+      {/* Ticker input */}
+      <div className="relative">
+        <input
+          type="text"
+          value={ticker}
+          onChange={(e) => setTicker(e.target.value)}
+          placeholder={
+            isCrypto
+              ? "bitcoin, ethereum, solana..."
+              : "AAPL, MSFT, VOO..."
+          }
+          className={inputClass}
+          autoFocus
+        />
+        {fetchingPrice && (
+          <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-zinc-400" />
         )}
       </div>
 
-      <input
-        type="text"
-        placeholder="e.g. Bitcoin, Apartment, Apple stock..."
-        value={draft.name}
-        onChange={(e) => onUpdate(draft.id, { name: e.target.value })}
-        className={inputClass}
-      />
+      {/* Price feedback */}
+      {priceResult && (
+        <p className="flex items-center gap-1.5 text-sm text-emerald-400">
+          <Check className="h-3.5 w-3.5" />
+          {priceResult.name} &middot;{" "}
+          {formatCurrency(priceResult.price, priceResult.currency)}
+        </p>
+      )}
+      {priceError && (
+        <p className="text-sm text-red-400">&times; {priceError}</p>
+      )}
 
-      <select
-        value={draft.categoryId}
-        onChange={(e) => onUpdate(draft.id, { categoryId: e.target.value })}
-        className={selectClass}
-      >
-        <option value="">Select category...</option>
-        {categories.map((cat) => (
-          <option key={cat.id} value={cat.id}>
-            {cat.name}
-          </option>
-        ))}
-      </select>
+      {/* Quantity / Value toggle + input */}
+      {priceResult && (
+        <>
+          <div className="flex rounded-lg border border-zinc-700 overflow-hidden">
+            <button
+              onClick={() => setMode("quantity")}
+              className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                mode === "quantity"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-zinc-800 text-zinc-400 hover:text-white"
+              }`}
+            >
+              I know the quantity
+            </button>
+            <button
+              onClick={() => setMode("value")}
+              className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                mode === "value"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-zinc-800 text-zinc-400 hover:text-white"
+              }`}
+            >
+              I know the total value
+            </button>
+          </div>
 
-      {/* Ticker field for Crypto / Stocks */}
-      {showTicker && (
-        <div>
-          <div className="relative">
+          {mode === "quantity" ? (
+            <div className="space-y-2">
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="e.g. 0.5"
+                className={inputClass}
+                min="0"
+                step="any"
+              />
+              {computedTotal > 0 && (
+                <div className="rounded-lg bg-zinc-800/50 px-3 py-2 text-right">
+                  <span className="text-xs text-zinc-500">Total: </span>
+                  <span className="text-sm font-medium text-white">
+                    {formatCurrency(computedTotal, priceResult.currency)}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
             <input
-              type="text"
-              value={draft.ticker}
-              onChange={(e) => {
-                tickerDirty.current = true;
-                onUpdate(draft.id, { ticker: e.target.value });
-              }}
-              placeholder={
-                isCrypto
-                  ? "CoinGecko ID (e.g. bitcoin, ethereum)"
-                  : "Ticker (e.g. AAPL, TSLA)"
-              }
+              type="number"
+              value={manualValue}
+              onChange={(e) => setManualValue(e.target.value)}
+              placeholder="Total value"
               className={inputClass}
+              min="0"
+              step="any"
             />
-            {fetchingPrice && (
-              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-zinc-400" />
-            )}
-          </div>
-          {priceError && (
-            <p className="mt-1 text-xs text-red-400">{priceError}</p>
           )}
-        </div>
+        </>
       )}
 
-      {/* Auto-fetch: quantity + unit price */}
-      {isAutoFetch && draft.ticker.trim() ? (
-        <div className="flex gap-2">
-          <input
-            type="number"
-            placeholder="Quantity (e.g. 0.5)"
-            value={draft.quantity}
-            onChange={(e) => onUpdate(draft.id, { quantity: e.target.value })}
-            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none"
-            min="0"
-            step="any"
-          />
-          <div className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2.5 text-sm text-zinc-400">
-            {draft.unitPrice
-              ? formatCurrency(Number(draft.unitPrice), draft.currency)
-              : "..."}
-          </div>
-        </div>
-      ) : (
-        /* Manual value entry */
-        <div className="flex gap-2">
-          <input
-            type="number"
-            placeholder="50000"
-            value={draft.value}
-            onChange={(e) => onUpdate(draft.id, { value: e.target.value })}
-            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none"
-          />
-          <select
-            value={draft.currency}
-            onChange={(e) =>
-              onUpdate(draft.id, { currency: e.target.value as Currency })
-            }
-            className={smallSelectClass}
-          >
-            <option value="CZK">CZK</option>
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-          </select>
-        </div>
-      )}
-
-      {/* Show computed total for auto-fetch */}
-      {isAutoFetch && draft.unitPrice && Number(draft.value) > 0 && (
-        <div className="rounded-lg bg-zinc-800/50 px-3 py-2 text-right">
-          <span className="text-xs text-zinc-500">Total: </span>
-          <span className="text-sm font-medium text-white">
-            {formatCurrency(Number(draft.value), draft.currency)}
-          </span>
-        </div>
-      )}
+      <button
+        onClick={handleAdd}
+        disabled={!canAdd}
+        className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600"
+      >
+        Add
+      </button>
     </div>
   );
 }
 
-/* ───────────────────────── Step 2: Add Assets ───────────────────────── */
+/* ───────────────────────── Manual form (Cash & Bank) ──────────── */
+
+function ManualForm({
+  currency,
+  categoryId,
+  placeholder,
+  onAdd,
+  onCancel,
+  title,
+  subCategory,
+}: {
+  currency: Currency;
+  categoryId: string;
+  placeholder: string;
+  onAdd: (draft: DraftAsset) => void;
+  onCancel: () => void;
+  title: string;
+  subCategory?: string;
+}) {
+  const [name, setName] = useState("");
+  const [value, setValue] = useState("");
+  const [cur, setCur] = useState<Currency>(currency);
+
+  const canAdd = name.trim() && Number(value) > 0;
+
+  function handleAdd() {
+    onAdd({
+      id: uuid(),
+      name: name.trim(),
+      symbol: "",
+      categoryId,
+      value,
+      currency: cur,
+      ticker: "",
+      priceSource: "manual",
+      quantity: "1",
+      unitPrice: "",
+      subCategory,
+    });
+  }
+
+  return (
+    <div className="w-full space-y-4">
+      <button
+        onClick={onCancel}
+        className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
+      </button>
+
+      <h3 className="text-lg font-semibold text-white">{title}</h3>
+
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={placeholder}
+        className={inputClass}
+        autoFocus
+      />
+
+      <div className="flex gap-2">
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Value"
+          className={`flex-1 ${inputClass}`}
+          min="0"
+          step="any"
+        />
+        <select
+          value={cur}
+          onChange={(e) => setCur(e.target.value as Currency)}
+          className="w-24 appearance-none rounded-lg border border-zinc-700 bg-zinc-800 bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2371717a%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat px-3 pr-10 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none"
+        >
+          <option value="CZK">CZK</option>
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+        </select>
+      </div>
+
+      <button
+        onClick={handleAdd}
+        disabled={!canAdd}
+        className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600"
+      >
+        Add
+      </button>
+    </div>
+  );
+}
+
+/* ───────────────────────── "Other" form (sub-category select) ─── */
+
+function OtherForm({
+  currency,
+  categories,
+  onAdd,
+  onCancel,
+}: {
+  currency: Currency;
+  categories: { id: string; name: string }[];
+  onAdd: (draft: DraftAsset) => void;
+  onCancel: () => void;
+}) {
+  const [subCat, setSubCat] = useState<string | null>(null);
+
+  const SUB_CAT_MAP: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const sc of OTHER_SUBCATEGORIES) {
+      const match = categories.find(
+        (c) => c.name.toLowerCase() === sc.toLowerCase()
+      );
+      if (match) map[sc] = match.id;
+    }
+    return map;
+  }, [categories]);
+
+  if (!subCat) {
+    return (
+      <div className="w-full space-y-4">
+        <button
+          onClick={onCancel}
+          className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </button>
+
+        <h3 className="text-lg font-semibold text-white">What type of asset?</h3>
+
+        <div className="grid grid-cols-2 gap-2">
+          {OTHER_SUBCATEGORIES.map((sc) => (
+            <button
+              key={sc}
+              onClick={() => setSubCat(sc)}
+              className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm font-medium text-zinc-300 transition-all hover:border-zinc-700 hover:text-white active:scale-[0.98]"
+            >
+              {sc}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const categoryId =
+    SUB_CAT_MAP[subCat] ||
+    categories.find((c) => c.name.toLowerCase() === "other")?.id ||
+    categories[categories.length - 1]?.id ||
+    "";
+
+  const placeholders: Record<string, string> = {
+    "Real Estate": "Apartment, House, Land...",
+    Domains: "example.com, mysite.io...",
+    Gaming: "CS2 Skins, In-game items...",
+    Vehicles: "Car, Motorcycle, Boat...",
+    Collectibles: "Gold, Art, Wine...",
+    Other: "Anything else...",
+  };
+
+  return (
+    <ManualForm
+      currency={currency}
+      categoryId={categoryId}
+      placeholder={placeholders[subCat] || "Name..."}
+      onAdd={onAdd}
+      onCancel={() => setSubCat(null)}
+      title={`Add ${subCat}`}
+      subCategory={subCat}
+    />
+  );
+}
+
+/* ───────────────────────── Completed asset card ─────────────────── */
+
+function CompletedCard({
+  draft,
+  onRemove,
+}: {
+  draft: DraftAsset;
+  onRemove: () => void;
+}) {
+  const isAuto = draft.priceSource !== "manual" && draft.ticker;
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+      <div className="flex-1 min-w-0">
+        <span className="text-sm font-medium text-white truncate flex items-center gap-1.5">
+          {draft.name}
+          {isAuto && (
+            <span className="text-zinc-500 font-normal">
+              &middot;{" "}
+              {Number(draft.quantity).toLocaleString(undefined, {
+                maximumFractionDigits: 6,
+              })}{" "}
+              {draft.symbol || draft.ticker.toUpperCase()}
+            </span>
+          )}
+          <PriceSourceBadge source={draft.priceSource} size="sm" />
+        </span>
+      </div>
+      <span className="text-sm text-zinc-400 shrink-0">
+        {formatCurrency(Number(draft.value) || 0, draft.currency)}
+      </span>
+      <button
+        onClick={onRemove}
+        className="rounded-lg p-1 text-zinc-600 hover:text-red-400 transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+/* ───────────────────────── Step 2: Add Assets ───────────────────── */
 
 function StepAssets({
-  drafts,
-  setDrafts,
+  completedDrafts,
+  setCompletedDrafts,
   currency,
 }: {
-  drafts: DraftAsset[];
-  setDrafts: React.Dispatch<React.SetStateAction<DraftAsset[]>>;
+  completedDrafts: DraftAsset[];
+  setCompletedDrafts: React.Dispatch<React.SetStateAction<DraftAsset[]>>;
   currency: Currency;
 }) {
   const categories = useLiveQuery(() =>
     db.categories.orderBy("sortOrder").toArray()
   );
-
   const catList = useMemo(
     () => categories?.map((c) => ({ id: c.id, name: c.name })) ?? [],
     [categories]
   );
 
-  const updateDraft = useCallback(
-    (id: string, patch: Partial<DraftAsset>) => {
-      setDrafts((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, ...patch } : d))
-      );
-    },
-    [setDrafts]
+  const [editingCategory, setEditingCategory] = useState<WizardCategory | null>(
+    null
   );
 
-  function removeDraft(id: string) {
-    setDrafts((prev) => prev.filter((d) => d.id !== id));
+  function resolveCategoryId(wizCat: WizardCategory): string {
+    const nameMap: Record<string, string> = {
+      crypto: "crypto",
+      stocks: "stocks",
+      cash: "cash & savings",
+    };
+    const target = nameMap[wizCat];
+    if (!target) return "";
+    return (
+      catList.find((c) => c.name.toLowerCase() === target)?.id ??
+      catList[0]?.id ??
+      ""
+    );
   }
 
-  function addAnother() {
-    setDrafts((prev) => [...prev, EMPTY_DRAFT(currency)]);
+  function handleAdd(draft: DraftAsset) {
+    setCompletedDrafts((prev) => [...prev, draft]);
+    setEditingCategory(null);
+  }
+
+  function handleRemove(id: string) {
+    setCompletedDrafts((prev) => prev.filter((d) => d.id !== id));
   }
 
   return (
     <div className="flex w-full max-w-lg flex-col items-center">
       <h2 className="text-2xl font-bold text-white sm:text-3xl">
-        Add your first asset
+        Add your assets
       </h2>
       <p className="mt-2 text-sm text-zinc-400">
         What do you own? You can always add more later.
       </p>
 
       <div className="mt-8 w-full space-y-4">
-        {drafts.map((draft, idx) => (
-          <AssetDraftCard
-            key={draft.id}
-            draft={draft}
-            idx={idx}
-            canRemove={drafts.length > 1}
-            categories={catList}
-            onUpdate={updateDraft}
-            onRemove={removeDraft}
-          />
-        ))}
-      </div>
+        {completedDrafts.length > 0 && (
+          <div className="space-y-2">
+            {completedDrafts.map((d) => (
+              <CompletedCard
+                key={d.id}
+                draft={d}
+                onRemove={() => handleRemove(d.id)}
+              />
+            ))}
+          </div>
+        )}
 
-      <button
-        onClick={addAnother}
-        className="mt-4 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/10"
-      >
-        <Plus className="h-4 w-4" />
-        Add another asset
-      </button>
+        {editingCategory === null ? (
+          <>
+            {completedDrafts.length > 0 && (
+              <div className="flex items-center gap-3 my-2">
+                <div className="h-px flex-1 bg-zinc-800" />
+                <span className="text-xs text-zinc-500">Add another</span>
+                <div className="h-px flex-1 bg-zinc-800" />
+              </div>
+            )}
+            <CategoryPicker onPick={(cat) => setEditingCategory(cat)} />
+          </>
+        ) : editingCategory === "crypto" || editingCategory === "stocks" ? (
+          <AutoPriceForm
+            type={editingCategory}
+            currency={currency}
+            categoryId={resolveCategoryId(editingCategory)}
+            onAdd={handleAdd}
+            onCancel={() => setEditingCategory(null)}
+          />
+        ) : editingCategory === "cash" ? (
+          <ManualForm
+            currency={currency}
+            categoryId={resolveCategoryId("cash")}
+            placeholder="Savings account, Checking, Cash..."
+            onAdd={handleAdd}
+            onCancel={() => setEditingCategory(null)}
+            title="Add Cash & Bank"
+          />
+        ) : (
+          <OtherForm
+            currency={currency}
+            categories={catList}
+            onAdd={handleAdd}
+            onCancel={() => setEditingCategory(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -466,6 +746,22 @@ function StepReview({
     return sum + convertCurrency(val, d.currency, currency, rates);
   }, 0);
 
+  // Allocation breakdown by category
+  const allocation = useMemo(() => {
+    if (total <= 0) return [];
+    const byCategory: Record<string, { name: string; value: number }> = {};
+    for (const d of drafts) {
+      const cat = catMap.get(d.categoryId);
+      const catName = cat?.name ?? "Other";
+      const val = convertCurrency(parseFloat(d.value) || 0, d.currency, currency, rates);
+      if (!byCategory[catName]) byCategory[catName] = { name: catName, value: 0 };
+      byCategory[catName].value += val;
+    }
+    return Object.values(byCategory)
+      .map((c) => ({ name: c.name, pct: Math.round((c.value / total) * 100) }))
+      .sort((a, b) => b.pct - a.pct);
+  }, [drafts, catMap, total, currency, rates]);
+
   return (
     <div className="flex w-full max-w-lg flex-col items-center">
       <h2 className="text-2xl font-bold text-white sm:text-3xl">
@@ -482,6 +778,8 @@ function StepReview({
           const badge = cat
             ? COLOR_BADGE_CLASSES[cat.color] ?? COLOR_BADGE_CLASSES.zinc
             : COLOR_BADGE_CLASSES.zinc;
+          const isAuto = d.priceSource !== "manual";
+          const catName = cat?.name ?? "Other";
 
           return (
             <div key={d.id} className="flex items-center gap-3 px-4 py-3">
@@ -494,21 +792,56 @@ function StepReview({
                 <span className="block text-sm font-medium text-white truncate">
                   {d.name}
                 </span>
-                {d.ticker && (
-                  <span className="text-xs text-zinc-500">{d.ticker}</span>
-                )}
+                <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  {isAuto ? (
+                    <>
+                      <span>
+                        {Number(d.quantity).toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
+                        {d.symbol || d.ticker.toUpperCase()}
+                      </span>
+                      <span>&middot;</span>
+                      <PriceSourceBadge source={d.priceSource} showLabel size="sm" />
+                    </>
+                  ) : (
+                    <>
+                      <span>{catName}</span>
+                      <span>&middot;</span>
+                      <PriceSourceBadge source="manual" showLabel size="sm" />
+                    </>
+                  )}
+                </span>
               </div>
               <span className="text-sm text-zinc-400 shrink-0">
-                {formatCurrency(parseFloat(d.value) || 0, d.currency)}
+                {formatCurrency(
+                  convertCurrency(
+                    parseFloat(d.value) || 0,
+                    d.currency,
+                    currency,
+                    rates
+                  ),
+                  currency
+                )}
               </span>
             </div>
           );
         })}
       </div>
 
+      {/* Allocation breakdown */}
+      {allocation.length > 1 && (
+        <p className="mt-4 text-sm text-zinc-400 text-center">
+          {allocation.map((a, i) => (
+            <span key={a.name}>
+              {i > 0 && " · "}
+              {a.name} {a.pct}%
+            </span>
+          ))}
+        </p>
+      )}
+
       <div className="mt-6 text-center">
         <p className="text-sm text-zinc-500">Total net worth</p>
-        <p className="mt-1 text-3xl font-bold text-white">
+        <p className="mt-1 text-4xl font-bold text-white">
           {formatCurrency(total, currency)}
         </p>
       </div>
@@ -524,47 +857,6 @@ function StepReview({
   );
 }
 
-/* ───────────────────────── Step 4: Done ───────────────────────── */
-
-function StepDone({
-  totalNetWorth,
-  currency,
-  onFinish,
-}: {
-  totalNetWorth: number;
-  currency: Currency;
-  onFinish: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
-        <CheckCircle className="h-10 w-10 text-emerald-500" />
-      </div>
-
-      <h2 className="mt-6 text-2xl font-bold text-white sm:text-3xl">
-        You&apos;re all set!
-      </h2>
-
-      <p className="mt-4 text-sm text-zinc-500">Your net worth</p>
-      <p className="mt-1 text-4xl font-bold text-white">
-        {formatCurrency(totalNetWorth, currency)}
-      </p>
-
-      <p className="mx-auto mt-6 max-w-xs text-sm text-zinc-400">
-        Your data is stored locally. No one else can see it.
-      </p>
-
-      <button
-        onClick={onFinish}
-        className="group mt-10 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-500 hover:shadow-emerald-500/30 active:scale-[0.98]"
-      >
-        Go to Dashboard
-        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-      </button>
-    </div>
-  );
-}
-
 /* ───────────────────────── Wizard ───────────────────────── */
 
 export default function OnboardingWizard({
@@ -575,7 +867,6 @@ export default function OnboardingWizard({
   const [step, setStep] = useState(0);
   const [currency, setCurrency] = useState<Currency>("USD");
 
-  // Detect from browser locale after hydration (avoids SSR mismatch)
   const currencyDetected = useRef(false);
   useEffect(() => {
     if (!currencyDetected.current) {
@@ -583,29 +874,22 @@ export default function OnboardingWizard({
       setCurrency(detectCurrency());
     }
   }, []);
-  const [drafts, setDrafts] = useState<DraftAsset[]>([EMPTY_DRAFT()]);
+
+  const [completedDrafts, setCompletedDrafts] = useState<DraftAsset[]>([]);
   const [saving, setSaving] = useState(false);
-  const [totalNetWorth, setTotalNetWorth] = useState(0);
 
   const { rates } = useExchangeRates();
 
-  const validDrafts = drafts.filter(
+  const validDrafts = completedDrafts.filter(
     (d) => d.name.trim() && d.categoryId && parseFloat(d.value) > 0
   );
+
   const canAdvance =
-    step === 0 ||
-    (step === 1 && validDrafts.length > 0) ||
-    step === 2 ||
-    step === 3;
+    step === 0 || (step === 1 && validDrafts.length > 0) || step === 2;
 
   async function saveAll() {
     setSaving(true);
     const now = new Date();
-
-    // Update primary currency
-    await db.settings.update("settings", { primaryCurrency: currency });
-
-    // Create assets
     const assets: Asset[] = validDrafts.map((d) => {
       const isAutoFetch = d.priceSource !== "manual" && d.ticker.trim();
       return {
@@ -625,52 +909,62 @@ export default function OnboardingWizard({
       };
     });
 
-    await db.assets.bulkAdd(assets);
-
-    // Record initial history entry
     const total = assets.reduce(
       (sum, a) =>
         sum + convertCurrency(a.currentValue, a.currency, currency, rates),
       0
     );
 
-    await db.history.add({
-      totalValue: total,
-      currency,
-      createdAt: now,
+    await db.transaction("rw", [db.settings, db.assets, db.history], async () => {
+      const existing = await db.settings.get("settings");
+      await db.settings.put({
+        id: "settings",
+        theme: "dark",
+        showHints: true,
+        ...existing,
+        primaryCurrency: currency,
+      } as import("@/types").UserSettings);
+      await db.assets.bulkAdd(assets);
+      await db.history.add({
+        totalValue: total,
+        currency,
+        createdAt: now,
+      });
     });
 
-    setTotalNetWorth(total);
     setSaving(false);
-    setStep(3);
+    onComplete();
   }
 
   function next() {
-    if (step === 2) {
+    if (step === 0) {
+      setCompletedDrafts((prev) => prev.map((d) => ({ ...d, currency })));
+      setStep(1);
+    } else if (step === 1) {
+      setStep(2);
+    } else if (step === 2) {
       saveAll();
-    } else if (step === 3) {
-      onComplete();
-    } else {
-      setStep((s) => s + 1);
     }
+  }
+
+  function back() {
+    if (step > 0) setStep((s) => s - 1);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#09090b]">
-      {/* Progress bar */}
-      <div className="shrink-0 px-6 pt-6 pb-4 sm:px-10">
+      <div className="shrink-0 px-6 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-4 sm:px-10">
         <ProgressBar step={step} />
       </div>
 
-      {/* Content */}
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 pb-32">
         {step === 0 && (
           <StepCurrency selected={currency} onSelect={setCurrency} />
         )}
         {step === 1 && (
           <StepAssets
-            drafts={drafts}
-            setDrafts={setDrafts}
+            completedDrafts={completedDrafts}
+            setCompletedDrafts={setCompletedDrafts}
             currency={currency}
           />
         )}
@@ -683,50 +977,40 @@ export default function OnboardingWizard({
             saving={saving}
           />
         )}
-        {step === 3 && (
-          <StepDone
-            totalNetWorth={totalNetWorth}
-            currency={currency}
-            onFinish={onComplete}
-          />
-        )}
       </div>
 
-      {/* Navigation buttons */}
-      {step < 3 && (
-        <div className="fixed bottom-0 inset-x-0 border-t border-zinc-800/60 bg-[#09090b]/90 px-6 py-4 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-lg items-center justify-between">
-            <button
-              onClick={() => setStep((s) => s - 1)}
-              className={`flex items-center gap-1.5 text-sm font-medium text-zinc-400 transition-colors hover:text-white ${
-                step === 0 ? "invisible" : ""
-              }`}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </button>
+      <div className="fixed bottom-0 inset-x-0 border-t border-zinc-800/60 bg-[#09090b]/90 px-6 py-4 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-lg items-center justify-between">
+          <button
+            onClick={back}
+            className={`flex items-center gap-1.5 text-sm font-medium text-zinc-400 transition-colors hover:text-white ${
+              step === 0 ? "invisible" : ""
+            }`}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
 
-            {step === 2 ? (
-              <Button
-                onClick={saveAll}
-                disabled={saving}
-                className="rounded-full px-6"
-              >
-                {saving ? "Saving..." : "Save & Start Tracking"}
-              </Button>
-            ) : (
-              <button
-                onClick={next}
-                disabled={!canAdvance}
-                className="group flex items-center gap-1.5 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600"
-              >
-                Continue
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            )}
-          </div>
+          {step === 2 ? (
+            <Button
+              onClick={saveAll}
+              disabled={saving}
+              className="rounded-full px-6"
+            >
+              {saving ? "Saving..." : "Save & Start Tracking"}
+            </Button>
+          ) : (
+            <button
+              onClick={next}
+              disabled={!canAdvance}
+              className="group flex items-center gap-1.5 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600"
+            >
+              Continue
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

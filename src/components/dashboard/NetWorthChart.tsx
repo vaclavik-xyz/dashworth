@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 import type { Currency, HistoryEntry } from "@/types";
 import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
@@ -23,11 +24,58 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
   const { ref, width } = useContainerWidth();
   const { hidden } = usePrivacy();
 
-  if (history.length < 2) return null;
-
   const sorted = [...history].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
+
+  // Single entry — show placeholder with dot + baseline
+  if (sorted.length < 2) {
+    const value = sorted[0]?.totalValue ?? 0;
+    return (
+      <Card>
+        <h2 className="mb-4 text-sm font-medium text-zinc-400">
+          Net Worth Over Time
+        </h2>
+        <div ref={ref} className="overflow-hidden">
+          {width > 0 && (
+            <LineChart
+              width={width}
+              height={200}
+              data={[{ idx: 0, value }, { idx: 1, value }]}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
+              <XAxis hide />
+              <YAxis hide domain={[(value * 0.9) || 0, (value * 1.1) || 100]} />
+              <ReferenceLine y={value} stroke="#10b981" strokeDasharray="6 4" strokeOpacity={0.4} />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="transparent"
+                dot={(_props: Record<string, unknown>) => {
+                  const { cx, cy, index } = _props as { cx: number; cy: number; index: number };
+                  if (index !== 0) return <circle key="hidden" r={0} />;
+                  return (
+                    <circle
+                      key="dot"
+                      cx={cx}
+                      cy={cy}
+                      r={6}
+                      fill="#10b981"
+                      stroke="#065f46"
+                      strokeWidth={2}
+                    />
+                  );
+                }}
+              />
+            </LineChart>
+          )}
+        </div>
+        <p className="mt-3 text-center text-xs text-zinc-500">
+          Your chart will grow as your portfolio changes
+        </p>
+      </Card>
+    );
+  }
 
   const firstDate = new Date(sorted[0].createdAt);
   const lastDate = new Date(sorted[sorted.length - 1].createdAt);

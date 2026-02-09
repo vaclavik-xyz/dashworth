@@ -7,6 +7,7 @@ import { getIcon } from "@/lib/icons";
 import { COLOR_TEXT_MUTED_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
 import { usePrivacy } from "@/contexts/PrivacyContext";
+import PriceSourceBadge from "@/components/ui/PriceSourceBadge";
 
 interface TopAssetsProps {
   assets: Asset[];
@@ -43,6 +44,9 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
               <div className="flex items-center gap-2.5 min-w-0">
                 <Icon className={`h-4 w-4 shrink-0 ${colorClass}`} />
                 <span className="text-sm text-zinc-900 dark:text-white truncate">{asset.name}</span>
+                <span className="shrink-0">
+                  <PriceSourceBadge source={asset.priceSource} size="sm" />
+                </span>
               </div>
               <div className="shrink-0 text-right">
                 <span className="text-sm font-medium text-zinc-900 dark:text-white">

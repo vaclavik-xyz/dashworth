@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { Asset, Category, Currency } from "@/types";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
@@ -8,6 +8,7 @@ import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
 import { usePrivacy } from "@/contexts/PrivacyContext";
+import PriceSourceBadge from "@/components/ui/PriceSourceBadge";
 
 interface AssetCardProps {
   asset: Asset;
@@ -72,12 +73,9 @@ export default function AssetCard({ asset, category, onEdit, onDelete, primaryCu
           )}
         </div>
         <div className="text-right">
-          {asset.priceSource !== "manual" && (
-            <div className="flex items-center gap-1 text-xs text-emerald-500 mb-0.5 justify-end">
-              <RefreshCw className="h-3 w-3" />
-              <span>Auto</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1 mb-0.5 justify-end">
+            <PriceSourceBadge source={asset.priceSource} showLabel size="sm" />
+          </div>
           <p className="text-xs text-zinc-600">{formatDate(asset.updatedAt)}</p>
         </div>
       </div>

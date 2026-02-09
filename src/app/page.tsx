@@ -66,7 +66,7 @@ export default function DashboardPage() {
         previousEntry={history?.[1]}
       />
 
-      {/* Charts */}
+      {/* Row 1: Chart + Allocation */}
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
         {history && (
           <NetWorthChart history={history} currency={currency} />
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Bottom sections */}
+      {/* Row 2: Top Assets + History */}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         {assets && categories && (
           <TopAssets assets={assets} categories={categories} currency={currency} rates={rates} />

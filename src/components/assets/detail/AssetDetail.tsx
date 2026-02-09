@@ -16,6 +16,7 @@ import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { usePrivacy } from "@/contexts/PrivacyContext";
+import PriceSourceBadge from "@/components/ui/PriceSourceBadge";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -100,6 +101,13 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
             <p>Group: <span className="text-zinc-700 dark:text-zinc-300">{asset.group}</span></p>
           )}
           <p>Currency: <span className="text-zinc-700 dark:text-zinc-300">{asset.currency}</span></p>
+          <p className="flex items-center gap-1">
+            Price source:{" "}
+            <span className="inline-flex items-center gap-1 text-zinc-700 dark:text-zinc-300">
+              {asset.priceSource === "coingecko" ? "CoinGecko" : asset.priceSource === "yahoo" ? "Yahoo Finance" : "Manual"}
+              <PriceSourceBadge source={asset.priceSource} size="sm" />
+            </span>
+          </p>
           <p>Updated: <span className="text-zinc-700 dark:text-zinc-300">{formatDate(asset.updatedAt)}{", "}{new Date(asset.updatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span></p>
         </div>
         {asset.notes && (
