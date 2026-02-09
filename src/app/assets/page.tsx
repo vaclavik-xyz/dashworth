@@ -13,6 +13,7 @@ import type { Asset, Category, Currency } from "@/types";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import AssetForm from "@/components/assets/AssetForm";
+import AddAssetPanel from "@/components/assets/AddAssetPanel";
 import AssetCard from "@/components/assets/AssetCard";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
 import type { Selection } from "@/components/assets/detail/DetailPanel";
@@ -116,8 +117,9 @@ export default function AssetsPage() {
   const { hidden, toggle } = usePrivacy();
 
   const [editingAsset, setEditingAsset] = useState<Asset | undefined>();
-  const [defaultCategoryId, setDefaultCategoryId] = useState<string | undefined>();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [addPanelOpen, setAddPanelOpen] = useState(false);
+  const [addPanelCategoryId, setAddPanelCategoryId] = useState<string | undefined>();
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [mobileSelection, setMobileSelection] = useState<Selection>(null);
@@ -132,21 +134,23 @@ export default function AssetsPage() {
   );
 
   function openAdd(categoryId?: string) {
-    setEditingAsset(undefined);
-    setDefaultCategoryId(categoryId);
-    setModalOpen(true);
+    setAddPanelCategoryId(categoryId);
+    setAddPanelOpen(true);
+  }
+
+  function closeAddPanel() {
+    setAddPanelOpen(false);
+    setAddPanelCategoryId(undefined);
   }
 
   function openEdit(asset: Asset) {
     setEditingAsset(asset);
-    setDefaultCategoryId(undefined);
-    setModalOpen(true);
+    setEditModalOpen(true);
   }
 
-  function closeModal() {
-    setModalOpen(false);
+  function closeEditModal() {
+    setEditModalOpen(false);
     setEditingAsset(undefined);
-    setDefaultCategoryId(undefined);
   }
 
   async function confirmDelete() {
@@ -351,13 +355,20 @@ export default function AssetsPage() {
         </div>
       )}
 
-      {/* Add/Edit modal */}
+      {/* Add asset panel */}
+      <AddAssetPanel
+        open={addPanelOpen}
+        onClose={closeAddPanel}
+        defaultCategoryId={addPanelCategoryId}
+      />
+
+      {/* Edit asset modal */}
       <Modal
-        open={modalOpen}
-        onClose={closeModal}
-        title={editingAsset ? "Edit Asset" : "Add Asset"}
+        open={editModalOpen}
+        onClose={closeEditModal}
+        title="Edit Asset"
       >
-        <AssetForm asset={editingAsset} defaultCategoryId={defaultCategoryId} onClose={closeModal} />
+        <AssetForm asset={editingAsset} onClose={closeEditModal} />
       </Modal>
 
       {/* Delete confirmation modal */}

@@ -6,21 +6,17 @@ import {
   ArrowLeft,
   ArrowRight,
   X,
-  Loader2,
   Bitcoin,
   TrendingUp,
   Banknote,
   Box,
-  Check,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency } from "@/lib/utils";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
-import {
-  fetchCryptoPriceDetailed,
-  fetchStockPriceDetailed,
-} from "@/lib/price-feeds";
+import TickerInput, { type TickerResult } from "@/components/shared/TickerInput";
+import QuantityValueToggle from "@/components/shared/QuantityValueToggle";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import type { Currency, Asset, PriceSource } from "@/types";
@@ -203,56 +199,10 @@ function AutoPriceForm({
 }) {
   const isCrypto = type === "crypto";
   const [ticker, setTicker] = useState("");
-  const [fetchingPrice, setFetchingPrice] = useState(false);
-  const [priceResult, setPriceResult] = useState<{
-    name: string;
-    symbol: string;
-    price: number;
-    currency: Currency;
-  } | null>(null);
-  const [priceError, setPriceError] = useState<string | null>(null);
+  const [priceResult, setPriceResult] = useState<TickerResult | null>(null);
   const [mode, setMode] = useState<"quantity" | "value">("quantity");
   const [quantity, setQuantity] = useState("1");
   const [manualValue, setManualValue] = useState("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  // Debounced price fetch using detailed API
-  useEffect(() => {
-    if (!ticker.trim()) {
-      setPriceResult(null);
-      setPriceError(null);
-      return;
-    }
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      setFetchingPrice(true);
-      setPriceError(null);
-      setPriceResult(null);
-      try {
-        const result = isCrypto
-          ? await fetchCryptoPriceDetailed(ticker.trim())
-          : await fetchStockPriceDetailed(ticker.trim());
-        if (!result) {
-          setPriceError(isCrypto ? "Coin not found" : "Ticker not found");
-          return;
-        }
-        // Pick price in primary currency, fall back to USD
-        const price = result.prices[currency] ?? result.prices["USD"];
-        const cur = result.prices[currency] ? currency : ("USD" as Currency);
-        setPriceResult({
-          name: result.name,
-          symbol: result.symbol,
-          price,
-          currency: cur,
-        });
-      } catch {
-        setPriceError("Failed to fetch price");
-      } finally {
-        setFetchingPrice(false);
-      }
-    }, 500);
-    return () => clearTimeout(debounceRef.current);
-  }, [ticker, currency, isCrypto]);
 
   const computedTotal =
     mode === "quantity" && priceResult
@@ -295,95 +245,31 @@ function AutoPriceForm({
         {isCrypto ? "Add Crypto" : "Add Stock"}
       </h3>
 
-      {/* Ticker input */}
-      <div className="relative">
-        <input
-          type="text"
-          value={ticker}
-          onChange={(e) => setTicker(e.target.value)}
-          placeholder={
-            isCrypto
-              ? "bitcoin, ethereum, solana..."
-              : "AAPL, MSFT, VOO..."
-          }
-          className={inputClass}
-          autoFocus
+      <TickerInput
+        type={type}
+        value={ticker}
+        onChange={setTicker}
+        currency={currency}
+        onResult={setPriceResult}
+        onError={() => {}}
+        onFetching={() => {}}
+        inputClassName={inputClass}
+        autoFocus
+      />
+
+      {priceResult && (
+        <QuantityValueToggle
+          mode={mode}
+          onModeChange={setMode}
+          quantity={quantity}
+          onQuantityChange={setQuantity}
+          manualValue={manualValue}
+          onManualValueChange={setManualValue}
+          computedTotal={computedTotal}
+          currency={priceResult.currency}
+          inputClassName={inputClass}
+          toggleInactiveClassName="bg-zinc-800 text-zinc-400 hover:text-white"
         />
-        {fetchingPrice && (
-          <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-zinc-400" />
-        )}
-      </div>
-
-      {/* Price feedback */}
-      {priceResult && (
-        <p className="flex items-center gap-1.5 text-sm text-emerald-400">
-          <Check className="h-3.5 w-3.5" />
-          {priceResult.name} &middot;{" "}
-          {formatCurrency(priceResult.price, priceResult.currency)}
-        </p>
-      )}
-      {priceError && (
-        <p className="text-sm text-red-400">&times; {priceError}</p>
-      )}
-
-      {/* Quantity / Value toggle + input */}
-      {priceResult && (
-        <>
-          <div className="flex rounded-lg border border-zinc-700 overflow-hidden">
-            <button
-              onClick={() => setMode("quantity")}
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                mode === "quantity"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:text-white"
-              }`}
-            >
-              I know the quantity
-            </button>
-            <button
-              onClick={() => setMode("value")}
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                mode === "value"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:text-white"
-              }`}
-            >
-              I know the total value
-            </button>
-          </div>
-
-          {mode === "quantity" ? (
-            <div className="space-y-2">
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="e.g. 0.5"
-                className={inputClass}
-                min="0"
-                step="any"
-              />
-              {computedTotal > 0 && (
-                <div className="rounded-lg bg-zinc-800/50 px-3 py-2 text-right">
-                  <span className="text-xs text-zinc-500">Total: </span>
-                  <span className="text-sm font-medium text-white">
-                    {formatCurrency(computedTotal, priceResult.currency)}
-                  </span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <input
-              type="number"
-              value={manualValue}
-              onChange={(e) => setManualValue(e.target.value)}
-              placeholder="Total value"
-              className={inputClass}
-              min="0"
-              step="any"
-            />
-          )}
-        </>
       )}
 
       <button
