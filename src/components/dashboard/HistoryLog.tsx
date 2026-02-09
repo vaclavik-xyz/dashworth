@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { TrendingUp, TrendingDown, Minus, Pencil, RefreshCw } from "lucide-react";
 import type { Asset, Category, Currency, HistoryEntry, AssetChangeEntry } from "@/types";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_TEXT_MUTED_CLASSES } from "@/constants/colors";
 import Card from "@/components/ui/Card";
@@ -17,9 +18,10 @@ interface HistoryLogProps {
   assets: Asset[];
   categories: Category[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function HistoryLog({ history, assetChanges, assets, categories, currency }: HistoryLogProps) {
+export default function HistoryLog({ history, assetChanges, assets, categories, currency, rates }: HistoryLogProps) {
   const { hidden } = usePrivacy();
   const [tab, setTab] = useState<Tab>("networth");
 
@@ -80,8 +82,10 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
           ) : (
             history.slice(0, 20).map((entry, i) => {
               const prev = history[i + 1];
-              const delta = prev ? entry.totalValue - prev.totalValue : 0;
-              const pct = prev && prev.totalValue > 0 ? (delta / prev.totalValue) * 100 : 0;
+              const val = convertCurrency(entry.totalValue, entry.currency, currency, rates);
+              const prevVal = prev ? convertCurrency(prev.totalValue, prev.currency, currency, rates) : 0;
+              const delta = prev ? val - prevVal : 0;
+              const pct = prev && prevVal > 0 ? (delta / prevVal) * 100 : 0;
 
               return (
                 <div
@@ -107,7 +111,7 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-sm font-medium text-zinc-900 dark:text-white">
-                      {hidden ? HIDDEN_VALUE : formatCurrency(entry.totalValue, currency)}
+                      {hidden ? HIDDEN_VALUE : formatCurrency(val, currency)}
                     </span>
                     {prev && delta !== 0 && (
                       <p className={`text-xs ${delta > 0 ? "text-emerald-500" : "text-red-500"}`}>
@@ -127,8 +131,10 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
             <p className="text-sm text-zinc-500 text-center py-4">No asset changes yet</p>
           ) : (
             assetChanges.slice(0, 20).map((entry, i) => {
-              const delta = entry.newValue - entry.oldValue;
-              const pct = entry.oldValue > 0 ? (delta / entry.oldValue) * 100 : 0;
+              const cvOld = convertCurrency(entry.oldValue, entry.currency, currency, rates);
+              const cvNew = convertCurrency(entry.newValue, entry.currency, currency, rates);
+              const delta = cvNew - cvOld;
+              const pct = cvOld > 0 ? (delta / cvOld) * 100 : 0;
 
               return (
                 <div
@@ -165,11 +171,11 @@ export default function HistoryLog({ history, assetChanges, assets, categories, 
                     <span className="text-sm font-medium text-zinc-900 dark:text-white">
                       {hidden
                         ? HIDDEN_VALUE
-                        : <>{formatCurrency(entry.oldValue, entry.currency)} → {formatCurrency(entry.newValue, entry.currency)}</>
+                        : <>{formatCurrency(cvOld, currency)} → {formatCurrency(cvNew, currency)}</>
                       }
                     </span>
                     <p className={`text-xs ${delta > 0 ? "text-emerald-500" : "text-red-500"}`}>
-                      {delta > 0 ? "+" : ""}{hidden ? "" : formatCurrency(delta, entry.currency)} ({pct > 0 ? "+" : ""}{pct.toFixed(1)}%)
+                      {delta > 0 ? "+" : ""}{hidden ? "" : formatCurrency(delta, currency)} ({pct > 0 ? "+" : ""}{pct.toFixed(1)}%)
                     </p>
                   </div>
                 </div>

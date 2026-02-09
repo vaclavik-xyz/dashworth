@@ -62,6 +62,7 @@ export default function DashboardPage() {
       <NetWorthHero
         totalNetWorth={totalNetWorth}
         currency={currency}
+        rates={rates}
         lastEntry={history?.[0]}
         previousEntry={history?.[1]}
       />
@@ -69,7 +70,7 @@ export default function DashboardPage() {
       {/* Row 1: Chart + Allocation */}
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
         {history && (
-          <NetWorthChart history={history} currency={currency} />
+          <NetWorthChart history={history} currency={currency} rates={rates} />
         )}
         {assets && categories && (
           <AllocationPie
@@ -87,7 +88,7 @@ export default function DashboardPage() {
           <TopAssets assets={assets} categories={categories} currency={currency} rates={rates} />
         )}
         {history && assetChanges && assets && categories && (history.length > 0 || assetChanges.length > 0) && (
-          <HistoryLog history={history} assetChanges={assetChanges} assets={assets} categories={categories} currency={currency} />
+          <HistoryLog history={history} assetChanges={assetChanges} assets={assets} categories={categories} currency={currency} rates={rates} />
         )}
       </div>
     </div>

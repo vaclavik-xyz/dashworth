@@ -12,6 +12,7 @@ import {
 import { TrendingUp, TrendingDown, Minus, Pencil, RefreshCw } from "lucide-react";
 import type { Asset, AssetChangeEntry, Category, Currency } from "@/types";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import { getIcon } from "@/lib/icons";
 import { COLOR_HEX } from "@/constants/colors";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
@@ -28,11 +29,14 @@ interface AssetDetailProps {
   rates: Record<string, number>;
 }
 
-export default function AssetDetail({ asset, category, changes }: AssetDetailProps) {
+export default function AssetDetail({ asset, category, changes, currency, rates }: AssetDetailProps) {
   const { hidden } = usePrivacy();
   const { ref, width } = useContainerWidth();
   const Icon = getIcon(asset.icon ?? category?.icon ?? "box");
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
+
+  // Convert a value from the asset/change currency to the display currency
+  const cv = (v: number, from: Currency) => convertCurrency(v, from, currency, rates);
 
   // Build chart data from changes (oldest first) + current value
   const chartData = useMemo(() => {
@@ -52,7 +56,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
       idx: idx++,
       tickLabel: `${firstDate.getDate()} ${MONTHS[firstDate.getMonth()]}`,
       fullLabel: formatFullLabel(firstDate),
-      value: sorted[0].oldValue,
+      value: cv(sorted[0].oldValue, sorted[0].currency),
     });
 
     // Add each change's new value
@@ -62,24 +66,26 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
         idx: idx++,
         tickLabel: `${d.getDate()} ${MONTHS[d.getMonth()]}`,
         fullLabel: formatFullLabel(d),
-        value: c.newValue,
+        value: cv(c.newValue, c.currency),
       });
     }
 
     // If the current value differs from the last change, add current
     const lastPoint = points[points.length - 1];
-    if (lastPoint && Math.round(lastPoint.value) !== Math.round(asset.currentValue)) {
+    const currentConverted = cv(asset.currentValue, asset.currency);
+    if (lastPoint && Math.round(lastPoint.value) !== Math.round(currentConverted)) {
       const now = new Date(asset.updatedAt);
       points.push({
         idx: idx++,
         tickLabel: `${now.getDate()} ${MONTHS[now.getMonth()]}`,
         fullLabel: formatFullLabel(now),
-        value: asset.currentValue,
+        value: currentConverted,
       });
     }
 
     return points;
-  }, [changes, asset.currentValue, asset.updatedAt]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [changes, asset.currentValue, asset.updatedAt, currency, rates]);
 
   const manyPoints = chartData.length > 10;
   const maxTicks = Math.min(chartData.length, width < 300 ? 3 : 5);
@@ -93,8 +99,13 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
           <h3 className="text-sm font-medium text-zinc-900 dark:text-white">{asset.name}</h3>
         </div>
         <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
-          {hidden ? HIDDEN_VALUE : formatCurrency(asset.currentValue, asset.currency)}
+          {hidden ? HIDDEN_VALUE : formatCurrency(cv(asset.currentValue, asset.currency), currency)}
         </p>
+        {asset.currency !== currency && !hidden && (
+          <p className="text-xs text-zinc-500">
+            {formatCurrency(asset.currentValue, asset.currency)}
+          </p>
+        )}
         <div className="mt-2 space-y-1 text-xs text-zinc-500">
           <p>Category: <span className="text-zinc-700 dark:text-zinc-300">{category?.name ?? "Unknown"}</span></p>
           {asset.group && (
@@ -142,7 +153,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v: number) =>
-                    hidden ? HIDDEN_VALUE : formatCurrency(v, asset.currency)
+                    hidden ? HIDDEN_VALUE : formatCurrency(v, currency)
                   }
                   width={70}
                 />
@@ -161,7 +172,7 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                     return item?.fullLabel ?? _label;
                   }}
                   formatter={(value: number | undefined) => [
-                    hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, asset.currency),
+                    hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency),
                     "Value",
                   ]}
                 />
@@ -188,8 +199,10 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
           </h4>
           <div className="space-y-1.5">
             {changes.slice(0, 20).map((entry, i) => {
-              const delta = entry.newValue - entry.oldValue;
-              const pct = entry.oldValue > 0 ? (delta / entry.oldValue) * 100 : 0;
+              const newVal = cv(entry.newValue, entry.currency);
+              const oldVal = cv(entry.oldValue, entry.currency);
+              const delta = newVal - oldVal;
+              const pct = oldVal > 0 ? (delta / oldVal) * 100 : 0;
 
               return (
                 <div
@@ -226,12 +239,12 @@ export default function AssetDetail({ asset, category, changes }: AssetDetailPro
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-xs font-medium text-zinc-900 dark:text-white">
-                      {hidden ? HIDDEN_VALUE : formatCurrency(entry.newValue, entry.currency)}
+                      {hidden ? HIDDEN_VALUE : formatCurrency(newVal, currency)}
                     </span>
                     {delta !== 0 && (
                       <p className={`text-[10px] ${delta > 0 ? "text-emerald-500" : "text-red-500"}`}>
                         {delta > 0 ? "+" : ""}
-                        {hidden ? "" : formatCurrency(delta, entry.currency)}{" "}
+                        {hidden ? "" : formatCurrency(delta, currency)}{" "}
                         ({pct > 0 ? "+" : ""}{pct.toFixed(1)}%)
                       </p>
                     )}

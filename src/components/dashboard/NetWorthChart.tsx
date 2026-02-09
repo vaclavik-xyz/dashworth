@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { Currency, HistoryEntry } from "@/types";
 import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import Card from "@/components/ui/Card";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { usePrivacy } from "@/contexts/PrivacyContext";
@@ -18,9 +19,10 @@ import { usePrivacy } from "@/contexts/PrivacyContext";
 interface NetWorthChartProps {
   history: HistoryEntry[];
   currency: Currency;
+  rates: Record<string, number>;
 }
 
-export default function NetWorthChart({ history, currency }: NetWorthChartProps) {
+export default function NetWorthChart({ history, currency, rates }: NetWorthChartProps) {
   const { ref, width } = useContainerWidth();
   const { hidden } = usePrivacy();
 
@@ -28,9 +30,11 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
+  const cv = (h: HistoryEntry) => convertCurrency(h.totalValue, h.currency, currency, rates);
+
   // Single entry — show placeholder with dot + baseline
   if (sorted.length < 2) {
-    const value = sorted[0]?.totalValue ?? 0;
+    const value = sorted[0] ? cv(sorted[0]) : 0;
     return (
       <Card>
         <h2 className="mb-4 text-sm font-medium text-zinc-400">
@@ -94,7 +98,7 @@ export default function NetWorthChart({ history, currency }: NetWorthChartProps)
       idx: i,
       tickLabel: spansYears ? `${mon} ${yr}` : `${day} ${mon}`,
       fullLabel: `${day} ${mon} ${d.getFullYear()}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`,
-      value: h.totalValue,
+      value: cv(h),
     };
   });
 

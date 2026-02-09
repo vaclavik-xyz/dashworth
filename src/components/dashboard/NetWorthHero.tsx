@@ -3,11 +3,13 @@
 import { TrendingUp, TrendingDown, Eye, EyeOff } from "lucide-react";
 import type { Currency, HistoryEntry } from "@/types";
 import { formatCurrency, HIDDEN_VALUE } from "@/lib/utils";
+import { convertCurrency } from "@/lib/exchange-rates";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface NetWorthHeroProps {
   totalNetWorth: number;
   currency: Currency;
+  rates: Record<string, number>;
   lastEntry?: HistoryEntry;
   previousEntry?: HistoryEntry;
 }
@@ -15,18 +17,18 @@ interface NetWorthHeroProps {
 export default function NetWorthHero({
   totalNetWorth,
   currency,
+  rates,
   lastEntry,
   previousEntry,
 }: NetWorthHeroProps) {
   const { hidden, toggle } = usePrivacy();
 
-  const change =
-    lastEntry && previousEntry
-      ? lastEntry.totalValue - previousEntry.totalValue
-      : null;
+  const lastVal = lastEntry ? convertCurrency(lastEntry.totalValue, lastEntry.currency, currency, rates) : null;
+  const prevVal = previousEntry ? convertCurrency(previousEntry.totalValue, previousEntry.currency, currency, rates) : null;
+  const change = lastVal !== null && prevVal !== null ? lastVal - prevVal : null;
   const changePercent =
-    change !== null && previousEntry && previousEntry.totalValue !== 0
-      ? (change / previousEntry.totalValue) * 100
+    change !== null && prevVal && prevVal !== 0
+      ? (change / prevVal) * 100
       : null;
 
   return (

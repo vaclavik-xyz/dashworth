@@ -68,7 +68,7 @@ export default function DefaultOverview({ assets, categories, history, currency,
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     .map((h) => ({
       date: new Date(h.createdAt).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" }),
-      value: h.totalValue,
+      value: convertCurrency(h.totalValue, h.currency, currency, rates),
     }));
   const lineData = [...new Map(rawLineData.map((d) => [d.date, d])).values()];
 
