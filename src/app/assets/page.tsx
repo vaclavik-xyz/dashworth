@@ -144,6 +144,7 @@ export default function AssetsPage() {
   const [mobileSelection, setMobileSelection] = useState<Selection>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
   const scrollYRef = useRef(0);
 
   const { rates } = useExchangeRates();
@@ -401,20 +402,35 @@ export default function AssetsPage() {
                                 return (
                                   <div
                                     key={asset.id}
-                                    className={`rounded-lg transition-colors cursor-pointer ${
+                                    className={`rounded-lg transition-colors ${
                                       isAssetSelected
                                         ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-1"
                                         : "md:border-l-2 md:border-transparent md:pl-1"
                                     }`}
-                                    onClick={() => {
-                                      toggleSelection(assetSelection);
-                                      navigateToMobileDetail(assetSelection);
-                                    }}
                                   >
                                     <AssetCard
                                       asset={asset}
                                       category={section.category}
                                       latestChange={latestChangeMap.get(asset.id)}
+                                      isExpanded={expandedAssetId === asset.id}
+                                      onToggleExpand={() => {
+                                        setExpandedAssetId((prev) => prev === asset.id ? null : asset.id);
+                                        toggleSelection(assetSelection);
+                                      }}
+                                      onViewDetails={() => {
+                                        setExpandedAssetId(null);
+                                        setEditingAssetId(null);
+                                        setSelection(assetSelection);
+                                        navigateToMobileDetail(assetSelection);
+                                      }}
+                                      onSettings={() => {
+                                        setExpandedAssetId(null);
+                                        setEditingAssetId(asset.id);
+                                        setSelection(assetSelection);
+                                        navigateToMobileDetail(assetSelection);
+                                      }}
+                                      currency={primaryCurrency}
+                                      rates={rates}
                                     />
                                   </div>
                                 );

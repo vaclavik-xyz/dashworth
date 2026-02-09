@@ -20,6 +20,7 @@ import {
   StickyNote,
   ChevronDown,
   RotateCcw,
+  Settings,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatCurrency, formatDate, HIDDEN_VALUE } from "@/lib/utils";
@@ -86,6 +87,9 @@ export default function AssetDetail({
   const Icon = getIcon(asset.icon ?? category?.icon ?? "box");
   const catColor = COLOR_HEX[category?.color ?? "zinc"] ?? COLOR_HEX.zinc;
   const cv = (v: number, from: Currency) => convertCurrency(v, from, currency, rates);
+
+  const [chartMode, setChartMode] = useState<"value" | "qty">("value");
+  const showQtyToggle = asset.priceSource !== "manual" && asset.ticker && (asset.unitPrice ?? 0) > 0;
 
   /* ─── Edit form state ─── */
   const [editName, setEditName] = useState(asset.name);
@@ -572,9 +576,9 @@ export default function AssetDetail({
             <button
               onClick={onEditStart}
               className="rounded-lg p-1.5 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
-              aria-label="Edit"
+              aria-label="Edit settings"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Settings className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={onDelete}
@@ -643,64 +647,88 @@ export default function AssetDetail({
         </div>
       )}
 
-      {/* Value chart */}
+      {/* Value / Qty chart */}
       {chartData.length >= 2 && (
         <div>
-          <h4 className="mb-2 text-xs font-medium text-zinc-400">Value Over Time</h4>
-          <div ref={ref} className="overflow-hidden">
-            {width > 0 && (
-              <LineChart width={width} height={160} data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
-                <XAxis
-                  dataKey="idx"
-                  type="number"
-                  domain={[0, chartData.length - 1]}
-                  tick={{ fontSize: 10 }}
-                  className="[&_.recharts-text]:fill-zinc-500"
-                  axisLine={{ stroke: "var(--dw-grid)" }}
-                  tickLine={false}
-                  tickCount={maxTicks}
-                  tickFormatter={(idx: number) => chartData[idx]?.tickLabel ?? ""}
-                />
-                <YAxis
-                  tick={{ fontSize: 10 }}
-                  className="[&_.recharts-text]:fill-zinc-500"
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v: number) =>
-                    hidden ? HIDDEN_VALUE : formatCurrency(v, currency)
-                  }
-                  width={70}
-                />
-                <Tooltip
-                  allowEscapeViewBox={{ x: false, y: false }}
-                  contentStyle={{
-                    backgroundColor: "var(--tooltip-bg, #18181b)",
-                    border: "1px solid var(--tooltip-border, #27272a)",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                    color: "var(--tooltip-text, #fafafa)",
-                  }}
-                  labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
-                  labelFormatter={(_label, payload) => {
-                    const item = payload?.[0]?.payload;
-                    return item?.fullLabel ?? _label;
-                  }}
-                  formatter={(value: number | undefined) => [
-                    hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency),
-                    "Value",
-                  ]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={catColor}
-                  strokeWidth={2}
-                  dot={manyPoints ? false : { fill: catColor, r: 3 }}
-                  activeDot={{ r: 5, stroke: catColor, strokeWidth: 2, fill: "#18181b" }}
-                />
-              </LineChart>
+          <h4
+            className={`mb-2 text-xs font-medium text-zinc-400 ${showQtyToggle ? "cursor-pointer hover:text-zinc-300 transition-colors" : ""}`}
+            onClick={() => {
+              if (showQtyToggle) setChartMode((m) => (m === "value" ? "qty" : "value"));
+            }}
+          >
+            {chartMode === "value" ? "Value Over Time" : "QTY Over Time"}
+            {showQtyToggle && (
+              <span className="ml-1.5 text-[10px] text-emerald-500">
+                tap to switch
+              </span>
             )}
+          </h4>
+          <div ref={ref} className="overflow-hidden">
+            {width > 0 && (() => {
+              const unitPrice = asset.unitPrice ?? 1;
+              const displayData = chartMode === "qty"
+                ? chartData.map((p) => ({ ...p, value: p.value / unitPrice }))
+                : chartData;
+              const ticker = asset.ticker?.toUpperCase() ?? "";
+
+              return (
+                <LineChart width={width} height={160} data={displayData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--dw-grid)" />
+                  <XAxis
+                    dataKey="idx"
+                    type="number"
+                    domain={[0, displayData.length - 1]}
+                    tick={{ fontSize: 10 }}
+                    className="[&_.recharts-text]:fill-zinc-500"
+                    axisLine={{ stroke: "var(--dw-grid)" }}
+                    tickLine={false}
+                    tickCount={maxTicks}
+                    tickFormatter={(idx: number) => displayData[idx]?.tickLabel ?? ""}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10 }}
+                    className="[&_.recharts-text]:fill-zinc-500"
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) =>
+                      chartMode === "qty"
+                        ? v.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                        : hidden ? HIDDEN_VALUE : formatCurrency(v, currency)
+                    }
+                    width={70}
+                  />
+                  <Tooltip
+                    allowEscapeViewBox={{ x: false, y: false }}
+                    contentStyle={{
+                      backgroundColor: "var(--tooltip-bg, #18181b)",
+                      border: "1px solid var(--tooltip-border, #27272a)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      color: "var(--tooltip-text, #fafafa)",
+                    }}
+                    labelStyle={{ color: "var(--tooltip-label, #a1a1aa)" }}
+                    labelFormatter={(_label, payload) => {
+                      const item = payload?.[0]?.payload;
+                      return item?.fullLabel ?? _label;
+                    }}
+                    formatter={(value: number | undefined) => [
+                      chartMode === "qty"
+                        ? `${(value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${ticker}`
+                        : hidden ? HIDDEN_VALUE : formatCurrency(value ?? 0, currency),
+                      chartMode === "qty" ? "Quantity" : "Value",
+                    ]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke={catColor}
+                    strokeWidth={2}
+                    dot={manyPoints ? false : { fill: catColor, r: 3 }}
+                    activeDot={{ r: 5, stroke: catColor, strokeWidth: 2, fill: "#18181b" }}
+                  />
+                </LineChart>
+              );
+            })()}
           </div>
         </div>
       )}
