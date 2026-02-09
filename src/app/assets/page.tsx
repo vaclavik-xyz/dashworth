@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Plus, Wallet, Eye, EyeOff } from "lucide-react";
+import { Plus, Wallet, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatCurrency, sumConverted, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
@@ -17,7 +17,6 @@ import AssetCard from "@/components/assets/AssetCard";
 import CategoryForm from "@/components/settings/CategoryForm";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
 import type { Selection } from "@/components/assets/detail/DetailPanel";
-import BottomSheet from "@/components/ui/BottomSheet";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface GroupedSection {
@@ -143,7 +142,9 @@ export default function AssetsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [mobileSelection, setMobileSelection] = useState<Selection>(null);
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const scrollYRef = useRef(0);
 
   const { rates } = useExchangeRates();
   const primaryCurrency: Currency = settings?.primaryCurrency ?? "CZK";
@@ -186,6 +187,7 @@ export default function AssetsPage() {
     }
     if (mobileSelection?.type === "asset" && mobileSelection.assetId === deleteTarget.id) {
       setMobileSelection(null);
+      setMobileView("list");
     }
     setEditingAssetId(null);
   }
@@ -201,13 +203,59 @@ export default function AssetsPage() {
     });
   }
 
-  function closeMobileSheet() {
+  function navigateToMobileDetail(sel: Selection) {
+    scrollYRef.current = window.scrollY;
+    setMobileSelection(sel);
+    setMobileView("detail");
+    window.scrollTo(0, 0);
+  }
+
+  function closeMobileDetail() {
+    setMobileView("list");
     setMobileSelection(null);
     setEditingAssetId(null);
+    requestAnimationFrame(() => window.scrollTo(0, scrollYRef.current));
+  }
+
+  function handleMobileBack() {
+    if (editingAssetId) {
+      setEditingAssetId(null);
+    } else {
+      closeMobileDetail();
+    }
   }
 
   return (
     <div className="p-6 md:p-10">
+      {/* Mobile full-screen detail view */}
+      {mobileView === "detail" && mobileSelection && (
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={handleMobileBack}
+            className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {editingAssetId ? "Cancel" : "Assets"}
+          </button>
+          <DetailPanel
+            selection={mobileSelection}
+            assets={assets ?? []}
+            categories={categories ?? []}
+            history={history ?? []}
+            assetChanges={assetChanges ?? []}
+            currency={primaryCurrency}
+            rates={rates}
+            editingAssetId={editingAssetId}
+            onEditAsset={(id) => setEditingAssetId(id)}
+            onEditEnd={() => setEditingAssetId(null)}
+            onDeleteAsset={(asset) => setDeleteTarget(asset)}
+          />
+        </div>
+      )}
+
+      {/* Main content — hidden on mobile when detail view is active */}
+      <div className={mobileView === "detail" ? "hidden md:block" : ""}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -276,7 +324,7 @@ export default function AssetsPage() {
                     }`}
                     onClick={() => {
                       toggleSelection(catSelection);
-                      setMobileSelection(catSelection);
+                      navigateToMobileDetail(catSelection);
                     }}
                   >
                     <div className="flex items-center gap-2">
@@ -330,7 +378,7 @@ export default function AssetsPage() {
                                 onClick={() => {
                                   if (grpSelection) {
                                     toggleSelection(grpSelection);
-                                    setMobileSelection(grpSelection);
+                                    navigateToMobileDetail(grpSelection);
                                   }
                                 }}
                               >
@@ -360,7 +408,7 @@ export default function AssetsPage() {
                                     }`}
                                     onClick={() => {
                                       toggleSelection(assetSelection);
-                                      setMobileSelection(assetSelection);
+                                      navigateToMobileDetail(assetSelection);
                                     }}
                                   >
                                     <AssetCard
@@ -414,6 +462,7 @@ export default function AssetsPage() {
           </div>
         </div>
       )}
+      </div>{/* end main content wrapper */}
 
       {/* Add asset panel */}
       <AddAssetPanel
@@ -441,26 +490,6 @@ export default function AssetsPage() {
           </Button>
         </div>
       </Modal>
-
-      {/* Mobile bottom sheet for detail */}
-      <BottomSheet
-        open={mobileSelection !== null}
-        onClose={closeMobileSheet}
-      >
-        <DetailPanel
-          selection={mobileSelection}
-          assets={assets ?? []}
-          categories={categories ?? []}
-          history={history ?? []}
-          assetChanges={assetChanges ?? []}
-          currency={primaryCurrency}
-          rates={rates}
-          editingAssetId={editingAssetId}
-          onEditAsset={(id) => setEditingAssetId(id)}
-          onEditEnd={() => setEditingAssetId(null)}
-          onDeleteAsset={(asset) => setDeleteTarget(asset)}
-        />
-      </BottomSheet>
 
       {/* Add Category modal */}
       <Modal
