@@ -21,9 +21,25 @@ interface DetailPanelProps {
   assetChanges: AssetChangeEntry[];
   currency: Currency;
   rates: Record<string, number>;
+  editingAssetId?: string | null;
+  onEditAsset?: (assetId: string) => void;
+  onEditEnd?: () => void;
+  onDeleteAsset?: (asset: Asset) => void;
 }
 
-export default function DetailPanel({ selection, assets, categories, history, assetChanges, currency, rates }: DetailPanelProps) {
+export default function DetailPanel({
+  selection,
+  assets,
+  categories,
+  history,
+  assetChanges,
+  currency,
+  rates,
+  editingAssetId,
+  onEditAsset,
+  onEditEnd,
+  onDeleteAsset,
+}: DetailPanelProps) {
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
   function renderContent() {
@@ -77,6 +93,12 @@ export default function DetailPanel({ selection, assets, categories, history, as
           changes={changes}
           currency={currency}
           rates={rates}
+          allCategories={categories}
+          allAssets={assets}
+          isEditing={editingAssetId === asset.id}
+          onEditStart={() => onEditAsset?.(asset.id)}
+          onEditEnd={() => onEditEnd?.()}
+          onDelete={() => onDeleteAsset?.(asset)}
         />
       );
     }

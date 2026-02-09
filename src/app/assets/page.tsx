@@ -12,7 +12,6 @@ import { COLOR_TEXT_CLASSES } from "@/constants/colors";
 import type { Asset, Category, Currency } from "@/types";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
-import AssetForm from "@/components/assets/AssetForm";
 import AddAssetPanel from "@/components/assets/AddAssetPanel";
 import AssetCard from "@/components/assets/AssetCard";
 import DetailPanel from "@/components/assets/detail/DetailPanel";
@@ -116,10 +115,9 @@ export default function AssetsPage() {
 
   const { hidden, toggle } = usePrivacy();
 
-  const [editingAsset, setEditingAsset] = useState<Asset | undefined>();
   const [addPanelOpen, setAddPanelOpen] = useState(false);
   const [addPanelCategoryId, setAddPanelCategoryId] = useState<string | undefined>();
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const [mobileSelection, setMobileSelection] = useState<Selection>(null);
@@ -144,23 +142,46 @@ export default function AssetsPage() {
   }
 
   function openEdit(asset: Asset) {
-    setEditingAsset(asset);
-    setEditModalOpen(true);
+    // Select the asset and enter edit mode
+    const assetSelection: Selection = { type: "asset", assetId: asset.id };
+    setSelection(assetSelection);
+    setEditingAssetId(asset.id);
   }
 
-  function closeEditModal() {
-    setEditModalOpen(false);
-    setEditingAsset(undefined);
+  function openEditMobile(asset: Asset) {
+    const assetSelection: Selection = { type: "asset", assetId: asset.id };
+    setMobileSelection(assetSelection);
+    setEditingAssetId(asset.id);
   }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
     await db.assets.delete(deleteTarget.id);
     setDeleteTarget(null);
+    // Clear selection if the deleted asset was selected
+    if (selection?.type === "asset" && selection.assetId === deleteTarget.id) {
+      setSelection(null);
+    }
+    if (mobileSelection?.type === "asset" && mobileSelection.assetId === deleteTarget.id) {
+      setMobileSelection(null);
+    }
+    setEditingAssetId(null);
   }
 
   function toggleSelection(next: Selection) {
-    setSelection((prev) => (isSelectionEqual(prev, next) ? null : next));
+    setSelection((prev) => {
+      const newSel = isSelectionEqual(prev, next) ? null : next;
+      // Clear editing when selection changes
+      if (editingAssetId && (!newSel || newSel.type !== "asset" || newSel.assetId !== editingAssetId)) {
+        setEditingAssetId(null);
+      }
+      return newSel;
+    });
+  }
+
+  function closeMobileSheet() {
+    setMobileSelection(null);
+    setEditingAssetId(null);
   }
 
   return (
@@ -321,6 +342,7 @@ export default function AssetsPage() {
                                     asset={asset}
                                     category={section.category}
                                     onEdit={() => openEdit(asset)}
+                                    onEditMobile={() => openEditMobile(asset)}
                                     onDelete={() => setDeleteTarget(asset)}
                                     primaryCurrency={primaryCurrency}
                                     rates={rates}
@@ -349,6 +371,10 @@ export default function AssetsPage() {
                 assetChanges={assetChanges ?? []}
                 currency={primaryCurrency}
                 rates={rates}
+                editingAssetId={editingAssetId}
+                onEditAsset={(id) => setEditingAssetId(id)}
+                onEditEnd={() => setEditingAssetId(null)}
+                onDeleteAsset={(asset) => setDeleteTarget(asset)}
               />
             </div>
           </div>
@@ -361,15 +387,6 @@ export default function AssetsPage() {
         onClose={closeAddPanel}
         defaultCategoryId={addPanelCategoryId}
       />
-
-      {/* Edit asset modal */}
-      <Modal
-        open={editModalOpen}
-        onClose={closeEditModal}
-        title="Edit Asset"
-      >
-        <AssetForm asset={editingAsset} onClose={closeEditModal} />
-      </Modal>
 
       {/* Delete confirmation modal */}
       <Modal
@@ -394,7 +411,7 @@ export default function AssetsPage() {
       {/* Mobile bottom sheet for detail */}
       <BottomSheet
         open={mobileSelection !== null}
-        onClose={() => setMobileSelection(null)}
+        onClose={closeMobileSheet}
       >
         <DetailPanel
           selection={mobileSelection}
@@ -404,6 +421,10 @@ export default function AssetsPage() {
           assetChanges={assetChanges ?? []}
           currency={primaryCurrency}
           rates={rates}
+          editingAssetId={editingAssetId}
+          onEditAsset={(id) => setEditingAssetId(id)}
+          onEditEnd={() => setEditingAssetId(null)}
+          onDeleteAsset={(asset) => setDeleteTarget(asset)}
         />
       </BottomSheet>
     </div>

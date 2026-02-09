@@ -14,12 +14,13 @@ interface AssetCardProps {
   asset: Asset;
   category?: Category;
   onEdit: () => void;
+  onEditMobile?: () => void;
   onDelete: () => void;
   primaryCurrency?: Currency;
   rates?: Record<string, number>;
 }
 
-export default function AssetCard({ asset, category, onEdit, onDelete, primaryCurrency, rates }: AssetCardProps) {
+export default function AssetCard({ asset, category, onEdit, onEditMobile, onDelete, primaryCurrency, rates }: AssetCardProps) {
   const { hidden } = usePrivacy();
   const Icon = getIcon(asset.icon ?? category?.icon ?? "box");
   const colorClass = category ? (COLOR_BADGE_CLASSES[category.color] ?? COLOR_BADGE_CLASSES.zinc) : COLOR_BADGE_CLASSES.zinc;
@@ -41,9 +42,17 @@ export default function AssetCard({ asset, category, onEdit, onDelete, primaryCu
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
+          {/* Desktop: edit in detail panel */}
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
+            className="hidden md:block rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          {/* Mobile: edit in bottom sheet */}
+          <button
+            onClick={(e) => { e.stopPropagation(); (onEditMobile ?? onEdit)(); }}
+            className="md:hidden rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors"
           >
             <Pencil className="h-4 w-4" />
           </button>
