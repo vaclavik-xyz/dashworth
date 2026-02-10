@@ -121,18 +121,15 @@ body {
 /* ── Landing page entrance animation ──────────────────── */
 @keyframes heroIn {
   from {
-    opacity: 0;
     filter: blur(4px);
     transform: scale(0.99);
   }
   to {
-    opacity: 1;
     filter: blur(0px);
     transform: scale(1);
   }
 }
 
 .animate-hero-in {
-  opacity: 0;
-  animation: heroIn 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  animation: heroIn 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
