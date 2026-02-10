@@ -19,6 +19,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
   const [name, setName] = useState(category?.name ?? "");
   const [icon, setIcon] = useState(category?.icon ?? "box");
   const [color, setColor] = useState(category?.color ?? "emerald");
+  const [isLiability, setIsLiability] = useState(category?.isLiability ?? false);
   const [saving, setSaving] = useState(false);
 
   const PreviewIcon = getIcon(icon);
@@ -35,6 +36,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
         name: name.trim(),
         icon,
         color,
+        isLiability,
       });
     } else {
       const maxSort = await db.categories.orderBy("sortOrder").last();
@@ -43,6 +45,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
         name: name.trim(),
         icon,
         color,
+        isLiability,
         sortOrder: (maxSort?.sortOrder ?? -1) + 1,
         createdAt: new Date(),
       });
@@ -108,6 +111,27 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
             );
           })}
         </div>
+      </div>
+
+      {/* Liability toggle */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-zinc-900 dark:text-white">Liability / Debt</p>
+          <p className="text-xs text-zinc-500">Subtracted from net worth</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsLiability(!isLiability)}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+            isLiability ? "bg-red-500" : "bg-zinc-600"
+          }`}
+        >
+          <span
+            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+              isLiability ? "translate-x-5.5" : "translate-x-0.5"
+            } mt-0.5`}
+          />
+        </button>
       </div>
 
     </form>

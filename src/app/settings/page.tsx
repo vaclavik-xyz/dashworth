@@ -11,7 +11,7 @@ import { importData, validateImport, readJsonFile } from "@/lib/import";
 import { seedDatabase } from "@/lib/seed";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
-import { formatDate, formatCurrency, sumConverted, HIDDEN_VALUE } from "@/lib/utils";
+import { formatDate, formatCurrency, calcNetWorth, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import type { Category, Currency, CustomThemeColors, Theme } from "@/types";
@@ -400,8 +400,11 @@ export default function SettingsPage() {
 
                     {/* Name + count */}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-white truncate flex items-center gap-1.5">
                         {cat.name}
+                        {cat.isLiability && (
+                          <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-400">debt</span>
+                        )}
                       </p>
                       <p className="text-xs text-zinc-500">
                         {count} {count === 1 ? "asset" : "assets"}
@@ -656,17 +659,29 @@ export default function SettingsPage() {
               vaclavik-xyz/dashworth
             </a>
           </div>
-          {activeAssets.length > 0 && (
-            <p className="pt-2 text-xs text-zinc-500">
-              You&apos;re tracking{" "}
-              <span className="font-medium text-emerald-400">{activeAssets.length} asset{activeAssets.length !== 1 ? "s" : ""}</span>
-              {" "}worth{" "}
-              <span className="font-medium text-emerald-400">
-                {hidden ? HIDDEN_VALUE : formatCurrency(sumConverted(activeAssets, currency, rates), currency)}
-              </span>
-              . Keep building!
-            </p>
-          )}
+          {activeAssets.length > 0 && categories && (() => {
+            const about = calcNetWorth(activeAssets, categories, currency, rates);
+            const liabilityCatIds = new Set(categories.filter((c) => c.isLiability).map((c) => c.id));
+            const assetOnlyCount = activeAssets.filter((a) => !liabilityCatIds.has(a.categoryId)).length;
+            const liabilityCount = activeAssets.filter((a) => liabilityCatIds.has(a.categoryId)).length;
+            return (
+              <p className="pt-2 text-xs text-zinc-500">
+                You&apos;re tracking{" "}
+                <span className="font-medium text-emerald-400">{assetOnlyCount} asset{assetOnlyCount !== 1 ? "s" : ""}</span>
+                {liabilityCount > 0 && (
+                  <>
+                    {" "}and{" "}
+                    <span className="font-medium text-red-400">{liabilityCount} {liabilityCount === 1 ? "liability" : "liabilities"}</span>
+                  </>
+                )}
+                {" "}worth{" "}
+                <span className="font-medium text-emerald-400">
+                  {hidden ? HIDDEN_VALUE : formatCurrency(about.netWorth, currency)}
+                </span>
+                . Keep building!
+              </p>
+            );
+          })()}
         </Card>
       </section>
 

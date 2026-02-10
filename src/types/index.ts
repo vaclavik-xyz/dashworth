@@ -14,6 +14,7 @@ export interface Category {
   name: string;
   icon: string;
   color: string;
+  isLiability: boolean;
   sortOrder: number;
   createdAt: Date;
 }

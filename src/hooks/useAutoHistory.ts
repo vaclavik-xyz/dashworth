@@ -2,13 +2,14 @@ import { useEffect, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { useExchangeRates } from "@/lib/useExchangeRates";
-import { sumConverted } from "@/lib/utils";
+import { calcNetWorth } from "@/lib/utils";
 import { recordHistory } from "@/lib/history";
 
 export function useAutoHistory(): void {
   const assets = useLiveQuery(() =>
     db.assets.filter((a) => !a.isArchived).toArray()
   );
+  const categories = useLiveQuery(() => db.categories.toArray());
   const settings = useLiveQuery(() => db.settings.get("settings"));
   const { rates } = useExchangeRates();
 
@@ -26,12 +27,12 @@ export function useAutoHistory(): void {
   }, []);
 
   useEffect(() => {
-    if (!assets || assets.length === 0 || !settings) {
+    if (!assets || assets.length === 0 || !categories || !settings) {
       if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
       return;
     }
 
-    const total = sumConverted(assets, settings.primaryCurrency, rates);
+    const total = calcNetWorth(assets, categories, settings.primaryCurrency, rates).netWorth;
     const rounded = Math.round(total);
 
     if (lastValueRef.current === rounded) {
@@ -49,5 +50,5 @@ export function useAutoHistory(): void {
 
     // No cleanup — timer is managed entirely above so React's
     // effect cleanup cycle cannot accidentally cancel a pending record.
-  }, [assets, settings, rates]);
+  }, [assets, categories, settings, rates]);
 }

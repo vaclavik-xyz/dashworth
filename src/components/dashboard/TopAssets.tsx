@@ -23,7 +23,7 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const top = [...assets]
-    .map((a) => ({ asset: a, converted: convertCurrency(a.currentValue, a.currency, currency, rates) }))
+    .map((a) => ({ asset: a, converted: convertCurrency(a.currentValue, a.currency, currency, rates), isLiability: categoryMap.get(a.categoryId)?.isLiability ?? false }))
     .sort((a, b) => b.converted - a.converted)
     .slice(0, 5);
 
@@ -31,7 +31,7 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
     <Card>
       <h2 className="mb-3 text-sm font-medium text-zinc-400">Top Assets</h2>
       <div className="space-y-2">
-        {top.map(({ asset, converted }) => {
+        {top.map(({ asset, converted, isLiability }) => {
           const cat = categoryMap.get(asset.categoryId);
           const Icon = getIcon(asset.icon ?? cat?.icon ?? "box");
           const colorClass = cat ? (COLOR_TEXT_MUTED_CLASSES[cat.color] ?? "text-zinc-400") : "text-zinc-400";
@@ -48,8 +48,11 @@ export default function TopAssets({ assets, categories, currency, rates }: TopAs
                   <PriceSourceBadge source={asset.priceSource} size="sm" />
                 </span>
               </div>
-              <div className="shrink-0 text-right">
-                <span className="text-sm font-medium text-zinc-900 dark:text-white">
+              <div className="shrink-0 text-right flex items-center gap-1.5">
+                {isLiability && (
+                  <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-400">debt</span>
+                )}
+                <span className={`text-sm font-medium ${isLiability ? "text-red-400" : "text-zinc-900 dark:text-white"}`}>
                   {hidden ? HIDDEN_VALUE : formatCurrency(converted, currency)}
                 </span>
                 {asset.currency !== currency && !hidden && (

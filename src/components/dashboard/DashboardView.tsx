@@ -3,7 +3,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { useExchangeRates } from "@/lib/useExchangeRates";
-import { sumConverted } from "@/lib/utils";
+import { calcNetWorth } from "@/lib/utils";
 import { useAutoHistory } from "@/hooks/useAutoHistory";
 import type { Currency } from "@/types";
 import NetWorthHero from "./NetWorthHero";
@@ -29,7 +29,7 @@ export default function DashboardView() {
 
   const { rates } = useExchangeRates();
   const currency: Currency = settings?.primaryCurrency ?? "CZK";
-  const totalNetWorth = assets ? sumConverted(assets, currency, rates) : 0;
+  const breakdown = assets && categories ? calcNetWorth(assets, categories, currency, rates) : { totalAssets: 0, totalLiabilities: 0, netWorth: 0 };
 
   // Auto-record history when portfolio value changes
   useAutoHistory();
@@ -48,7 +48,9 @@ export default function DashboardView() {
         <HintTooltip text="Net worth is the total value of all your assets converted to your primary currency." />
       </div>
       <NetWorthHero
-        totalNetWorth={totalNetWorth}
+        totalAssets={breakdown.totalAssets}
+        totalLiabilities={breakdown.totalLiabilities}
+        netWorth={breakdown.netWorth}
         currency={currency}
         rates={rates}
         lastEntry={history?.[0]}

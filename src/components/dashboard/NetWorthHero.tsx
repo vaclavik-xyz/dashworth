@@ -7,7 +7,9 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface NetWorthHeroProps {
-  totalNetWorth: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
   currency: Currency;
   rates: Record<string, number>;
   lastEntry?: HistoryEntry;
@@ -15,7 +17,9 @@ interface NetWorthHeroProps {
 }
 
 export default function NetWorthHero({
-  totalNetWorth,
+  totalAssets,
+  totalLiabilities,
+  netWorth,
   currency,
   rates,
   lastEntry,
@@ -45,8 +49,20 @@ export default function NetWorthHero({
         </button>
       </div>
       <p className="mt-1 text-4xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">
-        {hidden ? HIDDEN_VALUE : formatCurrency(totalNetWorth, currency)}
+        {hidden ? HIDDEN_VALUE : formatCurrency(netWorth, currency)}
       </p>
+      {totalLiabilities > 0 && (
+        <div className="mt-1.5 flex items-center gap-3 text-sm">
+          <span className="text-emerald-400">
+            {hidden ? HIDDEN_VALUE : formatCurrency(totalAssets, currency)}
+            <span className="ml-1 text-xs text-zinc-500">assets</span>
+          </span>
+          <span className="text-red-400">
+            {hidden ? HIDDEN_VALUE : `−${formatCurrency(totalLiabilities, currency)}`}
+            <span className="ml-1 text-xs text-zinc-500">debt</span>
+          </span>
+        </div>
+      )}
       {change !== null && changePercent !== null && (
         <div className="mt-2 flex items-center gap-1.5">
           {change >= 0 ? (

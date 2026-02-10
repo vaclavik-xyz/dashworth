@@ -66,6 +66,9 @@ export default function CategoryDetail({ category, assets, currency, rates }: Ca
           <h3 className="text-sm font-medium text-zinc-900 dark:text-white">
             {category?.name ?? "Unknown"}
           </h3>
+          {category?.isLiability && (
+            <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-400">debt</span>
+          )}
         </div>
         <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
           {hidden ? HIDDEN_VALUE : formatCurrency(total, currency)}

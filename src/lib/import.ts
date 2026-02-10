@@ -66,10 +66,11 @@ export async function importData(data: ImportDataV2): Promise<void> {
       await db.assetChanges.clear();
       await db.settings.clear();
 
-      // Ensure every category has a sortOrder (missing from older exports)
+      // Ensure every category has sortOrder and isLiability (missing from older exports)
       const categories = data.data.categories.map((cat, i) => ({
         ...cat,
         sortOrder: cat.sortOrder ?? i,
+        isLiability: cat.isLiability ?? false,
       }));
       await db.categories.bulkAdd(categories);
       // Ensure auto-fetch assets have quantity/unitPrice

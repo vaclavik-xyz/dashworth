@@ -44,8 +44,9 @@ export default function AllocationPie({ assets, categories, currency, rates }: A
       if (existing) {
         existing.value += converted;
       } else {
+        const label = cat?.name ?? "Other";
         grouped.set(key, {
-          name: cat?.name ?? "Other",
+          name: cat?.isLiability ? `${label} (debt)` : label,
           value: converted,
           color: COLOR_HEX[cat?.color ?? "zinc"] ?? COLOR_HEX.zinc,
         });

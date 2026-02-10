@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowLeft, Plus, Bitcoin, TrendingUp, Banknote, Box } from "lucide-react";
+import { ArrowLeft, Plus, Bitcoin, TrendingUp, Banknote, Box, Landmark, CreditCard } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency } from "@/lib/utils";
 import { recordHistory } from "@/lib/history";
@@ -32,6 +32,8 @@ const DEFAULT_CATEGORY_NAMES: Record<string, true> = {
   "cash & savings": true,
   "cash & bank": true,
   other: true,
+  "loans & mortgages": true,
+  "credit cards": true,
 };
 
 function isDefaultCategory(name: string) {
@@ -54,6 +56,8 @@ const CATEGORY_ICONS: Record<string, typeof Bitcoin> = {
   "cash & savings": Banknote,
   "cash & bank": Banknote,
   other: Box,
+  "loans & mortgages": Landmark,
+  "credit cards": CreditCard,
 };
 
 const CATEGORY_SUBTITLES: Record<string, string> = {
@@ -62,6 +66,8 @@ const CATEGORY_SUBTITLES: Record<string, string> = {
   "cash & savings": "Manual entry",
   "cash & bank": "Manual entry",
   other: "Any asset type",
+  "loans & mortgages": "Debt tracking",
+  "credit cards": "Debt tracking",
 };
 
 export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddAssetPanelProps) {
@@ -135,9 +141,13 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
 
   const listId = `add-panel-groups-${selectedCategoryId}`;
 
-  // Separate default vs custom categories
-  const defaultCategories = useMemo(
-    () => categories?.filter((c) => isDefaultCategory(c.name)) ?? [],
+  // Separate default asset vs default liability vs custom categories
+  const defaultAssetCategories = useMemo(
+    () => categories?.filter((c) => isDefaultCategory(c.name) && !c.isLiability) ?? [],
+    [categories],
+  );
+  const defaultLiabilityCategories = useMemo(
+    () => categories?.filter((c) => isDefaultCategory(c.name) && c.isLiability) ?? [],
     [categories],
   );
   const customCategories = useMemo(
@@ -234,11 +244,13 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
     // The new category will appear via useLiveQuery reactivity
   }
 
+  const isLiabilityCategory = selectedCategory?.isLiability ?? false;
   const formTitle = isAutoType
     ? selectedType === "crypto"
       ? "Add Crypto"
       : "Add Stock"
     : `Add ${selectedCategory?.name ?? "Asset"}`;
+  const saveLabel = isLiabilityCategory ? "Add Liability" : "Add Asset";
 
   return (
     <>
@@ -248,9 +260,9 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Add Asset</h2>
             <p className="text-sm text-zinc-500">Choose a category to get started.</p>
 
-            {/* Default categories 2×2 grid */}
+            {/* Default asset categories 2×2 grid */}
             <div className="grid grid-cols-2 gap-3">
-              {defaultCategories.map((cat) => {
+              {defaultAssetCategories.map((cat) => {
                 const Icon = CATEGORY_ICONS[cat.name.toLowerCase()] ?? Box;
                 const subtitle = CATEGORY_SUBTITLES[cat.name.toLowerCase()] ?? "Manual entry";
                 const isAuto = subtitle === "Auto prices";
@@ -269,6 +281,34 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
                 );
               })}
             </div>
+
+            {/* Default liability categories */}
+            {defaultLiabilityCategories.length > 0 && (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-red-500/20" />
+                  <span className="text-xs font-medium text-red-400">Liabilities</span>
+                  <div className="h-px flex-1 bg-red-500/20" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {defaultLiabilityCategories.map((cat) => {
+                    const Icon = CATEGORY_ICONS[cat.name.toLowerCase()] ?? Box;
+                    const subtitle = CATEGORY_SUBTITLES[cat.name.toLowerCase()] ?? "Manual entry";
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => handleCategoryPick(cat.id)}
+                        className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[var(--dw-border)] bg-[var(--dw-card)] p-5 transition-all hover:border-red-500/50 hover:bg-red-500/5 active:scale-[0.98]"
+                      >
+                        <Icon className="h-6 w-6 text-zinc-600 dark:text-zinc-300" />
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">{cat.name}</span>
+                        <span className="text-[11px] text-red-400">{subtitle}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             {/* Custom categories */}
             {customCategories.length > 0 && (
@@ -402,7 +442,7 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
                   disabled={!canSave || saving}
                   className="w-full"
                 >
-                  {saving ? "Adding..." : "Add Asset"}
+                  {saving ? "Adding..." : saveLabel}
                 </Button>
               </div>
             ) : (
@@ -482,7 +522,7 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
                   disabled={!canSave || saving}
                   className="w-full"
                 >
-                  {saving ? "Adding..." : "Add Asset"}
+                  {saving ? "Adding..." : saveLabel}
                 </Button>
               </div>
             )}

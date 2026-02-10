@@ -1,11 +1,12 @@
 import { db } from "./db";
-import { sumConverted } from "./utils";
+import { calcNetWorth } from "./utils";
 import { getExchangeRates } from "./exchange-rates";
 import type { Currency } from "@/types";
 
 export async function recordHistory(source?: "manual" | "auto"): Promise<void> {
-  const [assets, settings] = await Promise.all([
+  const [assets, categories, settings] = await Promise.all([
     db.assets.filter((a) => !a.isArchived).toArray(),
+    db.categories.toArray(),
     db.settings.get("settings"),
   ]);
 
@@ -13,7 +14,7 @@ export async function recordHistory(source?: "manual" | "auto"): Promise<void> {
 
   const currency: Currency = settings.primaryCurrency;
   const { rates } = await getExchangeRates();
-  const totalValue = sumConverted(assets, currency, rates);
+  const totalValue = calcNetWorth(assets, categories, currency, rates).netWorth;
 
   // Skip if value hasn't changed since last entry
   const lastEntry = await db.history.orderBy("createdAt").last();

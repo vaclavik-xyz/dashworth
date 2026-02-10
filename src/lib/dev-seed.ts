@@ -22,6 +22,10 @@ const VALUE_HISTORY: Record<string, number[]> = {
   savings:     [150000,  165000,  180000,  195000,  210000,  230000],
   tesla:       [12000,   14500,   13000,   16000,   15500,   17000],
   gold:        [55000,   58000,   60000,   62000,   59000,   64000],
+  // Liabilities (values decrease over time as debt is paid down)
+  mortgage:    [4200000, 4180000, 4160000, 4140000, 4120000, 4100000],
+  carLoan:     [180000,  170000,  160000,  150000,  140000,  130000],
+  creditCard:  [15000,   12000,   18000,   14000,   11000,   10000],
 };
 
 interface AssetDef {
@@ -33,17 +37,20 @@ interface AssetDef {
 }
 
 const ASSET_DEFS: AssetDef[] = [
-  { key: "bitcoin",    name: "Bitcoin — Trezor",     categoryName: "Crypto",          group: "Bitcoin",   currency: "CZK" },
-  { key: "ethereum",   name: "Ethereum — Binance",   categoryName: "Crypto",          group: "Ethereum",  currency: "CZK" },
-  { key: "btcBinance", name: "Bitcoin — Binance",    categoryName: "Crypto",          group: "Bitcoin",   currency: "CZK" },
-  { key: "apple",      name: "Apple (AAPL)",         categoryName: "Stocks",          group: "US Tech",   currency: "USD" },
-  { key: "tesla",      name: "Tesla (TSLA)",         categoryName: "Stocks",          group: "US Tech",   currency: "USD" },
-  { key: "apartment",  name: "Byt Praha 6",          categoryName: "Real Estate",     currency: "CZK" },
-  { key: "dragonLore", name: "AWP Dragon Lore FN",   categoryName: "Gaming",          currency: "CZK" },
-  { key: "domain",     name: "dashworth.net",        categoryName: "Domains",         currency: "USD" },
-  { key: "car",        name: "Škoda Octavia RS",     categoryName: "Vehicles",        currency: "CZK" },
-  { key: "savings",    name: "Spořicí účet Fio",     categoryName: "Cash & Savings",  currency: "CZK" },
-  { key: "gold",       name: "Zlaté slitky 1oz",     categoryName: "Collectibles",    currency: "CZK" },
+  { key: "bitcoin",    name: "Bitcoin — Trezor",     categoryName: "Crypto",            group: "Bitcoin",   currency: "CZK" },
+  { key: "ethereum",   name: "Ethereum — Binance",   categoryName: "Crypto",            group: "Ethereum",  currency: "CZK" },
+  { key: "btcBinance", name: "Bitcoin — Binance",    categoryName: "Crypto",            group: "Bitcoin",   currency: "CZK" },
+  { key: "apple",      name: "Apple (AAPL)",         categoryName: "Stocks",            group: "US Tech",   currency: "USD" },
+  { key: "tesla",      name: "Tesla (TSLA)",         categoryName: "Stocks",            group: "US Tech",   currency: "USD" },
+  { key: "apartment",  name: "Byt Praha 6",          categoryName: "Real Estate",       currency: "CZK" },
+  { key: "dragonLore", name: "AWP Dragon Lore FN",   categoryName: "Gaming",            currency: "CZK" },
+  { key: "domain",     name: "dashworth.net",        categoryName: "Domains",           currency: "USD" },
+  { key: "car",        name: "Škoda Octavia RS",     categoryName: "Vehicles",          currency: "CZK" },
+  { key: "savings",    name: "Spořicí účet Fio",     categoryName: "Cash & Savings",    currency: "CZK" },
+  { key: "gold",       name: "Zlaté slitky 1oz",     categoryName: "Collectibles",      currency: "CZK" },
+  { key: "mortgage",   name: "Hypotéka Praha 6",     categoryName: "Loans & Mortgages", currency: "CZK" },
+  { key: "carLoan",    name: "Autokredit Octavia",   categoryName: "Loans & Mortgages", currency: "CZK" },
+  { key: "creditCard", name: "ČSOB Visa",            categoryName: "Credit Cards",      currency: "CZK" },
 ];
 
 export async function devSeedDatabase(): Promise<void> {
@@ -76,13 +83,21 @@ export async function devSeedDatabase(): Promise<void> {
     };
   });
 
-  // Create 6 monthly history entries from total values
+  // Create 6 monthly history entries from total values (assets - liabilities = net worth)
+  const liabilityCatNames = new Set(["Loans & Mortgages", "Credit Cards"]);
   const historyDates = [monthsAgo(5), monthsAgo(4), monthsAgo(3), monthsAgo(2), monthsAgo(1), now];
   const historyEntries: Omit<HistoryEntry, "id">[] = Array.from({ length: 6 }, (_, i) => {
-    // Sum all asset values at this point in time
-    const totalValue = ASSET_DEFS.reduce((sum, def) => sum + VALUE_HISTORY[def.key][i], 0);
+    let totalAssets = 0;
+    let totalLiabilities = 0;
+    for (const def of ASSET_DEFS) {
+      if (liabilityCatNames.has(def.categoryName)) {
+        totalLiabilities += VALUE_HISTORY[def.key][i];
+      } else {
+        totalAssets += VALUE_HISTORY[def.key][i];
+      }
+    }
     return {
-      totalValue,
+      totalValue: totalAssets - totalLiabilities,
       currency: "CZK" as Currency,
       createdAt: historyDates[i],
     };

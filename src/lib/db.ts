@@ -95,4 +95,34 @@ db.version(9).stores({
 db.version(10).stores({});
 // No schema index change — icon is not indexed
 
+db.version(11).stores({}).upgrade(async (tx) => {
+  // Add isLiability = false to all existing categories
+  await tx.table("categories").toCollection().modify((cat) => {
+    if (cat.isLiability == null) cat.isLiability = false;
+  });
+
+  // Add default liability categories if they don't exist
+  const existing = await tx.table("categories").toArray();
+  const names = new Set(existing.map((c: { name: string }) => c.name));
+  const maxSort = existing.reduce((max: number, c: { sortOrder?: number }) => Math.max(max, c.sortOrder ?? 0), 0);
+
+  const defaults = [
+    { name: "Loans & Mortgages", icon: "landmark", color: "rose", isLiability: true },
+    { name: "Credit Cards", icon: "credit-card", color: "red", isLiability: true },
+  ];
+
+  let nextSort = maxSort + 1;
+  for (const d of defaults) {
+    if (!names.has(d.name)) {
+      const id = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+      await tx.table("categories").add({
+        id,
+        ...d,
+        sortOrder: nextSort++,
+        createdAt: new Date(),
+      });
+    }
+  }
+});
+
 export { db };

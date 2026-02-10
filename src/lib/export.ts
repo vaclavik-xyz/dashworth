@@ -2,7 +2,7 @@ import { db } from "./db";
 
 interface ExportData {
   app: "dashworth";
-  version: 2;
+  version: 3;
   exportedAt: string;
   data: {
     categories: unknown[];
@@ -24,7 +24,7 @@ export async function exportData(): Promise<void> {
 
   const payload: ExportData = {
     app: "dashworth",
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     data: {
       categories,

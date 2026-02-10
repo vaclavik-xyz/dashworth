@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, Wallet, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
-import { formatCurrency, sumConverted, HIDDEN_VALUE } from "@/lib/utils";
+import { formatCurrency, calcNetWorth, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { getIcon } from "@/lib/icons";
@@ -106,8 +106,12 @@ function buildGroupedSections(
     };
   });
 
-  // Sort: non-empty by value desc, empty at bottom by sortOrder
+  // Sort: assets first, then liabilities; within each group: non-empty by value desc, empty at bottom by sortOrder
   sections.sort((a, b) => {
+    const aLiab = a.category?.isLiability ? 1 : 0;
+    const bLiab = b.category?.isLiability ? 1 : 0;
+    if (aLiab !== bLiab) return aLiab - bLiab;
+
     if (a.assetCount > 0 && b.assetCount === 0) return -1;
     if (a.assetCount === 0 && b.assetCount > 0) return 1;
     if (a.assetCount > 0 && b.assetCount > 0) return b.subtotal - a.subtotal;
@@ -153,7 +157,8 @@ export default function AssetsPage() {
 
   const { rates } = useExchangeRates();
   const primaryCurrency: Currency = settings?.primaryCurrency ?? "CZK";
-  const totalNetWorth = assets ? sumConverted(assets, primaryCurrency, rates) : 0;
+  const breakdown = assets && categories ? calcNetWorth(assets, categories, primaryCurrency, rates) : { totalAssets: 0, totalLiabilities: 0, netWorth: 0 };
+  const totalNetWorth = breakdown.netWorth;
 
   const sections = useMemo(
     () => (assets && categories ? buildGroupedSections(assets, categories, rates, primaryCurrency) : []),
@@ -297,6 +302,18 @@ export default function AssetsPage() {
             </button>
           </div>
           <p className="text-sm text-zinc-500">Total net worth</p>
+          {breakdown.totalLiabilities > 0 && (
+            <div className="flex items-center gap-3 text-xs">
+              <span className="text-emerald-400">
+                {hidden ? HIDDEN_VALUE : formatCurrency(breakdown.totalAssets, primaryCurrency)}
+                <span className="ml-1 text-zinc-500">assets</span>
+              </span>
+              <span className="text-red-400">
+                {hidden ? HIDDEN_VALUE : `−${formatCurrency(breakdown.totalLiabilities, primaryCurrency)}`}
+                <span className="ml-1 text-zinc-500">debt</span>
+              </span>
+            </div>
+          )}
         </div>
         {assets && assets.length > 0 && (
           <Button onClick={() => openAdd()}>
@@ -325,11 +342,12 @@ export default function AssetsPage() {
         <div className="mt-6 flex gap-0 md:gap-6">
           {/* Left: asset list */}
           <div className="w-full md:w-3/5 space-y-8">
-            {sections.map((section) => {
+            {sections.map((section, sectionIdx) => {
               const Icon = section.category ? getIcon(section.category.icon) : null;
               const colorClass = section.category
                 ? (COLOR_TEXT_CLASSES[section.category.color] ?? "text-zinc-500")
                 : "text-zinc-500";
+              const isLiabilityCategory = section.category?.isLiability ?? false;
 
               const isCategorySelected =
                 selection?.type === "category" && selection.categoryId === section.categoryId;
@@ -337,13 +355,26 @@ export default function AssetsPage() {
               const catSelection: Selection = { type: "category", categoryId: section.categoryId };
               const isCatCollapsed = collapsedCategories.has(section.categoryId);
 
+              // Show divider before first liability category
+              const prevSection = sectionIdx > 0 ? sections[sectionIdx - 1] : null;
+              const showLiabilityDivider = isLiabilityCategory && prevSection && !prevSection.category?.isLiability;
+
               return (
                 <div key={section.categoryId}>
+                  {showLiabilityDivider && (
+                    <div className="flex items-center gap-3 mb-4 -mt-2">
+                      <div className="h-px flex-1 bg-red-500/20" />
+                      <span className="text-xs font-medium text-red-400">Liabilities</span>
+                      <div className="h-px flex-1 bg-red-500/20" />
+                    </div>
+                  )}
                   {/* Category header */}
                   <div
                     className={`mb-3 cursor-pointer rounded-lg transition-colors ${
                       isCategorySelected
-                        ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-2"
+                        ? isLiabilityCategory
+                          ? "md:border-l-2 md:border-red-500 md:bg-red-500/5 md:pl-2"
+                          : "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-2"
                         : "md:border-l-2 md:border-transparent md:pl-2"
                     }`}
                     onClick={() => {
@@ -358,6 +389,9 @@ export default function AssetsPage() {
                       <h2 className={`text-lg font-semibold text-zinc-900 dark:text-white ${isCatCollapsed ? "md:text-xl" : ""}`}>
                         {section.category?.name ?? "Unknown"}
                       </h2>
+                      {isLiabilityCategory && (
+                        <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-400">debt</span>
+                      )}
                       {isCatCollapsed && (
                         <>
                           <span className="ml-auto text-sm md:text-base text-zinc-400">
@@ -388,8 +422,8 @@ export default function AssetsPage() {
                       </button>
                     </div>
                     {!isCatCollapsed && (
-                      <p className="mt-0.5 text-sm text-zinc-400">
-                        {hidden ? HIDDEN_VALUE : formatCurrency(section.subtotal, primaryCurrency)}
+                      <p className={`mt-0.5 text-sm ${isLiabilityCategory ? "text-red-400" : "text-zinc-400"}`}>
+                        {hidden ? HIDDEN_VALUE : (isLiabilityCategory ? `−${formatCurrency(section.subtotal, primaryCurrency)}` : formatCurrency(section.subtotal, primaryCurrency))}
                         <span className="text-zinc-500"> · {section.assetCount} {section.assetCount === 1 ? "asset" : "assets"}</span>
                       </p>
                     )}

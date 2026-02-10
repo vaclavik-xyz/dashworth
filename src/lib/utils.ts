@@ -1,5 +1,33 @@
-import type { Asset, Currency } from "@/types";
+import type { Asset, Category, Currency } from "@/types";
 import { convertCurrency } from "@/lib/exchange-rates";
+
+export interface NetWorthBreakdown {
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
+}
+
+export function calcNetWorth(
+  assets: Asset[],
+  categories: Category[],
+  targetCurrency: Currency,
+  rates: Record<string, number>,
+): NetWorthBreakdown {
+  const liabilityIds = new Set(categories.filter((c) => c.isLiability).map((c) => c.id));
+  let totalAssets = 0;
+  let totalLiabilities = 0;
+
+  for (const a of assets) {
+    const converted = convertCurrency(a.currentValue, a.currency, targetCurrency, rates);
+    if (liabilityIds.has(a.categoryId)) {
+      totalLiabilities += converted;
+    } else {
+      totalAssets += converted;
+    }
+  }
+
+  return { totalAssets, totalLiabilities, netWorth: totalAssets - totalLiabilities };
+}
 
 export function uuid(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
