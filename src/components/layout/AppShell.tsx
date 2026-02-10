@@ -8,8 +8,6 @@ import BottomNav from "./BottomNav";
 import { db } from "@/lib/db";
 import { seedDatabase } from "@/lib/seed";
 import { applyTheme, watchSystemTheme } from "@/lib/theme";
-import { refreshAutoPrices } from "@/lib/auto-update";
-import { useAutoHistory } from "@/hooks/useAutoHistory";
 import { PrivacyProvider } from "@/contexts/PrivacyContext";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -23,9 +21,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Start as null = "don't know yet" (matches server render)
   const [ready, setReady] = useState<boolean | null>(null);
-
-  // Auto-record history when portfolio value changes
-  useAutoHistory();
 
   useEffect(() => {
     setMounted(true);
@@ -46,15 +41,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [ready, pathname, router]);
 
   useEffect(() => {
+    if (assetCount === undefined) return;
     async function init() {
       await seedDatabase();
-      await refreshAutoPrices();
+      if (assetCount! > 0) {
+        const { refreshAutoPrices } = await import("@/lib/auto-update");
+        await refreshAutoPrices();
+      }
     }
     init();
+  }, [assetCount]);
 
-    // Register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js");
+  // Defer service worker registration
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const register = () => navigator.serviceWorker.register("/sw.js");
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(register);
+    } else {
+      setTimeout(register, 1000);
     }
   }, []);
 

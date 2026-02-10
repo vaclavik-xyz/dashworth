@@ -52,6 +52,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://api.exchangerate-api.com" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <link rel="icon" href="/favicon.ico" sizes="32x32" />
