@@ -147,6 +147,8 @@ export default function AssetsPage() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
   const [sheetAssetId, setSheetAssetId] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const scrollYRef = useRef(0);
 
   const { rates } = useExchangeRates();
@@ -178,6 +180,24 @@ export default function AssetsPage() {
   function closeAddPanel() {
     setAddPanelOpen(false);
     setAddPanelCategoryId(undefined);
+  }
+
+  function toggleCategoryCollapse(categoryId: string) {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  }
+
+  function toggleGroupCollapse(key: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   async function confirmDelete() {
@@ -315,6 +335,7 @@ export default function AssetsPage() {
                 selection?.type === "category" && selection.categoryId === section.categoryId;
 
               const catSelection: Selection = { type: "category", categoryId: section.categoryId };
+              const isCatCollapsed = collapsedCategories.has(section.categoryId);
 
               return (
                 <div key={section.categoryId}>
@@ -326,34 +347,55 @@ export default function AssetsPage() {
                         : "md:border-l-2 md:border-transparent md:pl-2"
                     }`}
                     onClick={() => {
-                      toggleSelection(catSelection);
-                      navigateToMobileDetail(catSelection);
+                      toggleCategoryCollapse(section.categoryId);
+                      if (window.matchMedia("(min-width: 768px)").matches) {
+                        toggleSelection(catSelection);
+                      }
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      {Icon && <Icon className={`h-5 w-5 ${colorClass}`} />}
-                      <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                    <div className={`flex items-center gap-2 ${isCatCollapsed ? "md:py-1" : ""}`}>
+                      {Icon && <Icon className={`h-5 w-5 ${isCatCollapsed ? "md:h-6 md:w-6" : ""} ${colorClass}`} />}
+                      <h2 className={`text-lg font-semibold text-zinc-900 dark:text-white ${isCatCollapsed ? "md:text-xl" : ""}`}>
                         {section.category?.name ?? "Unknown"}
                       </h2>
+                      {isCatCollapsed && (
+                        <>
+                          <span className="ml-auto text-sm md:text-base text-zinc-400">
+                            {hidden ? HIDDEN_VALUE : formatCurrency(section.subtotal, primaryCurrency)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigateToMobileDetail(catSelection);
+                            }}
+                            className="inline-flex items-center justify-center min-w-[24px] h-6 md:h-7 px-2 md:px-2.5 rounded-full bg-zinc-700 text-zinc-300 text-xs md:text-sm font-medium md:pointer-events-none"
+                          >
+                            {section.assetCount}
+                          </button>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openAdd(section.categoryId);
                         }}
-                        className="ml-auto rounded-md p-1 text-zinc-500 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                        className={`${isCatCollapsed ? "" : "ml-auto "}rounded-md p-1 text-zinc-500 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors`}
                         aria-label={`Add asset to ${section.category?.name ?? "category"}`}
                       >
                         <Plus className="h-4 w-4" />
                       </button>
                     </div>
-                    <p className="mt-0.5 text-sm text-zinc-400">
-                      {hidden ? HIDDEN_VALUE : formatCurrency(section.subtotal, primaryCurrency)}
-                      <span className="text-zinc-500"> · {section.assetCount} {section.assetCount === 1 ? "asset" : "assets"}</span>
-                    </p>
+                    {!isCatCollapsed && (
+                      <p className="mt-0.5 text-sm text-zinc-400">
+                        {hidden ? HIDDEN_VALUE : formatCurrency(section.subtotal, primaryCurrency)}
+                        <span className="text-zinc-500"> · {section.assetCount} {section.assetCount === 1 ? "asset" : "assets"}</span>
+                      </p>
+                    )}
                   </div>
 
-                  {section.assetCount === 0 ? (
+                  {!isCatCollapsed && (section.assetCount === 0 ? (
                     <p className="ml-1 text-sm text-zinc-500">No assets yet. Tap + to add one.</p>
                   ) : (
                     <div className="space-y-4">
@@ -367,6 +409,8 @@ export default function AssetsPage() {
                         const grpSelection: Selection = grp.name
                           ? { type: "group", categoryId: section.categoryId, group: grp.name }
                           : null;
+                        const groupKey = grp.name ? `${section.categoryId}::${grp.name}` : null;
+                        const isGrpCollapsed = groupKey ? collapsedGroups.has(groupKey) : false;
 
                         return (
                           <div key={grp.name ?? `ungrouped-${gi}`}>
@@ -379,21 +423,42 @@ export default function AssetsPage() {
                                     : "md:border-l-2 md:border-transparent md:pl-2"
                                 }`}
                                 onClick={() => {
-                                  if (grpSelection) {
+                                  if (groupKey) toggleGroupCollapse(groupKey);
+                                  if (grpSelection && window.matchMedia("(min-width: 768px)").matches) {
                                     toggleSelection(grpSelection);
-                                    navigateToMobileDetail(grpSelection);
                                   }
                                 }}
                               >
-                                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                                  {grp.name}
-                                </span>
-                                <p className="text-xs text-zinc-500">
-                                  {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} {grp.assets.length === 1 ? "asset" : "assets"}
-                                </p>
+                                <div className={`flex items-center gap-1.5 ${isGrpCollapsed ? "md:py-0.5" : ""}`}>
+                                  <span className={`text-sm font-medium text-zinc-600 dark:text-zinc-400 ${isGrpCollapsed ? "md:text-base" : ""}`}>
+                                    {grp.name}
+                                  </span>
+                                  {isGrpCollapsed && (
+                                    <>
+                                      <span className="ml-auto text-xs md:text-sm text-zinc-500">
+                                        {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (grpSelection) navigateToMobileDetail(grpSelection);
+                                        }}
+                                        className="inline-flex items-center justify-center min-w-[24px] h-6 md:h-7 px-2 md:px-2.5 rounded-full bg-zinc-700 text-zinc-300 text-xs md:text-sm font-medium md:pointer-events-none"
+                                      >
+                                        {grp.assets.length}
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                                {!isGrpCollapsed && (
+                                  <p className="text-xs text-zinc-500">
+                                    {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} {grp.assets.length === 1 ? "asset" : "assets"}
+                                  </p>
+                                )}
                               </div>
                             )}
-                            <div className={`grid ${"gap-1.5"}`}>
+                            {!isGrpCollapsed && (<div className={`grid ${"gap-1.5"}`}>
                               {grp.assets.map((asset) => {
                                 const isAssetSelected =
                                   selection?.type === "asset" && selection.assetId === asset.id;
@@ -439,12 +504,12 @@ export default function AssetsPage() {
                                   </div>
                                 );
                               })}
-                            </div>
+                            </div>)}
                           </div>
                         );
                       })}
                     </div>
-                  )}
+                  ))}
                 </div>
               );
             })}
