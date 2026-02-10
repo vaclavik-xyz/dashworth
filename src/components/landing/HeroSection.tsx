@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Shield,
   Layers,
@@ -84,13 +84,15 @@ function HeroCarousel() {
   const polyline = CHART_POINTS.map((p) => `${p.x},${scaleY(p.y)}`).join(" ");
   const areaFill = `${polyline} ${svgW},${svgH} 0,${svgH}`;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = scrollRef.current;
-    if (!el || el.scrollWidth <= el.clientWidth) return;
-    const cards = el.firstElementChild?.children;
-    if (!cards?.[2]) return;
-    const card = cards[2] as HTMLElement;
-    el.scrollLeft = card.offsetLeft - (el.clientWidth - card.clientWidth) / 2;
+    if (el && el.scrollWidth > el.clientWidth) {
+      const cards = el.firstElementChild?.children;
+      if (cards?.[2]) {
+        const card = cards[2] as HTMLElement;
+        el.scrollLeft = card.offsetLeft - (el.clientWidth - card.clientWidth) / 2;
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -366,10 +368,18 @@ function HeroCarousel() {
 export default function HeroSection() {
   const { onStart } = useLandingActions();
   const { showInstallCard, isIosSafari, deferredPrompt, handleAndroidInstall } = useInstall();
+  const [heroReady, setHeroReady] = useState(false);
+
+  useEffect(() => {
+    // Runs after paint — triggers the CSS transition
+    setHeroReady(true);
+  }, []);
 
   return (
     <div
-      className={`animate-hero-in relative flex min-h-[100dvh] flex-col items-center px-6 text-center${
+      className={`relative flex min-h-[100dvh] flex-col items-center px-6 text-center transition-[opacity,filter,transform] duration-700 ease-out ${
+        heroReady ? "opacity-100 blur-0 scale-100" : "opacity-0 blur-[6px] scale-[0.98]"
+      }${
         showInstallCard
           ? " pb-3 md:justify-center md:pb-0"
           : " justify-center"

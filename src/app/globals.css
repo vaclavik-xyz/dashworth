@@ -126,18 +126,3 @@ body {
   animation: slideInRight 0.2s ease-out;
 }
 
-/* ── Landing page entrance animation ──────────────────── */
-@keyframes heroIn {
-  from {
-    filter: blur(4px);
-    transform: scale(0.99);
-  }
-  to {
-    filter: blur(0px);
-    transform: scale(1);
-  }
-}
-
-.animate-hero-in {
-  animation: heroIn 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) both;
-}

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useLayoutEffect, type ReactNode } from "react";
 
 interface InstallState {
   showInstallCard: boolean;
@@ -25,7 +25,7 @@ export default function InstallProvider({ children }: { children: ReactNode }) {
   const [isIosSafari, setIsIosSafari] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as unknown as { standalone?: boolean }).standalone === true;
