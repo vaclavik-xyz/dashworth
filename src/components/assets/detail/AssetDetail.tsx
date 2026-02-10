@@ -59,9 +59,9 @@ interface AssetDetailProps {
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between text-xs">
-      <span className="text-zinc-500">{label}</span>
-      <span className="text-zinc-700 dark:text-zinc-300">{value}</span>
+    <div className="flex items-center justify-between gap-2 text-xs min-w-0">
+      <span className="text-zinc-500 shrink-0">{label}</span>
+      <span className="text-zinc-700 dark:text-zinc-300 truncate">{value}</span>
     </div>
   );
 }
@@ -90,6 +90,9 @@ export default function AssetDetail({
   const cv = (v: number, from: Currency) => convertCurrency(v, from, currency, rates);
 
   const [chartMode, setChartMode] = useState<"value" | "qty">("value");
+  const [showAllChanges, setShowAllChanges] = useState(false);
+  const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
+  const initialCount = isDesktop ? 5 : 3;
   const showQtyToggle = asset.priceSource !== "manual" && asset.ticker && (asset.unitPrice ?? 0) > 0;
 
   /* ─── Edit form state ─── */
@@ -537,7 +540,7 @@ export default function AssetDetail({
       </div>
 
       {/* Info pairs */}
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 md:grid-cols-1 md:gap-y-2">
         <InfoRow label="Category" value={category?.name ?? "Unknown"} />
         <InfoRow
           label="Source"
@@ -677,8 +680,8 @@ export default function AssetDetail({
             Changes
             <span className="ml-1.5 text-[10px] text-emerald-500">{changes.length}</span>
           </h4>
-          <div className="space-y-1.5">
-            {changes.slice(0, 20).map((entry, i) => {
+          <div className="space-y-1.5 md:max-h-[400px] md:overflow-y-auto md:pr-2 md:[scrollbar-width:thin] md:[scrollbar-color:theme(colors.zinc.600)_transparent]">
+            {(isDesktop ? changes : showAllChanges ? changes : changes.slice(0, initialCount)).map((entry, i) => {
               const newVal = cv(entry.newValue, entry.currency);
               const oldVal = cv(entry.oldValue, entry.currency);
               const delta = newVal - oldVal;
@@ -736,6 +739,15 @@ export default function AssetDetail({
               );
             })}
           </div>
+          {!isDesktop && changes.length > initialCount && (
+            <button
+              type="button"
+              onClick={() => setShowAllChanges(!showAllChanges)}
+              className="w-full py-3 text-sm text-zinc-400 hover:text-zinc-200 text-center transition-colors"
+            >
+              {showAllChanges ? "Show less" : `Show all ${changes.length} changes`}
+            </button>
+          )}
         </div>
       )}
 

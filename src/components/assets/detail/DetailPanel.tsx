@@ -106,5 +106,9 @@ export default function DetailPanel({
     return null;
   }
 
-  return <Card>{renderContent()}</Card>;
+  return (
+    <Card>
+      {renderContent()}
+    </Card>
+  );
 }
