@@ -86,6 +86,7 @@ export default function AssetCard({
                   e.stopPropagation();
                   onSettings();
                 }}
+                aria-label="Edit asset"
                 className="text-zinc-500 hover:text-zinc-300 transition-colors"
               >
                 <Settings className="h-3.5 w-3.5" />

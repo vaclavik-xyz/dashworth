@@ -274,6 +274,7 @@ export default function AssetDetail({
               <button
                 type="button"
                 onClick={() => setEditIconOpen(!editIconOpen)}
+                aria-label="Change icon"
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] transition-colors ${editIconOpen ? "border-emerald-500" : ""}`}
               >
                 {(() => {
@@ -326,6 +327,7 @@ export default function AssetDetail({
               <button
                 type="button"
                 onClick={() => setEditNewCategoryOpen(true)}
+                aria-label="Add category"
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] text-zinc-400 hover:text-zinc-200 transition-colors"
                 title="New category"
               >
@@ -351,6 +353,7 @@ export default function AssetDetail({
                     setEditGroup("");
                     setEditNewGroup(false);
                   }}
+                  aria-label="Cancel"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] text-zinc-400 hover:text-zinc-200 transition-colors"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -374,6 +377,7 @@ export default function AssetDetail({
                     setEditGroup("");
                     setEditNewGroup(true);
                   }}
+                  aria-label="Add group"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] text-zinc-400 hover:text-zinc-200 transition-colors"
                   title="New group"
                 >

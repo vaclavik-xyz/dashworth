@@ -1,32 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import LandingPage from "@/components/landing/LandingPage";
 
-const OnboardingWizard = dynamic(() => import("@/components/onboarding/OnboardingWizard"), { ssr: false });
 const DashboardView = dynamic(() => import("@/components/dashboard/DashboardView"), { ssr: false });
+const OnboardingWizard = dynamic(() => import("@/components/onboarding/OnboardingWizard"), { ssr: false });
 
-type View = "landing" | "onboarding" | "dashboard";
+type AppState = "landing" | "onboarding" | "dashboard";
 
 export default function DashboardPage() {
-  const [view, setView] = useState<View>("landing");
-  const assetCount = useLiveQuery(() => db.assets.count());
+  const [appState, setAppState] = useState<AppState>("landing");
+  const [transitioning, setTransitioning] = useState(false);
 
-  // Still loading from IndexedDB — blank dark screen for seamless transition
-  if (assetCount === undefined) {
-    return <div className="fixed inset-0 z-50 bg-[#09090b]" />;
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { db } = await import("@/lib/db");
+        const count = await db.assets.count();
+        if (count > 0) {
+          setTransitioning(true);
+          setTimeout(() => setAppState("dashboard"), 150);
+        }
+      } catch {
+        // DB error — stay on landing
+      }
+    };
+    checkUser();
+  }, []);
+
+  if (appState === "onboarding") {
+    return <OnboardingWizard onComplete={() => setAppState("dashboard")} />;
   }
 
-  // New user flow
-  if (assetCount === 0) {
-    if (view === "onboarding") {
-      return <OnboardingWizard onComplete={() => setView("dashboard")} />;
-    }
-    return <LandingPage onStart={() => setView("onboarding")} />;
+  if (appState === "dashboard") {
+    return <DashboardView />;
   }
 
-  return <DashboardView />;
+  return (
+    <div className={transitioning ? "opacity-0 transition-opacity duration-150" : ""}>
+      <LandingPage onStart={() => setAppState("onboarding")} />
+    </div>
+  );
 }

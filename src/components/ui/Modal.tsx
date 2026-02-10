@@ -59,7 +59,7 @@ export default function Modal({ open, onClose, title, size = "default", children
       <div className={`w-full ${size === "sm" ? "max-w-sm sm:max-w-md rounded-2xl" : "sm:max-w-lg rounded-t-2xl sm:rounded-2xl"} max-h-[calc(100vh-5rem)] sm:max-h-[85vh] bg-[var(--dw-card)] border border-[var(--dw-border)] shadow-xl flex flex-col`}>
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--dw-border)] px-5 py-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">{title}</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors">
+          <button onClick={onClose} aria-label="Close" className="text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-white transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>

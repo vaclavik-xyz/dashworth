@@ -111,7 +111,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         }`}
       >
         <div className="overflow-hidden">
-          <p className="text-sm leading-relaxed text-zinc-400">{a}</p>
+          <p className="text-sm leading-relaxed text-zinc-300">{a}</p>
         </div>
       </div>
     </div>
@@ -308,6 +308,7 @@ function HeroCarousel() {
               {CHART_POINTS.map((p, i) => (
                 <button
                   key={i}
+                  aria-label={`Show value for ${p.label}`}
                   className="absolute -translate-x-1/2 -translate-y-1/2"
                   style={{
                     left: `${(p.x / svgW) * 100}%`,
@@ -577,17 +578,17 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
             <div className="flex flex-col items-center gap-1.5">
               <Shield className="h-5 w-5 text-emerald-500" />
               <p className="text-sm font-semibold text-white">100% Private</p>
-              <p className="text-xs text-zinc-400">On-device only</p>
+              <p className="text-xs text-zinc-300">On-device only</p>
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <RefreshCw className="h-5 w-5 text-emerald-500" />
               <p className="text-sm font-semibold text-white">Live Prices</p>
-              <p className="text-xs text-zinc-400">Crypto &amp; stocks</p>
+              <p className="text-xs text-zinc-300">Crypto &amp; stocks</p>
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <Layers className="h-5 w-5 text-emerald-500" />
               <p className="text-sm font-semibold text-white">All Assets</p>
-              <p className="text-xs text-zinc-400">Track anything</p>
+              <p className="text-xs text-zinc-300">Track anything</p>
             </div>
           </div>
 
@@ -661,7 +662,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
         <h2 className="text-center text-2xl font-bold text-white sm:text-3xl">
           Features
         </h2>
-        <p className="mx-auto mt-3 max-w-lg text-center text-sm text-zinc-400">
+        <p className="mx-auto mt-3 max-w-lg text-center text-sm text-zinc-300">
           Everything you need to track and understand your wealth.
         </p>
 
@@ -669,63 +670,63 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <Shield className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">100% Private</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               All data stored locally. No accounts, no servers.
             </p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <RefreshCw className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Live Prices</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Auto-updating crypto &amp; stock prices.
             </p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <Layers className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Track Anything</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Crypto, stocks, real estate, cash — all in one place.
             </p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <History className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Auto History</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Net worth tracked automatically with charts.
             </p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <Eye className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Privacy Mode</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Hide all values with one tap.
             </p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <FolderOpen className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Categories</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Organize assets into groups and categories.
             </p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <Download className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Export &amp; Import</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Back up as JSON. Move between devices.
             </p>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <Wifi className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />
             <h3 className="mt-2 text-sm font-semibold text-white md:mt-3">Works Offline</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Install as a PWA, access anytime.
             </p>
           </div>
           <div className="hidden md:block rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 md:p-5">
             <Palette className="h-5 w-5 text-emerald-500" />
             <h3 className="mt-3 text-sm font-semibold text-white">Themes</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-300 line-clamp-2">
               Multiple dark themes to match your style.
             </p>
           </div>

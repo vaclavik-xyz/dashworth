@@ -414,6 +414,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => swapSortOrder(cat, "up")}
                         disabled={idx === 0}
+                        aria-label="Move up"
                         className="rounded p-0.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors"
                       >
                         <ChevronUp className="h-3.5 w-3.5" />
@@ -422,6 +423,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => swapSortOrder(cat, "down")}
                         disabled={idx === (categories?.length ?? 0) - 1}
+                        aria-label="Move down"
                         className="rounded p-0.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors"
                       >
                         <ChevronDown className="h-3.5 w-3.5" />
@@ -432,6 +434,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => openEditCategory(cat)}
+                      aria-label="Edit category"
                       className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:hover:text-white transition-colors"
                     >
                       <Pencil className="h-4 w-4" />
@@ -445,6 +448,7 @@ export default function SettingsPage() {
                           setProtectedCategoryHint(cat.name);
                           setTimeout(() => setProtectedCategoryHint(null), 3000);
                         }}
+                        aria-label="Delete category"
                         className="relative rounded-lg p-2 text-zinc-600 cursor-not-allowed transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -456,6 +460,7 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setDeleteCategoryTarget(cat)}
+                        aria-label="Delete category"
                         className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
