@@ -267,7 +267,6 @@ export default function AssetDetail({
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 className={inputClass}
-                autoFocus
               />
               <button
                 type="button"
