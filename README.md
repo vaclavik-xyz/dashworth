@@ -93,4 +93,4 @@ The app is currently deployed at [dashworth.net](https://dashworth.net).
 
 ## License
 
-MIT
+BSL 1.1 (Business Source License)
