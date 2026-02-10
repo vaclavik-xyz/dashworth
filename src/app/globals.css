@@ -134,5 +134,5 @@ body {
 
 .animate-hero-in {
   opacity: 0;
-  animation: heroIn 1.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  animation: heroIn 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
