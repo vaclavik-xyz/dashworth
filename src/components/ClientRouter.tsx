@@ -44,7 +44,12 @@ export default function ClientRouter({ children }: { children: ReactNode }) {
 
   if (appState === "dashboard") return <DashboardView />;
   if (appState === "onboarding") {
-    return <OnboardingWizard onComplete={() => setAppState("dashboard")} />;
+    return (
+      <OnboardingWizard
+        onComplete={() => setAppState("dashboard")}
+        onClose={() => setAppState("landing")}
+      />
+    );
   }
 
   return (

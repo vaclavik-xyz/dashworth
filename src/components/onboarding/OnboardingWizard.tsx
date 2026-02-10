@@ -747,8 +747,10 @@ function StepReview({
 
 export default function OnboardingWizard({
   onComplete,
+  onClose,
 }: {
   onComplete: () => void;
+  onClose?: () => void;
 }) {
   const [step, setStep] = useState(0);
   const [currency, setCurrency] = useState<Currency>("USD");
@@ -840,7 +842,20 @@ export default function OnboardingWizard({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#09090b]">
       <div className="shrink-0 px-6 pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-4 sm:px-10">
-        <ProgressBar step={step} />
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <ProgressBar step={step} />
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="rounded-lg p-1 text-zinc-500 transition-colors hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 pb-32">
