@@ -10,9 +10,11 @@ import {
   TrendingUp,
   Banknote,
   Box,
+  Landmark,
+  CreditCard,
 } from "lucide-react";
 import { db } from "@/lib/db";
-import { uuid, formatCurrency } from "@/lib/utils";
+import { uuid, formatCurrency, calcNetWorth } from "@/lib/utils";
 import { useExchangeRates } from "@/lib/useExchangeRates";
 import { convertCurrency } from "@/lib/exchange-rates";
 import TickerInput, { type TickerResult } from "@/components/shared/TickerInput";
@@ -23,7 +25,7 @@ import type { Currency, Asset, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
 import PriceSourceBadge from "@/components/ui/PriceSourceBadge";
 
-const STEPS = ["Currency", "Assets", "Review"];
+const STEPS = ["Currency", "Assets", "Debt", "Review"];
 
 function detectCurrency(): Currency {
   try {
@@ -609,16 +611,215 @@ function StepAssets({
   );
 }
 
-/* ───────────────────────── Step 3: Review ───────────────────────── */
+/* ───────────────────────── Step 3: Debt (optional) ────────────── */
+
+type DebtCategory = "loans" | "credit-cards";
+
+const DEBT_CARDS: {
+  key: DebtCategory;
+  label: string;
+  subtitle: string;
+  Icon: typeof Landmark;
+}[] = [
+  { key: "loans", label: "Loans & Mortgages", subtitle: "Manual entry", Icon: Landmark },
+  { key: "credit-cards", label: "Credit Cards", subtitle: "Manual entry", Icon: CreditCard },
+];
+
+function DebtCategoryPicker({ onPick }: { onPick: (cat: DebtCategory) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 w-full">
+      {DEBT_CARDS.map(({ key, label, subtitle, Icon }) => (
+        <button
+          key={key}
+          onClick={() => onPick(key)}
+          className="flex flex-col items-center gap-2 rounded-2xl border-2 border-zinc-800 bg-zinc-900/50 p-5 transition-all hover:border-red-500/40 hover:bg-red-500/5 active:scale-[0.98]"
+        >
+          <Icon className="h-6 w-6 text-zinc-300" />
+          <span className="text-sm font-semibold text-white">{label}</span>
+          <span className="text-[11px] text-zinc-500">{subtitle}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function StepDebt({
+  debtDrafts,
+  setDebtDrafts,
+  currency,
+}: {
+  debtDrafts: DraftAsset[];
+  setDebtDrafts: React.Dispatch<React.SetStateAction<DraftAsset[]>>;
+  currency: Currency;
+}) {
+  const categories = useLiveQuery(() =>
+    db.categories.orderBy("sortOrder").toArray()
+  );
+  const catList = useMemo(
+    () => categories?.map((c) => ({ id: c.id, name: c.name })) ?? [],
+    [categories]
+  );
+
+  const [editingCategory, setEditingCategory] = useState<DebtCategory | null>(null);
+
+  function resolveCategoryId(debtCat: DebtCategory): string {
+    const nameMap: Record<DebtCategory, string> = {
+      loans: "loans & mortgages",
+      "credit-cards": "credit cards",
+    };
+    const target = nameMap[debtCat];
+    return (
+      catList.find((c) => c.name.toLowerCase() === target)?.id ??
+      catList[0]?.id ??
+      ""
+    );
+  }
+
+  function handleAdd(draft: DraftAsset) {
+    setDebtDrafts((prev) => [...prev, draft]);
+    setEditingCategory(null);
+  }
+
+  function handleRemove(id: string) {
+    setDebtDrafts((prev) => prev.filter((d) => d.id !== id));
+  }
+
+  const placeholders: Record<DebtCategory, string> = {
+    loans: "Mortgage, Car loan, Student loan...",
+    "credit-cards": "Visa, Mastercard, Store card...",
+  };
+
+  const titles: Record<DebtCategory, string> = {
+    loans: "Add Loan or Mortgage",
+    "credit-cards": "Add Credit Card Debt",
+  };
+
+  return (
+    <div className="flex w-full max-w-lg flex-col items-center">
+      <h2 className="text-2xl font-bold text-white sm:text-3xl">
+        Any debts or loans?
+      </h2>
+      <p className="mt-2 text-sm text-zinc-400">
+        Optional — you can skip this step.
+      </p>
+
+      <div className="mt-8 w-full space-y-4">
+        {debtDrafts.length > 0 && (
+          <div className="space-y-2">
+            {debtDrafts.map((d) => (
+              <CompletedCard
+                key={d.id}
+                draft={d}
+                onRemove={() => handleRemove(d.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        {editingCategory === null ? (
+          <>
+            {debtDrafts.length > 0 && (
+              <div className="flex items-center gap-3 my-2">
+                <div className="h-px flex-1 bg-zinc-800" />
+                <span className="text-xs text-zinc-500">Add another</span>
+                <div className="h-px flex-1 bg-zinc-800" />
+              </div>
+            )}
+            <DebtCategoryPicker onPick={(cat) => setEditingCategory(cat)} />
+          </>
+        ) : (
+          <ManualForm
+            currency={currency}
+            categoryId={resolveCategoryId(editingCategory)}
+            placeholder={placeholders[editingCategory]}
+            onAdd={handleAdd}
+            onCancel={() => setEditingCategory(null)}
+            title={titles[editingCategory]}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────── Step 4: Review ───────────────────────── */
+
+function ReviewItemRow({
+  draft,
+  currency,
+  rates,
+  catMap,
+  valueClassName,
+}: {
+  draft: DraftAsset;
+  currency: Currency;
+  rates: Record<string, number>;
+  catMap: Map<string, NonNullable<ReturnType<typeof useLiveQuery<import("@/types").Category[]>>>[number]>;
+  valueClassName?: string;
+}) {
+  const cat = catMap.get(draft.categoryId);
+  const Icon = cat ? getIcon(cat.icon) : getIcon("box");
+  const badge = cat
+    ? COLOR_BADGE_CLASSES[cat.color] ?? COLOR_BADGE_CLASSES.zinc
+    : COLOR_BADGE_CLASSES.zinc;
+  const isAuto = draft.priceSource !== "manual";
+  const catName = cat?.name ?? "Other";
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badge}`}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <span className="block text-sm font-medium text-white truncate">
+          {draft.name}
+        </span>
+        <span className="flex items-center gap-1.5 text-xs text-zinc-500">
+          {isAuto ? (
+            <>
+              <span>
+                {Number(draft.quantity).toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
+                {draft.symbol || draft.ticker.toUpperCase()}
+              </span>
+              <span>&middot;</span>
+              <PriceSourceBadge source={draft.priceSource} showLabel size="sm" />
+            </>
+          ) : (
+            <>
+              <span>{catName}</span>
+              <span>&middot;</span>
+              <PriceSourceBadge source="manual" showLabel size="sm" />
+            </>
+          )}
+        </span>
+      </div>
+      <span className={`text-sm shrink-0 ${valueClassName ?? "text-zinc-400"}`}>
+        {formatCurrency(
+          convertCurrency(
+            parseFloat(draft.value) || 0,
+            draft.currency,
+            currency,
+            rates
+          ),
+          currency
+        )}
+      </span>
+    </div>
+  );
+}
 
 function StepReview({
   drafts,
+  debtDrafts,
   currency,
   rates,
   onSave,
   saving,
 }: {
   drafts: DraftAsset[];
+  debtDrafts: DraftAsset[];
   currency: Currency;
   rates: Record<string, number>;
   onSave: () => void;
@@ -627,14 +828,22 @@ function StepReview({
   const categories = useLiveQuery(() => db.categories.toArray());
   const catMap = new Map(categories?.map((c) => [c.id, c]) ?? []);
 
-  const total = drafts.reduce((sum, d) => {
+  const totalAssets = drafts.reduce((sum, d) => {
     const val = parseFloat(d.value) || 0;
     return sum + convertCurrency(val, d.currency, currency, rates);
   }, 0);
 
-  // Allocation breakdown by category
+  const totalLiabilities = debtDrafts.reduce((sum, d) => {
+    const val = parseFloat(d.value) || 0;
+    return sum + convertCurrency(val, d.currency, currency, rates);
+  }, 0);
+
+  const netWorth = totalAssets - totalLiabilities;
+  const hasDebts = debtDrafts.length > 0;
+
+  // Allocation breakdown by category (assets only)
   const allocation = useMemo(() => {
-    if (total <= 0) return [];
+    if (totalAssets <= 0) return [];
     const byCategory: Record<string, { name: string; value: number }> = {};
     for (const d of drafts) {
       const cat = catMap.get(d.categoryId);
@@ -644,9 +853,9 @@ function StepReview({
       byCategory[catName].value += val;
     }
     return Object.values(byCategory)
-      .map((c) => ({ name: c.name, pct: Math.round((c.value / total) * 100) }))
+      .map((c) => ({ name: c.name, pct: Math.round((c.value / totalAssets) * 100) }))
       .sort((a, b) => b.pct - a.pct);
-  }, [drafts, catMap, total, currency, rates]);
+  }, [drafts, catMap, totalAssets, currency, rates]);
 
   return (
     <div className="flex w-full max-w-lg flex-col items-center">
@@ -658,59 +867,36 @@ function StepReview({
       </p>
 
       <div className="mt-8 w-full rounded-xl border border-zinc-800 bg-zinc-900/50 divide-y divide-zinc-800">
-        {drafts.map((d) => {
-          const cat = catMap.get(d.categoryId);
-          const Icon = cat ? getIcon(cat.icon) : getIcon("box");
-          const badge = cat
-            ? COLOR_BADGE_CLASSES[cat.color] ?? COLOR_BADGE_CLASSES.zinc
-            : COLOR_BADGE_CLASSES.zinc;
-          const isAuto = d.priceSource !== "manual";
-          const catName = cat?.name ?? "Other";
+        {drafts.map((d) => (
+          <ReviewItemRow
+            key={d.id}
+            draft={d}
+            currency={currency}
+            rates={rates}
+            catMap={catMap}
+          />
+        ))}
 
-          return (
-            <div key={d.id} className="flex items-center gap-3 px-4 py-3">
-              <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badge}`}
-              >
-                <Icon className="h-4 w-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="block text-sm font-medium text-white truncate">
-                  {d.name}
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-zinc-500">
-                  {isAuto ? (
-                    <>
-                      <span>
-                        {Number(d.quantity).toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
-                        {d.symbol || d.ticker.toUpperCase()}
-                      </span>
-                      <span>&middot;</span>
-                      <PriceSourceBadge source={d.priceSource} showLabel size="sm" />
-                    </>
-                  ) : (
-                    <>
-                      <span>{catName}</span>
-                      <span>&middot;</span>
-                      <PriceSourceBadge source="manual" showLabel size="sm" />
-                    </>
-                  )}
-                </span>
-              </div>
-              <span className="text-sm text-zinc-400 shrink-0">
-                {formatCurrency(
-                  convertCurrency(
-                    parseFloat(d.value) || 0,
-                    d.currency,
-                    currency,
-                    rates
-                  ),
-                  currency
-                )}
+        {hasDebts && (
+          <>
+            <div className="flex items-center gap-3 px-4 py-2 bg-zinc-900/80">
+              <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
+                Liabilities
               </span>
+              <div className="h-px flex-1 bg-red-500/20" />
             </div>
-          );
-        })}
+            {debtDrafts.map((d) => (
+              <ReviewItemRow
+                key={d.id}
+                draft={d}
+                currency={currency}
+                rates={rates}
+                catMap={catMap}
+                valueClassName="text-red-400"
+              />
+            ))}
+          </>
+        )}
       </div>
 
       {/* Allocation breakdown */}
@@ -726,10 +912,35 @@ function StepReview({
       )}
 
       <div className="mt-6 text-center">
-        <p className="text-sm text-zinc-500">Total net worth</p>
-        <p className="mt-1 text-4xl font-bold text-white">
-          {formatCurrency(total, currency)}
-        </p>
+        {hasDebts ? (
+          <>
+            <div className="flex justify-center gap-8 text-sm">
+              <div>
+                <p className="text-zinc-500">Assets</p>
+                <p className="mt-0.5 text-lg font-semibold text-white">
+                  {formatCurrency(totalAssets, currency)}
+                </p>
+              </div>
+              <div>
+                <p className="text-zinc-500">Liabilities</p>
+                <p className="mt-0.5 text-lg font-semibold text-red-400">
+                  {formatCurrency(totalLiabilities, currency)}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-zinc-500 mt-4">Net worth</p>
+            <p className="mt-1 text-4xl font-bold text-white">
+              {formatCurrency(netWorth, currency)}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-zinc-500">Total net worth</p>
+            <p className="mt-1 text-4xl font-bold text-white">
+              {formatCurrency(totalAssets, currency)}
+            </p>
+          </>
+        )}
       </div>
 
       <Button
@@ -764,6 +975,7 @@ export default function OnboardingWizard({
   }, []);
 
   const [completedDrafts, setCompletedDrafts] = useState<DraftAsset[]>([]);
+  const [debtDrafts, setDebtDrafts] = useState<DraftAsset[]>([]);
   const [saving, setSaving] = useState(false);
 
   const { rates } = useExchangeRates();
@@ -772,13 +984,21 @@ export default function OnboardingWizard({
     (d) => d.name.trim() && d.categoryId && parseFloat(d.value) > 0
   );
 
+  const validDebtDrafts = debtDrafts.filter(
+    (d) => d.name.trim() && d.categoryId && parseFloat(d.value) > 0
+  );
+
   const canAdvance =
-    step === 0 || (step === 1 && validDrafts.length > 0) || step === 2;
+    step === 0
+    || (step === 1 && validDrafts.length > 0)
+    || step === 2
+    || step === 3;
 
   async function saveAll() {
     setSaving(true);
     const now = new Date();
-    const assets: Asset[] = validDrafts.map((d) => {
+
+    function toAsset(d: DraftAsset): Asset {
       const isAutoFetch = d.priceSource !== "manual" && d.ticker.trim();
       return {
         id: uuid(),
@@ -795,15 +1015,14 @@ export default function OnboardingWizard({
         createdAt: now,
         updatedAt: now,
       };
-    });
+    }
 
-    const total = assets.reduce(
-      (sum, a) =>
-        sum + convertCurrency(a.currentValue, a.currency, currency, rates),
-      0
-    );
+    const allAssets: Asset[] = [
+      ...validDrafts.map(toAsset),
+      ...validDebtDrafts.map(toAsset),
+    ];
 
-    await db.transaction("rw", [db.settings, db.assets, db.history], async () => {
+    await db.transaction("rw", [db.settings, db.assets, db.history, db.categories], async () => {
       const existing = await db.settings.get("settings");
       await db.settings.put({
         id: "settings",
@@ -812,9 +1031,12 @@ export default function OnboardingWizard({
         ...existing,
         primaryCurrency: currency,
       } as import("@/types").UserSettings);
-      await db.assets.bulkAdd(assets);
+      await db.assets.bulkAdd(allAssets);
+
+      const cats = await db.categories.toArray();
+      const { netWorth } = calcNetWorth(allAssets, cats, currency, rates);
       await db.history.add({
-        totalValue: total,
+        totalValue: netWorth,
         currency,
         createdAt: now,
       });
@@ -831,6 +1053,8 @@ export default function OnboardingWizard({
     } else if (step === 1) {
       setStep(2);
     } else if (step === 2) {
+      setStep(3);
+    } else if (step === 3) {
       saveAll();
     }
   }
@@ -869,8 +1093,16 @@ export default function OnboardingWizard({
           />
         )}
         {step === 2 && (
+          <StepDebt
+            debtDrafts={debtDrafts}
+            setDebtDrafts={setDebtDrafts}
+            currency={currency}
+          />
+        )}
+        {step === 3 && (
           <StepReview
             drafts={validDrafts}
+            debtDrafts={validDebtDrafts}
             currency={currency}
             rates={rates}
             onSave={saveAll}
@@ -891,7 +1123,7 @@ export default function OnboardingWizard({
             Back
           </button>
 
-          {step === 2 ? (
+          {step === 3 ? (
             <Button
               onClick={saveAll}
               disabled={saving}
@@ -905,7 +1137,7 @@ export default function OnboardingWizard({
               disabled={!canAdvance}
               className="group flex items-center gap-1.5 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600"
             >
-              Continue
+              {step === 2 && validDebtDrafts.length === 0 ? "Skip" : "Continue"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           )}
