@@ -138,11 +138,7 @@ export default function AssetDetail({
     () => allCategories.find((c) => c.id === editCategoryId),
     [allCategories, editCategoryId],
   );
-  const editCatName = editSelectedCategory?.name?.toLowerCase() ?? "";
-  const editIsCrypto = editCatName === "crypto";
-  const editIsStocks = editCatName === "stocks";
-  const editShowTicker = editIsCrypto || editIsStocks;
-  const editIsAutoPrice = editShowTicker && editPriceSource !== "manual";
+  const editIsAutoPrice = editPriceSource !== "manual";
 
   const existingGroups = useMemo(() => {
     const groups = new Set<string>();
@@ -174,12 +170,12 @@ export default function AssetDetail({
       icon: editIcon || undefined,
       currency: saveCurrency,
       notes: editNotes.trim() || undefined,
-      ticker: editShowTicker && editTicker.trim() ? editTicker.trim() : undefined,
-      priceSource: (editShowTicker && editTicker.trim() ? editPriceSource : "manual") as PriceSource,
+      ticker: editIsAutoPrice && editTicker.trim() ? editTicker.trim() : undefined,
+      priceSource: (editIsAutoPrice && editTicker.trim() ? editPriceSource : "manual") as PriceSource,
       quantity: useAutoPrice ? (asset.quantity ?? 1) : undefined,
       unitPrice: useAutoPrice ? editUnitPrice : undefined,
       currentValue: useAutoPrice ? (asset.quantity ?? 1) * editUnitPrice : asset.currentValue,
-      lastPriceUpdate: editShowTicker && editTicker.trim() ? now : undefined,
+      lastPriceUpdate: editIsAutoPrice && editTicker.trim() ? now : undefined,
       updatedAt: now,
     };
 
@@ -400,46 +396,41 @@ export default function AssetDetail({
           />
         </div>
 
-        {/* ── Price Source (auto-price only) ── */}
-        {editShowTicker && (
-          <CollapsibleSection label="Price Source">
-            <p className="text-xs text-zinc-500">
-              Source:{" "}
-              <span className="text-zinc-700 dark:text-zinc-300">
-                {editIsCrypto ? "CoinGecko" : "Yahoo Finance"}
-              </span>
-            </p>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-500">
-                {editIsCrypto ? "Coin ID" : "Ticker"}
-              </label>
-              <TickerInput
-                type={editIsCrypto ? "crypto" : "stocks"}
-                value={editTicker}
-                onChange={setEditTicker}
-                currency={editCurrency}
-                onResult={handleTickerResult}
-                onError={() => {}}
-                onFetching={() => {}}
-                inputClassName={inputClass}
-              />
-            </div>
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={editPriceSource !== "manual"}
-                onChange={(e) =>
-                  setEditPriceSource(
-                    e.target.checked ? (editIsCrypto ? "coingecko" : "yahoo") : "manual",
-                  )
-                }
-                className="h-4 w-4 rounded border-zinc-300 text-emerald-500 focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-800"
-              />
-              <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                Auto-update price on app open
-              </span>
-            </label>
-            {editIsAutoPrice && (
+        {/* ── Price Source ── */}
+        <CollapsibleSection label="Price Source">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-500">Source</label>
+            <select
+              value={editPriceSource}
+              onChange={(e) => {
+                const src = e.target.value as PriceSource;
+                setEditPriceSource(src);
+                if (src === "manual") setEditTicker("");
+              }}
+              className={inputClass}
+            >
+              <option value="manual">Manual</option>
+              <option value="coingecko">CoinGecko (Crypto)</option>
+              <option value="yahoo">Yahoo Finance (Stocks)</option>
+            </select>
+          </div>
+          {editIsAutoPrice && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-500">
+                  {editPriceSource === "coingecko" ? "Coin ID" : "Ticker"}
+                </label>
+                <TickerInput
+                  source={editPriceSource as "coingecko" | "yahoo"}
+                  value={editTicker}
+                  onChange={setEditTicker}
+                  currency={editCurrency}
+                  onResult={handleTickerResult}
+                  onError={() => {}}
+                  onFetching={() => {}}
+                  inputClassName={inputClass}
+                />
+              </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-500">Currency</label>
                 <select
@@ -452,12 +443,12 @@ export default function AssetDetail({
                   <option value="USD">USD</option>
                 </select>
               </div>
-            )}
-          </CollapsibleSection>
-        )}
+            </>
+          )}
+        </CollapsibleSection>
 
-        {/* ── Currency (non-ticker assets) ── */}
-        {!editShowTicker && (
+        {/* ── Currency (manual assets) ── */}
+        {!editIsAutoPrice && (
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-500">Currency</label>
             <select

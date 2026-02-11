@@ -47,31 +47,15 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [priceError, setPriceError] = useState<string | null>(null);
 
-  // Determine selected category name
+  // Determine selected category
   const selectedCategory = useMemo(
     () => categories?.find((c) => c.id === categoryId),
     [categories, categoryId],
   );
-  const catName = selectedCategory?.name?.toLowerCase() ?? "";
-  const isCrypto = catName === "crypto";
-  const isStocks = catName === "stocks";
-  const showTicker = isCrypto || isStocks;
-  const isAutoFetch = showTicker && priceSource !== "manual";
+  const isAutoFetch = priceSource !== "manual";
 
   // Computed total for auto-fetch assets
   const computedTotal = (Number(quantity) || 0) * (Number(unitPrice) || 0);
-
-  // When category changes, set price source
-  useEffect(() => {
-    if (!asset) {
-      if (isCrypto) setPriceSource("coingecko");
-      else if (isStocks) setPriceSource("yahoo");
-      else {
-        setPriceSource("manual");
-        setTicker("");
-      }
-    }
-  }, [categoryId, isCrypto, isStocks, asset]);
 
   // Existing groups for the selected category (for autocomplete)
   const existingGroups = useMemo(() => {
@@ -97,15 +81,15 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
   }
 
   const fetchPrice = useCallback(async () => {
-    if (!ticker.trim()) return;
+    if (!ticker.trim() || priceSource === "manual") return;
     setFetchingPrice(true);
     setPriceError(null);
 
     try {
       let prices: Record<string, number> | null = null;
-      if (isCrypto) {
+      if (priceSource === "coingecko") {
         prices = await fetchCryptoPrice(ticker.trim());
-      } else if (isStocks) {
+      } else if (priceSource === "yahoo") {
         prices = await fetchStockPrice(ticker.trim());
       }
 
@@ -131,14 +115,14 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
     } finally {
       setFetchingPrice(false);
     }
-  }, [ticker, isCrypto, isStocks, currency]);
+  }, [ticker, priceSource, currency]);
 
   // Auto-fetch price when ticker changes (debounced)
   useEffect(() => {
-    if (!showTicker || !ticker.trim()) return;
+    if (priceSource === "manual" || !ticker.trim()) return;
     const timeout = setTimeout(fetchPrice, 800);
     return () => clearTimeout(timeout);
-  }, [ticker, showTicker, fetchPrice]);
+  }, [ticker, priceSource, fetchPrice]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -160,11 +144,11 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
       currentValue: finalValue,
       currency,
       notes: notes.trim() || undefined,
-      ticker: showTicker && ticker.trim() ? ticker.trim() : undefined,
-      priceSource: showTicker && ticker.trim() ? priceSource : ("manual" as PriceSource),
+      ticker: isAutoFetch && ticker.trim() ? ticker.trim() : undefined,
+      priceSource: isAutoFetch && ticker.trim() ? priceSource : ("manual" as PriceSource),
       quantity: useAutoPrice ? (Number(quantity) || 1) : undefined,
       unitPrice: useAutoPrice ? (Number(unitPrice) || 0) : undefined,
-      lastPriceUpdate: showTicker && ticker.trim() ? now : undefined,
+      lastPriceUpdate: isAutoFetch && ticker.trim() ? now : undefined,
       updatedAt: now,
     };
 
@@ -299,20 +283,40 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
         </div>
       )}
 
-      {/* Ticker field for Crypto / Stocks */}
-      {showTicker && (
+      {/* Price Source */}
+      <div>
+        <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <HintTooltip text="Manual: you update the price. CoinGecko/Yahoo: price updates automatically.">
+            Price Source
+          </HintTooltip>
+        </label>
+        <select
+          value={priceSource}
+          onChange={(e) => {
+            const src = e.target.value as PriceSource;
+            setPriceSource(src);
+            if (src === "manual") setTicker("");
+          }}
+          className={inputClass}
+        >
+          <option value="manual">Manual</option>
+          <option value="coingecko">CoinGecko (Crypto)</option>
+          <option value="yahoo">Yahoo Finance (Stocks)</option>
+        </select>
+      </div>
+
+      {/* Ticker field for auto-priced assets */}
+      {isAutoFetch && (
         <div>
           <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            <HintTooltip text="Manual: you update the price. CoinGecko/Yahoo: price updates automatically.">
-              {isCrypto ? "CoinGecko ID" : "Ticker Symbol"}
-            </HintTooltip>
+            {priceSource === "coingecko" ? "CoinGecko ID" : "Ticker Symbol"}
           </label>
           <div className="relative">
             <input
               type="text"
               value={ticker}
               onChange={(e) => setTicker(e.target.value)}
-              placeholder={isCrypto ? "e.g. bitcoin, ethereum, solana, cardano" : "e.g. AAPL, TSLA, MSFT"}
+              placeholder={priceSource === "coingecko" ? "e.g. bitcoin, ethereum, solana, cardano" : "e.g. AAPL, TSLA, MSFT"}
               className={inputClass}
             />
             {fetchingPrice && (
@@ -323,7 +327,7 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
             <p className="mt-1 text-xs text-red-400">{priceError}</p>
           )}
           <p className="mt-1 text-xs text-zinc-500">
-            {isCrypto
+            {priceSource === "coingecko"
               ? "Enter a CoinGecko ID to auto-fetch the price"
               : "Enter a ticker to auto-fetch the price (via CORS proxy)"}
           </p>
@@ -432,23 +436,6 @@ export default function AssetForm({ asset, defaultCategoryId, onClose }: AssetFo
             </select>
           </div>
         </div>
-      )}
-
-      {/* Auto-update toggle for assets with ticker */}
-      {showTicker && ticker.trim() && (
-        <label className="flex items-center gap-2.5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={priceSource !== "manual"}
-            onChange={(e) =>
-              setPriceSource(e.target.checked ? (isCrypto ? "coingecko" : "yahoo") : "manual")
-            }
-            className="h-4 w-4 rounded border-zinc-300 text-emerald-500 focus:ring-emerald-500 dark:border-zinc-600 dark:bg-zinc-800"
-          />
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
-            Auto-update price on app open
-          </span>
-        </label>
       )}
 
       {/* Update note — only when editing, attached to this specific change */}

@@ -248,7 +248,7 @@ function AutoPriceForm({
       </h3>
 
       <TickerInput
-        type={type}
+        source={type === "crypto" ? "coingecko" : "yahoo"}
         value={ticker}
         onChange={setTicker}
         currency={currency}
@@ -531,9 +531,10 @@ function StepAssets({
       cash: "cash & savings",
     };
     const target = nameMap[wizCat];
-    if (!target) return "";
+    if (!target) return catList[0]?.id ?? "";
     return (
       catList.find((c) => c.name.toLowerCase() === target)?.id ??
+      catList.find((c) => c.name.toLowerCase() === "cash & bank")?.id ??
       catList[0]?.id ??
       ""
     );
@@ -670,6 +671,7 @@ function StepDebt({
     const target = nameMap[debtCat];
     return (
       catList.find((c) => c.name.toLowerCase() === target)?.id ??
+      catList.find((c) => c.name.toLowerCase() === "other")?.id ??
       catList[0]?.id ??
       ""
     );

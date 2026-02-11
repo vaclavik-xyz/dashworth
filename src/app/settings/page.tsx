@@ -101,7 +101,6 @@ export default function SettingsPage() {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
-  const [protectedCategoryHint, setProtectedCategoryHint] = useState<string | null>(null);
 
   // Goal management state
   const [goalModalOpen, setGoalModalOpen] = useState(false);
@@ -510,31 +509,14 @@ export default function SettingsPage() {
                     </button>
 
                     {/* Delete */}
-                    {["crypto", "stocks"].includes(cat.name.toLowerCase()) ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProtectedCategoryHint(cat.name);
-                          setTimeout(() => setProtectedCategoryHint(null), 3000);
-                        }}
-                        aria-label="Delete category"
-                        className="relative rounded-lg p-2 text-zinc-600 cursor-not-allowed transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="absolute inset-0 flex items-center justify-center">
-                          <span className="block h-[1.5px] w-5 rotate-45 rounded bg-zinc-600" />
-                        </span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setDeleteCategoryTarget(cat)}
-                        aria-label="Delete category"
-                        className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteCategoryTarget(cat)}
+                      aria-label="Delete category"
+                      className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 );
               })}
@@ -545,13 +527,6 @@ export default function SettingsPage() {
             </p>
           )}
         </Card>
-        {protectedCategoryHint && (
-          <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-zinc-800 border border-zinc-700 px-4 py-2.5 shadow-lg">
-            <p className="whitespace-nowrap text-xs text-zinc-300">
-              {protectedCategoryHint} can&apos;t be deleted — needed for auto price tracking.
-            </p>
-          </div>
-        )}
       </CollapsibleSection>
 
       {/* Guide */}
@@ -584,7 +559,7 @@ export default function SettingsPage() {
               Go to <span className="text-zinc-300">Assets</span> and tap <span className="text-zinc-300">+ Add Asset</span>. Enter a name, pick a category, set the currency and current value. Your net worth is calculated and tracked automatically on the <span className="text-zinc-300">Dashboard</span>.
             </GuideItem>
             <GuideItem icon={RefreshCw} title="Live Price Tracking">
-              Assets in <span className="text-zinc-300">Crypto</span> and <span className="text-zinc-300">Stocks</span> categories support auto-updating prices. When adding an asset, set the price source to <span className="text-zinc-300">CoinGecko</span> (crypto) or <span className="text-zinc-300">Yahoo Finance</span> (stocks) and enter the ticker symbol (e.g. bitcoin, AAPL).
+              Any asset can use auto-updating prices. When adding or editing an asset, set the price source to <span className="text-zinc-300">CoinGecko</span> (crypto) or <span className="text-zinc-300">Yahoo Finance</span> (stocks) and enter the ticker symbol (e.g. bitcoin, AAPL).
             </GuideItem>
             <GuideItem icon={Layers} title="Categories & Groups">
               Categories organize your assets by type (Crypto, Stocks, Real Estate, etc.). Groups are sub-folders within a category — e.g. multiple wallets under a &quot;Bitcoin&quot; group. Manage categories in Settings above.

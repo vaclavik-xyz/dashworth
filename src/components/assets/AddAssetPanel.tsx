@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowLeft, Plus, Bitcoin, TrendingUp, Banknote, Box, Landmark, CreditCard } from "lucide-react";
+import { ArrowLeft, Plus, Box } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency } from "@/lib/utils";
 import { recordHistory } from "@/lib/history";
@@ -24,51 +24,8 @@ interface AddAssetPanelProps {
   defaultCategoryId?: string;
 }
 
-type SelectedType = "crypto" | "stocks" | "manual";
-
-const DEFAULT_CATEGORY_NAMES: Record<string, true> = {
-  crypto: true,
-  stocks: true,
-  "cash & savings": true,
-  "cash & bank": true,
-  other: true,
-  "loans & mortgages": true,
-  "credit cards": true,
-};
-
-function isDefaultCategory(name: string) {
-  return DEFAULT_CATEGORY_NAMES[name.toLowerCase()] === true;
-}
-
-function categoryToType(name: string): SelectedType {
-  const lower = name.toLowerCase();
-  if (lower === "crypto") return "crypto";
-  if (lower === "stocks") return "stocks";
-  return "manual";
-}
-
 const inputClass =
   "w-full rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none dark:text-white dark:placeholder-zinc-500";
-
-const CATEGORY_ICONS: Record<string, typeof Bitcoin> = {
-  crypto: Bitcoin,
-  stocks: TrendingUp,
-  "cash & savings": Banknote,
-  "cash & bank": Banknote,
-  other: Box,
-  "loans & mortgages": Landmark,
-  "credit cards": CreditCard,
-};
-
-const CATEGORY_SUBTITLES: Record<string, string> = {
-  crypto: "Auto prices",
-  stocks: "Auto prices",
-  "cash & savings": "Manual entry",
-  "cash & bank": "Manual entry",
-  other: "Any asset type",
-  "loans & mortgages": "Debt tracking",
-  "credit cards": "Debt tracking",
-};
 
 export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddAssetPanelProps) {
   const categories = useLiveQuery(() => db.categories.orderBy("sortOrder").toArray());
@@ -77,7 +34,7 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
 
   const [step, setStep] = useState<"category" | "form">(defaultCategoryId ? "form" : "category");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(defaultCategoryId ?? null);
-  const [selectedType, setSelectedType] = useState<SelectedType>("manual");
+  const [priceSource, setPriceSource] = useState<PriceSource>("manual");
   const [createCategoryModalOpen, setCreateCategoryModalOpen] = useState(false);
 
   // Form state (declared before reset block)
@@ -101,13 +58,11 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
       if (defaultCategoryId) {
         setStep("form");
         setSelectedCategoryId(defaultCategoryId);
-        const cat = categories?.find((c) => c.id === defaultCategoryId);
-        setSelectedType(cat ? categoryToType(cat.name) : "manual");
       } else {
         setStep("category");
         setSelectedCategoryId(null);
-        setSelectedType("manual");
       }
+      setPriceSource("manual");
       setTicker("");
       setTickerResult(null);
       setMode("quantity");
@@ -141,17 +96,12 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
 
   const listId = `add-panel-groups-${selectedCategoryId}`;
 
-  // Separate default asset vs default liability vs custom categories
-  const defaultAssetCategories = useMemo(
-    () => categories?.filter((c) => isDefaultCategory(c.name) && !c.isLiability) ?? [],
+  const assetCategories = useMemo(
+    () => categories?.filter((c) => !c.isLiability) ?? [],
     [categories],
   );
-  const defaultLiabilityCategories = useMemo(
-    () => categories?.filter((c) => isDefaultCategory(c.name) && c.isLiability) ?? [],
-    [categories],
-  );
-  const customCategories = useMemo(
-    () => categories?.filter((c) => !isDefaultCategory(c.name)) ?? [],
+  const liabilityCategories = useMemo(
+    () => categories?.filter((c) => c.isLiability) ?? [],
     [categories],
   );
 
@@ -161,9 +111,9 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
       ? (Number(quantity) || 0) * tickerResult.price
       : Number(manualValue) || 0;
 
-  const isAutoType = selectedType === "crypto" || selectedType === "stocks";
+  const isAutoSource = priceSource !== "manual";
 
-  const canSave = isAutoType
+  const canSave = isAutoSource
     ? ticker.trim() && tickerResult && computedTotal > 0
     : manualName.trim() && Number(manualTotal) > 0;
 
@@ -171,7 +121,7 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
     const cat = categories?.find((c) => c.id === catId);
     if (!cat) return;
     setSelectedCategoryId(catId);
-    setSelectedType(categoryToType(cat.name));
+    setPriceSource("manual");
     setStep("form");
     // Reset form
     setTicker("");
@@ -196,7 +146,7 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
 
     const now = new Date();
 
-    if (isAutoType && tickerResult) {
+    if (isAutoSource && tickerResult) {
       const totalVal =
         mode === "quantity"
           ? (Number(quantity) || 0) * tickerResult.price
@@ -211,7 +161,7 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
         currency: tickerResult.currency,
         notes: notes.trim() || undefined,
         ticker: ticker.trim(),
-        priceSource: (selectedType === "crypto" ? "coingecko" : "yahoo") as PriceSource,
+        priceSource,
         quantity: mode === "quantity" ? (Number(quantity) || 1) : 1,
         unitPrice: tickerResult.price,
         lastPriceUpdate: now,
@@ -245,11 +195,7 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
   }
 
   const isLiabilityCategory = selectedCategory?.isLiability ?? false;
-  const formTitle = isAutoType
-    ? selectedType === "crypto"
-      ? "Add Crypto"
-      : "Add Stock"
-    : `Add ${selectedCategory?.name ?? "Asset"}`;
+  const formTitle = `Add ${selectedCategory?.name ?? "Asset"}`;
   const saveLabel = isLiabilityCategory ? "Add Liability" : "Add Asset";
 
   return (
@@ -260,30 +206,28 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Add Asset</h2>
             <p className="text-sm text-zinc-500">Choose a category to get started.</p>
 
-            {/* Default asset categories 2×2 grid */}
+            {/* Asset categories */}
             <div className="grid grid-cols-2 gap-3">
-              {defaultAssetCategories.map((cat) => {
-                const Icon = CATEGORY_ICONS[cat.name.toLowerCase()] ?? Box;
-                const subtitle = CATEGORY_SUBTITLES[cat.name.toLowerCase()] ?? "Manual entry";
-                const isAuto = subtitle === "Auto prices";
+              {assetCategories.map((cat) => {
+                const CatIcon = getIcon(cat.icon);
+                const badge = COLOR_BADGE_CLASSES[cat.color] ?? COLOR_BADGE_CLASSES.zinc;
                 return (
                   <button
                     key={cat.id}
                     onClick={() => handleCategoryPick(cat.id)}
                     className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[var(--dw-border)] bg-[var(--dw-card)] p-5 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/5 active:scale-[0.98]"
                   >
-                    <Icon className="h-6 w-6 text-zinc-600 dark:text-zinc-300" />
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${badge}`}>
+                      <CatIcon className="h-4.5 w-4.5" />
+                    </div>
                     <span className="text-sm font-semibold text-zinc-900 dark:text-white">{cat.name}</span>
-                    <span className={`text-[11px] ${isAuto ? "text-emerald-500" : "text-zinc-500"}`}>
-                      {subtitle}
-                    </span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Default liability categories */}
-            {defaultLiabilityCategories.length > 0 && (
+            {/* Liability categories */}
+            {liabilityCategories.length > 0 && (
               <>
                 <div className="flex items-center gap-3">
                   <div className="h-px flex-1 bg-red-500/20" />
@@ -291,47 +235,19 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
                   <div className="h-px flex-1 bg-red-500/20" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {defaultLiabilityCategories.map((cat) => {
-                    const Icon = CATEGORY_ICONS[cat.name.toLowerCase()] ?? Box;
-                    const subtitle = CATEGORY_SUBTITLES[cat.name.toLowerCase()] ?? "Manual entry";
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => handleCategoryPick(cat.id)}
-                        className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[var(--dw-border)] bg-[var(--dw-card)] p-5 transition-all hover:border-red-500/50 hover:bg-red-500/5 active:scale-[0.98]"
-                      >
-                        <Icon className="h-6 w-6 text-zinc-600 dark:text-zinc-300" />
-                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">{cat.name}</span>
-                        <span className="text-[11px] text-red-400">{subtitle}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* Custom categories */}
-            {customCategories.length > 0 && (
-              <>
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-[var(--dw-border)]" />
-                  <span className="text-xs text-zinc-500">Custom</span>
-                  <div className="h-px flex-1 bg-[var(--dw-border)]" />
-                </div>
-                <div className="space-y-2">
-                  {customCategories.map((cat) => {
+                  {liabilityCategories.map((cat) => {
                     const CatIcon = getIcon(cat.icon);
                     const badge = COLOR_BADGE_CLASSES[cat.color] ?? COLOR_BADGE_CLASSES.zinc;
                     return (
                       <button
                         key={cat.id}
                         onClick={() => handleCategoryPick(cat.id)}
-                        className="flex w-full items-center gap-3 rounded-xl border border-[var(--dw-border)] bg-[var(--dw-card)] p-3 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/5 active:scale-[0.99]"
+                        className="flex flex-col items-center gap-2 rounded-2xl border-2 border-[var(--dw-border)] bg-[var(--dw-card)] p-5 transition-all hover:border-red-500/50 hover:bg-red-500/5 active:scale-[0.98]"
                       >
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badge}`}>
-                          <CatIcon className="h-4 w-4" />
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${badge}`}>
+                          <CatIcon className="h-4.5 w-4.5" />
                         </div>
-                        <span className="text-sm font-medium text-zinc-900 dark:text-white">{cat.name}</span>
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-white">{cat.name}</span>
                       </button>
                     );
                   })}
@@ -363,117 +279,121 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
             )}
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">{formTitle}</h2>
 
-            {isAutoType ? (
-              /* ── Auto-price form (Crypto / Stocks) ── */
-              <div className="space-y-4">
-                <TickerInput
-                  type={selectedType as "crypto" | "stocks"}
-                  value={ticker}
-                  onChange={setTicker}
-                  currency={manualCurrency}
-                  onResult={setTickerResult}
-                  onError={() => {}}
-                  onFetching={() => {}}
-                  inputClassName={inputClass}
-                  autoFocus
-                />
-
-                {tickerResult && (
-                  <QuantityValueToggle
-                    mode={mode}
-                    onModeChange={setMode}
-                    quantity={quantity}
-                    onQuantityChange={setQuantity}
-                    manualValue={manualValue}
-                    onManualValueChange={setManualValue}
-                    computedTotal={computedTotal}
-                    currency={tickerResult.currency}
-                    inputClassName={inputClass}
-                    toggleInactiveClassName="bg-[var(--dw-input)] text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-                    quantityLabel={selectedType === "stocks" ? "I know the shares" : "I know the quantity"}
-                  />
-                )}
-
-                <CollapsibleSection label="Optional">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Group</label>
-                    <input
-                      type="text"
-                      value={group}
-                      onChange={(e) => setGroup(e.target.value)}
-                      placeholder="e.g. Bitcoin, US Tech"
-                      className={inputClass}
-                      list={listId}
-                    />
-                    <datalist id={listId}>
-                      {existingGroups.map((g) => (
-                        <option key={g} value={g} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
-                    <select
-                      value={manualCurrency}
-                      onChange={(e) => setManualCurrency(e.target.value as Currency)}
-                      className={inputClass}
-                    >
-                      <option value="CZK">CZK</option>
-                      <option value="EUR">EUR</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Notes</label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Optional notes..."
-                      className={`${inputClass} resize-none`}
-                      rows={2}
-                    />
-                  </div>
-                </CollapsibleSection>
-
-                <Button
-                  onClick={handleSave}
-                  disabled={!canSave || saving}
-                  className="w-full"
+            <div className="space-y-4">
+              {/* Price source selector */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Price Source</label>
+                <select
+                  value={priceSource}
+                  onChange={(e) => {
+                    const src = e.target.value as PriceSource;
+                    setPriceSource(src);
+                    setTicker("");
+                    setTickerResult(null);
+                  }}
+                  className={inputClass}
                 >
-                  {saving ? "Adding..." : saveLabel}
-                </Button>
+                  <option value="manual">Manual</option>
+                  <option value="coingecko">CoinGecko (Crypto)</option>
+                  <option value="yahoo">Yahoo Finance (Stocks)</option>
+                </select>
               </div>
-            ) : (
-              /* ── Manual form (Cash, Other, Custom) ── */
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Name</label>
-                  <input
-                    type="text"
-                    value={manualName}
-                    onChange={(e) => setManualName(e.target.value)}
-                    placeholder="e.g. Savings Account, Gold Ring"
-                    className={inputClass}
+
+              {isAutoSource ? (
+                /* ── Auto-price form ── */
+                <>
+                  <TickerInput
+                    source={priceSource as "coingecko" | "yahoo"}
+                    value={ticker}
+                    onChange={setTicker}
+                    currency={manualCurrency}
+                    onResult={setTickerResult}
+                    onError={() => {}}
+                    onFetching={() => {}}
+                    inputClassName={inputClass}
                     autoFocus
                   />
-                </div>
 
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Value</label>
+                  {tickerResult && (
+                    <QuantityValueToggle
+                      mode={mode}
+                      onModeChange={setMode}
+                      quantity={quantity}
+                      onQuantityChange={setQuantity}
+                      manualValue={manualValue}
+                      onManualValueChange={setManualValue}
+                      computedTotal={computedTotal}
+                      currency={tickerResult.currency}
+                      inputClassName={inputClass}
+                      toggleInactiveClassName="bg-[var(--dw-input)] text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                      quantityLabel={priceSource === "yahoo" ? "I know the shares" : "I know the quantity"}
+                    />
+                  )}
+                </>
+              ) : (
+                /* ── Manual fields ── */
+                <>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Name</label>
                     <input
-                      type="number"
-                      value={manualTotal}
-                      onChange={(e) => setManualTotal(e.target.value)}
-                      placeholder="0"
+                      type="text"
+                      value={manualName}
+                      onChange={(e) => setManualName(e.target.value)}
+                      placeholder="e.g. Savings Account, Gold Ring"
                       className={inputClass}
-                      min="0"
-                      step="any"
+                      autoFocus
                     />
                   </div>
-                  <div className="w-24">
+
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Value</label>
+                      <input
+                        type="number"
+                        value={manualTotal}
+                        onChange={(e) => setManualTotal(e.target.value)}
+                        placeholder="0"
+                        className={inputClass}
+                        min="0"
+                        step="any"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
+                      <select
+                        value={manualCurrency}
+                        onChange={(e) => setManualCurrency(e.target.value as Currency)}
+                        className={inputClass}
+                      >
+                        <option value="CZK">CZK</option>
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <CollapsibleSection label="Optional">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Group</label>
+                  <input
+                    type="text"
+                    value={group}
+                    onChange={(e) => setGroup(e.target.value)}
+                    placeholder="e.g. Bitcoin, US Tech"
+                    className={inputClass}
+                    list={listId}
+                  />
+                  <datalist id={listId}>
+                    {existingGroups.map((g) => (
+                      <option key={g} value={g} />
+                    ))}
+                  </datalist>
+                </div>
+
+                {isAutoSource && (
+                  <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Currency</label>
                     <select
                       value={manualCurrency}
@@ -485,47 +405,28 @@ export default function AddAssetPanel({ open, onClose, defaultCategoryId }: AddA
                       <option value="USD">USD</option>
                     </select>
                   </div>
+                )}
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Notes</label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Optional notes..."
+                    className={`${inputClass} resize-none`}
+                    rows={2}
+                  />
                 </div>
+              </CollapsibleSection>
 
-                <CollapsibleSection label="Optional">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Group</label>
-                    <input
-                      type="text"
-                      value={group}
-                      onChange={(e) => setGroup(e.target.value)}
-                      placeholder="e.g. Bitcoin, US Tech"
-                      className={inputClass}
-                      list={listId}
-                    />
-                    <datalist id={listId}>
-                      {existingGroups.map((g) => (
-                        <option key={g} value={g} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">Notes</label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Optional notes..."
-                      className={`${inputClass} resize-none`}
-                      rows={2}
-                    />
-                  </div>
-                </CollapsibleSection>
-
-                <Button
-                  onClick={handleSave}
-                  disabled={!canSave || saving}
-                  className="w-full"
-                >
-                  {saving ? "Adding..." : saveLabel}
-                </Button>
-              </div>
-            )}
+              <Button
+                onClick={handleSave}
+                disabled={!canSave || saving}
+                className="w-full"
+              >
+                {saving ? "Adding..." : saveLabel}
+              </Button>
+            </div>
           </div>
         )}
       </SlidePanel>

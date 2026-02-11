@@ -17,7 +17,7 @@ export interface TickerResult {
 }
 
 interface TickerInputProps {
-  type: "crypto" | "stocks";
+  source: "coingecko" | "yahoo";
   value: string;
   onChange: (v: string) => void;
   currency: Currency;
@@ -29,7 +29,7 @@ interface TickerInputProps {
 }
 
 export default function TickerInput({
-  type,
+  source,
   value,
   onChange,
   currency,
@@ -39,7 +39,7 @@ export default function TickerInput({
   inputClassName,
   autoFocus,
 }: TickerInputProps) {
-  const isCrypto = type === "crypto";
+  const isCrypto = source === "coingecko";
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [fetching, setFetching] = useState(false);
   const [result, setResult] = useState<TickerResult | null>(null);
@@ -86,7 +86,7 @@ export default function TickerInput({
       }
     }, 500);
     return () => clearTimeout(debounceRef.current);
-  }, [value, currency, isCrypto]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value, currency, source]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-2">

@@ -137,14 +137,16 @@ export default function GoalForm({ goal, categories, assets, onClose }: GoalForm
             className={selectClass}
           >
             <option value="">Select a category…</option>
-            {categories.map((cat) => {
-              const count = assets.filter((a) => a.categoryId === cat.id).length;
-              return (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name} ({count} {count === 1 ? "asset" : "assets"})
-                </option>
-              );
-            })}
+            {categories
+              .filter((cat) => assets.some((a) => a.categoryId === cat.id))
+              .map((cat) => {
+                const count = assets.filter((a) => a.categoryId === cat.id).length;
+                return (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name} ({count} {count === 1 ? "asset" : "assets"})
+                  </option>
+                );
+              })}
           </select>
         </div>
       )}
