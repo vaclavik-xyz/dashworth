@@ -1,4 +1,4 @@
-import type { Asset, Category, Currency } from "@/types";
+import type { Asset, Category, Currency, Goal } from "@/types";
 import { convertCurrency } from "@/lib/exchange-rates";
 
 export interface NetWorthBreakdown {
@@ -59,6 +59,30 @@ export function formatCurrency(value: number, currency: Currency): string {
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("cs-CZ", { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function getGoalCurrentValue(
+  goal: Goal,
+  assets: Asset[],
+  categories: Category[],
+  netWorth: number,
+  currency: Currency,
+  rates: Record<string, number>,
+): number | null {
+  if (goal.linkType === "asset" && goal.linkId) {
+    const asset = assets.find((a) => a.id === goal.linkId);
+    if (!asset) return null;
+    return convertCurrency(asset.currentValue, asset.currency, currency, rates);
+  }
+  if (goal.linkType === "category" && goal.linkId) {
+    if (!categories.find((c) => c.id === goal.linkId)) return null;
+    return sumConverted(
+      assets.filter((a) => a.categoryId === goal.linkId),
+      currency,
+      rates,
+    );
+  }
+  return netWorth;
 }
 
 export function sumConverted(

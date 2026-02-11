@@ -11,8 +11,10 @@ import NetWorthChart from "./NetWorthChart";
 import AllocationPie from "./AllocationPie";
 import TopAssets from "./TopAssets";
 import HistoryLog from "./HistoryLog";
+import GoalProgress from "./GoalProgress";
 import InstallPrompt from "@/components/ui/InstallPrompt";
 import HintTooltip from "@/components/ui/HintTooltip";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 export default function DashboardView() {
   const assets = useLiveQuery(() =>
@@ -28,6 +30,7 @@ export default function DashboardView() {
   const settings = useLiveQuery(() => db.settings.get("settings"));
 
   const { rates } = useExchangeRates();
+  const { hidden } = usePrivacy();
   const currency: Currency = settings?.primaryCurrency ?? "CZK";
   const breakdown = assets && categories ? calcNetWorth(assets, categories, currency, rates) : { totalAssets: 0, totalLiabilities: 0, netWorth: 0 };
 
@@ -56,6 +59,21 @@ export default function DashboardView() {
         lastEntry={history?.[0]}
         previousEntry={history?.[1]}
       />
+
+      {/* Goal Progress */}
+      {settings?.goals && settings.goals.length > 0 && history && assets && categories && settings.goals.map((goal) => (
+        <GoalProgress
+          key={goal.id}
+          goal={goal}
+          currentNetWorth={breakdown.netWorth}
+          currency={currency}
+          rates={rates}
+          history={history}
+          hidden={hidden}
+          assets={assets}
+          categories={categories}
+        />
+      ))}
 
       {/* Row 1: Chart + Allocation */}
       <div className="mt-8 grid gap-4 lg:grid-cols-2">

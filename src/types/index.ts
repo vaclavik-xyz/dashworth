@@ -48,6 +48,16 @@ export interface HistoryEntry {
   createdAt: Date;
 }
 
+export interface Goal {
+  id: string;
+  name: string;
+  amount: number;
+  currency?: Currency;
+  date?: string;
+  linkType?: "asset" | "category";
+  linkId?: string;
+}
+
 export interface UserSettings {
   id: string;
   primaryCurrency: Currency;
@@ -55,6 +65,7 @@ export interface UserSettings {
   customTheme?: CustomThemeColors;
   showHints?: boolean;
   lastExportAt?: string;
+  goals?: Goal[];
 }
 
 export interface ExchangeRateCache {

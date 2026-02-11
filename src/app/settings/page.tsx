@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield, Info, Eye, Layers, Smartphone } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield, Info, Eye, Layers, Smartphone, Target } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -14,11 +14,12 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate, formatCurrency, calcNetWorth, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
-import type { Category, Currency, CustomThemeColors, Theme } from "@/types";
+import type { Category, Goal, Currency, CustomThemeColors, Theme } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import CategoryForm from "@/components/settings/CategoryForm";
+import GoalForm from "@/components/settings/GoalForm";
 import HintTooltip from "@/components/ui/HintTooltip";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 import type { LucideIcon } from "lucide-react";
@@ -37,20 +38,22 @@ function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section className="mt-8">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 group"
-      >
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          {title}
-        </h2>
-        <ChevronDown
-          className={`h-3.5 w-3.5 text-zinc-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
+      <div className="flex w-full items-center gap-2 group">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2"
+        >
+          <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+            {title}
+          </h2>
+          <ChevronDown
+            className={`h-3.5 w-3.5 text-zinc-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
+        </button>
         <div className="flex-1" />
-        {titleRight && <div onClick={(e) => e.stopPropagation()}>{titleRight}</div>}
-      </button>
+        {titleRight}
+      </div>
       <div className={`grid transition-all duration-200 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
         <div className="overflow-hidden">{children}</div>
       </div>
@@ -100,6 +103,11 @@ export default function SettingsPage() {
   const [deleteCategoryTarget, setDeleteCategoryTarget] = useState<Category | null>(null);
   const [protectedCategoryHint, setProtectedCategoryHint] = useState<string | null>(null);
 
+  // Goal management state
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | undefined>();
+  const [deleteGoalTarget, setDeleteGoalTarget] = useState<Goal | null>(null);
+
   const { hidden } = usePrivacy();
   const activeAssets = assets?.filter((a) => !a.isArchived) ?? [];
   const currency: Currency = settings?.primaryCurrency ?? "USD";
@@ -112,10 +120,11 @@ export default function SettingsPage() {
   };
 
   async function updateSetting(
-    key: string,
+    key: "primaryCurrency" | "theme",
     value: string,
   ) {
-    await db.settings.update("settings", { [key]: value });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await db.settings.update("settings", { [key]: value } as any);
   }
 
   async function selectCustomTheme() {
@@ -174,6 +183,29 @@ export default function SettingsPage() {
     if (!deleteCategoryTarget) return;
     await db.categories.delete(deleteCategoryTarget.id);
     setDeleteCategoryTarget(null);
+  }
+
+  // Goal helpers
+  function openAddGoal() {
+    setEditingGoal(undefined);
+    setGoalModalOpen(true);
+  }
+
+  function openEditGoal(goal: Goal) {
+    setEditingGoal(goal);
+    setGoalModalOpen(true);
+  }
+
+  function closeGoalModal() {
+    setGoalModalOpen(false);
+    setEditingGoal(undefined);
+  }
+
+  async function confirmDeleteGoal() {
+    if (!deleteGoalTarget) return;
+    const goals = settings?.goals ?? [];
+    await db.settings.update("settings", { goals: goals.filter((g) => g.id !== deleteGoalTarget.id) });
+    setDeleteGoalTarget(null);
   }
 
   // Import flow
@@ -570,6 +602,66 @@ export default function SettingsPage() {
         </Card>
       </CollapsibleSection>
 
+      {/* Goals */}
+      <CollapsibleSection
+        title="Goals"
+        titleRight={
+          <Button variant="ghost" onClick={openAddGoal} className="text-xs">
+            <Plus className="h-3.5 w-3.5" />
+            Add Goal
+          </Button>
+        }
+      >
+        <Card className="mt-3 p-0">
+          {settings.goals && settings.goals.length > 0 ? (
+            <div className="divide-y divide-[var(--dw-border)]">
+              {settings.goals.map((goal) => (
+                <div key={goal.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <Target className="h-4.5 w-4.5 text-emerald-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{goal.name}</p>
+                    <p className="text-xs text-zinc-500">
+                      {hidden ? HIDDEN_VALUE : formatCurrency(goal.amount, goal.currency ?? settings.primaryCurrency)}
+                      {goal.date && ` · by ${new Date(goal.date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
+                      {goal.linkType && goal.linkId && (() => {
+                        const linked = goal.linkType === "asset"
+                          ? assets?.find((a) => a.id === goal.linkId)?.name
+                          : categories?.find((c) => c.id === goal.linkId)?.name;
+                        return linked
+                          ? <> · {linked}</>
+                          : <> · <span className="text-amber-400">broken link</span></>;
+                      })()}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openEditGoal(goal)}
+                    aria-label="Edit goal"
+                    className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:hover:text-white transition-colors"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteGoalTarget(goal)}
+                    aria-label="Delete goal"
+                    className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="px-4 py-6 text-center text-sm text-zinc-500">
+              No goals yet. Add one to track your progress.
+            </p>
+          )}
+        </Card>
+      </CollapsibleSection>
+
       {/* Data */}
       <CollapsibleSection title="Data">
         <div className="mt-3 flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
@@ -761,6 +853,36 @@ export default function SettingsPage() {
             </div>
           </>
         )}
+      </Modal>
+
+      {/* Add/Edit Goal modal */}
+      <Modal
+        open={goalModalOpen}
+        onClose={closeGoalModal}
+        title={editingGoal ? "Edit Goal" : "Add Goal"}
+      >
+        <GoalForm goal={editingGoal} categories={categories ?? []} assets={activeAssets} onClose={closeGoalModal} />
+      </Modal>
+
+      {/* Delete Goal confirmation modal */}
+      <Modal
+        open={deleteGoalTarget !== null}
+        onClose={() => setDeleteGoalTarget(null)}
+        title="Delete Goal"
+      >
+        <p className="text-sm text-zinc-400">
+          Are you sure you want to delete{" "}
+          <span className="font-medium text-zinc-900 dark:text-white">{deleteGoalTarget?.name}</span>?
+          This action cannot be undone.
+        </p>
+        <div className="mt-4 flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setDeleteGoalTarget(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteGoal}>
+            Delete
+          </Button>
+        </div>
       </Modal>
 
       {/* Import confirmation modal */}
