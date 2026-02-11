@@ -21,11 +21,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Dashworth",
-  description: "All your assets in one dashboard. No accounts, no cloud. Everything stays on your device.",
+  title: "Dashworth — Track Your Net Worth. Privately.",
+  description: "All your assets in one dashboard. 100% private — no accounts, no cloud, no servers. Everything stays on your device. Live prices for stocks, crypto & more.",
+  alternates: {
+    canonical: "https://dashworth.net",
+  },
   openGraph: {
-    title: "Dashworth — Track your net worth. Privately.",
-    description: "All your assets in one dashboard. No accounts, no cloud. Everything stays on your device.",
+    title: "Dashworth — Track Your Net Worth. Privately.",
+    description: "All your assets in one dashboard. 100% private — no accounts, no cloud, no servers. Everything stays on your device. Live prices for stocks, crypto & more.",
     url: "https://dashworth.net",
     siteName: "Dashworth",
     images: [{ url: "https://dashworth.net/og-image.png" }],
@@ -33,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dashworth — Track your net worth. Privately.",
-    description: "All your assets in one dashboard. No accounts, no cloud. Everything stays on your device.",
+    title: "Dashworth — Track Your Net Worth. Privately.",
+    description: "All your assets in one dashboard. 100% private — no accounts, no cloud, no servers. Everything stays on your device. Live prices for stocks, crypto & more.",
     images: ["https://dashworth.net/og-image.png"],
   },
   appleWebApp: {
