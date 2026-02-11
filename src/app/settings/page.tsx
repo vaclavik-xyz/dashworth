@@ -23,6 +23,41 @@ import HintTooltip from "@/components/ui/HintTooltip";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 import type { LucideIcon } from "lucide-react";
 
+function CollapsibleSection({
+  title,
+  defaultOpen = false,
+  titleRight,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  titleRight?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className="mt-8">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 group"
+      >
+        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
+          {title}
+        </h2>
+        <ChevronDown
+          className={`h-3.5 w-3.5 text-zinc-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+        <div className="flex-1" />
+        {titleRight && <div onClick={(e) => e.stopPropagation()}>{titleRight}</div>}
+      </button>
+      <div className={`grid transition-all duration-200 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+        <div className="overflow-hidden">{children}</div>
+      </div>
+    </section>
+  );
+}
+
 function GuideItem({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -202,10 +237,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Settings</h1>
 
       {/* General */}
-      <section className="mt-8">
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          General
-        </h2>
+      <CollapsibleSection title="General">
         <Card className="mt-3 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -255,9 +287,13 @@ export default function SettingsPage() {
                 : "Using offline rates"}
             </p>
           </div>
+        </Card>
+      </CollapsibleSection>
 
+      {/* Theme */}
+      <CollapsibleSection title="Theme">
+        <Card className="mt-3">
           <div>
-            <p className="text-sm font-medium text-zinc-900 dark:text-white">Theme</p>
             <p className="text-xs text-zinc-500 mb-3">Appearance preference</p>
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
               {([
@@ -365,21 +401,19 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
-
         </Card>
-      </section>
+      </CollapsibleSection>
 
       {/* Categories */}
-      <section className="mt-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-            Categories
-          </h2>
+      <CollapsibleSection
+        title="Categories"
+        titleRight={
           <Button variant="ghost" onClick={openAddCategory} className="text-xs">
             <Plus className="h-3.5 w-3.5" />
             Add Category
           </Button>
-        </div>
+        }
+      >
         <Card className="mt-3 p-0">
           {categories && categories.length > 0 ? (
             <div className="divide-y divide-[var(--dw-border)]">
@@ -486,13 +520,10 @@ export default function SettingsPage() {
             </p>
           </div>
         )}
-      </section>
+      </CollapsibleSection>
 
       {/* Guide */}
-      <section className="mt-8">
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          Guide
-        </h2>
+      <CollapsibleSection title="Guide">
         <Card className="mt-3">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -537,13 +568,10 @@ export default function SettingsPage() {
             </GuideItem>
           </div>
         </Card>
-      </section>
+      </CollapsibleSection>
 
       {/* Data */}
-      <section className="mt-8">
-        <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          Data
-        </h2>
+      <CollapsibleSection title="Data">
         <div className="mt-3 flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
           <div className="text-xs">
@@ -598,7 +626,7 @@ export default function SettingsPage() {
             </Button>
           </div>
         </Card>
-      </section>
+      </CollapsibleSection>
 
       {/* Danger Zone */}
       <section className="mt-8">
