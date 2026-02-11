@@ -12,6 +12,7 @@ import {
   Box,
   Landmark,
   CreditCard,
+  Plus,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency, calcNetWorth } from "@/lib/utils";
@@ -23,7 +24,9 @@ import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
 import type { Currency, Asset, PriceSource } from "@/types";
 import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
 import PriceSourceBadge from "@/components/ui/PriceSourceBadge";
+import CategoryForm from "@/components/settings/CategoryForm";
 
 const STEPS = ["Currency", "Assets", "Debt", "Review"];
 
@@ -179,7 +182,6 @@ function CategoryPicker({ onPick }: { onPick: (cat: WizardCategory) => void }) {
 
 const OTHER_SUBCATEGORIES = [
   "Real Estate",
-  "Domains",
   "Gaming",
   "Vehicles",
   "Collectibles",
@@ -393,6 +395,7 @@ function OtherForm({
   onCancel: () => void;
 }) {
   const [subCat, setSubCat] = useState<string | null>(null);
+  const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
 
   const SUB_CAT_MAP: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};
@@ -428,20 +431,43 @@ function OtherForm({
               {sc}
             </button>
           ))}
+          <button
+            onClick={() => setCreateCategoryOpen(true)}
+            className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/50 px-4 py-3 text-sm font-medium text-zinc-400 transition-all hover:border-emerald-500/50 hover:text-emerald-400 active:scale-[0.98] flex items-center justify-center gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
+            New Category
+          </button>
         </div>
+
+        <Modal
+          open={createCategoryOpen}
+          onClose={() => setCreateCategoryOpen(false)}
+          title="New Category"
+        >
+          <CategoryForm
+            onClose={() => {
+              setCreateCategoryOpen(false);
+              // Find the newest category (highest sortOrder) and select it
+              db.categories.orderBy("sortOrder").last().then((newest) => {
+                if (newest) setSubCat(newest.name);
+              });
+            }}
+          />
+        </Modal>
       </div>
     );
   }
 
   const categoryId =
     SUB_CAT_MAP[subCat] ||
+    categories.find((c) => c.name.toLowerCase() === subCat.toLowerCase())?.id ||
     categories.find((c) => c.name.toLowerCase() === "other")?.id ||
     categories[categories.length - 1]?.id ||
     "";
 
   const placeholders: Record<string, string> = {
     "Real Estate": "Apartment, House, Land...",
-    Domains: "example.com, mysite.io...",
     Gaming: "CS2 Skins, In-game items...",
     Vehicles: "Car, Motorcycle, Boat...",
     Collectibles: "Gold, Art, Wine...",

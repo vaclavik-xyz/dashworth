@@ -125,4 +125,14 @@ db.version(11).stores({}).upgrade(async (tx) => {
   }
 });
 
+db.version(12).stores({}).upgrade(async (tx) => {
+  const domains = await tx.table("categories").where("name").equals("Domains").first();
+  if (domains) {
+    const assetCount = await tx.table("assets").where("categoryId").equals(domains.id).count();
+    if (assetCount === 0) {
+      await tx.table("categories").delete(domains.id);
+    }
+  }
+});
+
 export { db };
