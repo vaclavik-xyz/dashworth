@@ -47,12 +47,12 @@ function buildGroupedSections(
     byCat.set(asset.categoryId, list);
   }
 
-  // Include ALL categories (even empty ones) + orphan categoryIds
+  // Only include categories that have assets + orphan categoryIds
   const seen = new Set<string>();
   const allCatIds: string[] = [];
   for (const cat of categories) {
     seen.add(cat.id);
-    allCatIds.push(cat.id);
+    if (byCat.has(cat.id)) allCatIds.push(cat.id);
   }
   for (const catId of byCat.keys()) {
     if (!seen.has(catId)) allCatIds.push(catId);
