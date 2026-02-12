@@ -26,11 +26,13 @@ import type { LucideIcon } from "lucide-react";
 
 function CollapsibleSection({
   title,
+  icon: Icon,
   defaultOpen = false,
   titleRight,
   children,
 }: {
   title: string;
+  icon?: LucideIcon;
   defaultOpen?: boolean;
   titleRight?: React.ReactNode;
   children: React.ReactNode;
@@ -44,6 +46,7 @@ function CollapsibleSection({
           onClick={() => setOpen(!open)}
           className="flex items-center gap-2"
         >
+          {Icon && <Icon className="h-4 w-4 text-zinc-500" />}
           <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
             {title}
           </h2>
@@ -268,7 +271,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Settings</h1>
 
       {/* General */}
-      <CollapsibleSection title="General">
+      <CollapsibleSection title="General" icon={Globe}>
         <Card className="mt-3 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -322,7 +325,7 @@ export default function SettingsPage() {
       </CollapsibleSection>
 
       {/* Theme */}
-      <CollapsibleSection title="Theme">
+      <CollapsibleSection title="Theme" icon={Palette}>
         <Card className="mt-3">
           <div>
             <p className="text-xs text-zinc-500 mb-3">Appearance preference</p>
@@ -438,6 +441,7 @@ export default function SettingsPage() {
       {/* Categories */}
       <CollapsibleSection
         title="Categories"
+        icon={Layers}
         titleRight={
           <Button variant="ghost" onClick={openAddCategory} className="text-xs">
             <Plus className="h-3.5 w-3.5" />
@@ -530,7 +534,7 @@ export default function SettingsPage() {
       </CollapsibleSection>
 
       {/* Guide */}
-      <CollapsibleSection title="Guide">
+      <CollapsibleSection title="Guide" icon={Info}>
         <Card className="mt-3">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -580,6 +584,7 @@ export default function SettingsPage() {
       {/* Goals */}
       <CollapsibleSection
         title="Goals"
+        icon={Target}
         titleRight={
           <Button variant="ghost" onClick={openAddGoal} className="text-xs">
             <Plus className="h-3.5 w-3.5" />
@@ -638,7 +643,7 @@ export default function SettingsPage() {
       </CollapsibleSection>
 
       {/* Data */}
-      <CollapsibleSection title="Data">
+      <CollapsibleSection title="Data" icon={Shield}>
         <div className="mt-3 flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/60">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
           <div className="text-xs">
