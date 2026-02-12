@@ -12,7 +12,7 @@ const OnboardingWizard = dynamic(
   { ssr: false },
 );
 
-type AppState = "landing" | "onboarding" | "dashboard";
+type AppState = "loading" | "landing" | "onboarding" | "dashboard";
 
 const LandingActionsContext = createContext<{ onStart: () => void }>({
   onStart: () => {},
@@ -23,8 +23,7 @@ export function useLandingActions() {
 }
 
 export default function ClientRouter({ children }: { children: ReactNode }) {
-  const [appState, setAppState] = useState<AppState>("landing");
-  const [transitioning, setTransitioning] = useState(false);
+  const [appState, setAppState] = useState<AppState>("loading");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -32,16 +31,16 @@ export default function ClientRouter({ children }: { children: ReactNode }) {
         const { db } = await import("@/lib/db");
         const count = await db.assets.count();
         if (count > 0) {
-          setTransitioning(true);
-          setTimeout(() => setAppState("dashboard"), 150);
+          setAppState("dashboard");
+          return;
         }
-      } catch {
-        // DB error — stay on landing
-      }
+      } catch {}
+      setAppState("landing");
     };
     checkUser();
   }, []);
 
+  if (appState === "loading") return null;
   if (appState === "dashboard") return <DashboardView />;
   if (appState === "onboarding") {
     return (
@@ -54,9 +53,7 @@ export default function ClientRouter({ children }: { children: ReactNode }) {
 
   return (
     <LandingActionsContext.Provider value={{ onStart: () => setAppState("onboarding") }}>
-      <div className={transitioning ? "opacity-0 transition-opacity duration-150" : ""}>
-        {children}
-      </div>
+      {children}
     </LandingActionsContext.Provider>
   );
 }
