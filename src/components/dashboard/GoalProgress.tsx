@@ -1,9 +1,23 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
+import { EyeOff } from "lucide-react";
 import type { Asset, Category, Currency, Goal, HistoryEntry } from "@/types";
 import { formatCurrency, getGoalCurrentValue, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
+import { COLOR_BG_CLASSES, COLOR_BADGE_CLASSES, COLOR_TEXT_MUTED_CLASSES, COLOR_HEX } from "@/constants/colors";
+import { db } from "@/lib/db";
 import Card from "@/components/ui/Card";
+
+async function updateGoal(goalId: string, patch: Partial<Goal>) {
+  const settings = await db.settings.get("settings");
+  if (!settings?.goals) return;
+  const goals = settings.goals.map((g) =>
+    g.id === goalId ? { ...g, ...patch } : g
+  );
+  await db.settings.update("settings", { goals });
+}
 
 interface GoalProgressProps {
   goal: Goal;
@@ -14,6 +28,21 @@ interface GoalProgressProps {
   hidden: boolean;
   assets: Asset[];
   categories: Category[];
+}
+
+const GOAL_TYPE_DEFAULTS: Record<string, string> = {
+  asset: "sky",
+  category: "purple",
+};
+
+function resolveGoalColor(goal: Goal) {
+  const c = goal.color ?? GOAL_TYPE_DEFAULTS[goal.linkType ?? ""] ?? "emerald";
+  return {
+    bar: COLOR_BG_CLASSES[c] ?? COLOR_BG_CLASSES.emerald,
+    text: COLOR_TEXT_MUTED_CLASSES[c] ?? COLOR_TEXT_MUTED_CLASSES.emerald,
+    badge: COLOR_BADGE_CLASSES[c] ?? COLOR_BADGE_CLASSES.emerald,
+    confetti: [COLOR_HEX[c] ?? "#10b981", "#fbbf24", "#f59e0b"],
+  };
 }
 
 export default function GoalProgress({
@@ -32,6 +61,7 @@ export default function GoalProgress({
     : goalAmount;
 
   const isLinked = !!goal.linkType;
+  const colors = resolveGoalColor(goal);
   const currentValue = getGoalCurrentValue(goal, assets, categories, currentNetWorth, currency, rates);
   const brokenLink = currentValue === null;
 
@@ -46,9 +76,70 @@ export default function GoalProgress({
     return cat ? cat.name : null;
   })();
 
+  const isLiabilityGoal = (() => {
+    if (goal.linkType === "category" && goal.linkId) {
+      return categories.find((c) => c.id === goal.linkId)?.isLiability ?? false;
+    }
+    if (goal.linkType === "asset" && goal.linkId) {
+      const asset = assets.find((a) => a.id === goal.linkId);
+      if (!asset) return false;
+      return categories.find((c) => c.id === asset.categoryId)?.isLiability ?? false;
+    }
+    return false;
+  })();
+
   const effectiveValue = currentValue ?? 0;
-  const pct = goalInPrimary > 0 ? Math.min((effectiveValue / goalInPrimary) * 100, 100) : 0;
-  const reached = !brokenLink && effectiveValue >= goalInPrimary;
+
+  let pct: number;
+  let reached: boolean;
+
+  if (isLiabilityGoal) {
+    reached = !brokenLink && effectiveValue <= goalInPrimary;
+    const initial = goal.initialValue ?? effectiveValue;
+    if (initial <= goalInPrimary) {
+      pct = 100;
+    } else {
+      pct = Math.min(Math.max(((initial - effectiveValue) / (initial - goalInPrimary)) * 100, 0), 100);
+    }
+  } else {
+    reached = !brokenLink && effectiveValue >= goalInPrimary;
+    pct = goalInPrimary > 0 ? Math.min((effectiveValue / goalInPrimary) * 100, 100) : 0;
+  }
+
+  // Track first-reach and fire confetti
+  const celebratedRef = useRef(false);
+
+  useEffect(() => {
+    if (!reached || celebratedRef.current) return;
+
+    const now = new Date().toISOString();
+    const patch: Partial<Goal> = {};
+
+    if (!goal.reachedAt) {
+      patch.reachedAt = now;
+    }
+
+    if (!goal.celebratedAt) {
+      patch.celebratedAt = now;
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.8 },
+        colors: [...colors.confetti],
+      });
+    }
+
+    if (Object.keys(patch).length > 0) {
+      celebratedRef.current = true;
+      updateGoal(goal.id, patch);
+    }
+  }, [reached, goal.id, goal.reachedAt, goal.celebratedAt]);
+
+  // Auto-set initialValue for liability goals (reference point for progress bar)
+  useEffect(() => {
+    if (!isLiabilityGoal || goal.initialValue != null || brokenLink) return;
+    updateGoal(goal.id, { initialValue: effectiveValue });
+  }, [isLiabilityGoal, goal.id, goal.initialValue, brokenLink, effectiveValue]);
 
   // Projection: average daily change from last 30+ days of history
   // Disabled for linked goals (history only stores total net worth)
@@ -160,22 +251,35 @@ export default function GoalProgress({
             </p>
           )}
         </div>
-        {reached && (
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
-            Reached!
-          </span>
-        )}
-        {!reached && onTrack && (
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-              onTrack.behind
-                ? "bg-amber-500/10 text-amber-400"
-                : "bg-emerald-500/10 text-emerald-400"
-            }`}
-          >
-            {onTrack.label}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {reached && (
+            <>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${colors.badge}`}>
+                Reached!
+              </span>
+              <button
+                type="button"
+                onClick={() => updateGoal(goal.id, { hidden: true })}
+                aria-label="Hide from dashboard"
+                title="Hide from dashboard"
+                className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
+              >
+                <EyeOff className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
+          {!reached && onTrack && (
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                onTrack.behind
+                  ? "bg-amber-500/10 text-amber-400"
+                  : colors.badge
+              }`}
+            >
+              {onTrack.label}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Current / Goal values */}
@@ -191,8 +295,8 @@ export default function GoalProgress({
       {/* Progress bar */}
       <div className="relative h-3 w-full overflow-hidden rounded-full bg-zinc-800">
         <div
-          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-            reached ? "bg-emerald-400" : "bg-emerald-500"
+          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${colors.bar} ${
+            reached ? "opacity-80" : ""
           }`}
           style={{ width: `${pct}%` }}
         />
@@ -208,7 +312,7 @@ export default function GoalProgress({
 
       {/* Percentage */}
       <div className="mt-1.5">
-        <span className="text-xs font-medium text-emerald-400">{pct.toFixed(0)}%</span>
+        <span className={`text-xs font-medium ${colors.text}`}>{pct.toFixed(0)}%</span>
       </div>
 
       {/* Projection / target info */}
@@ -228,7 +332,7 @@ export default function GoalProgress({
         </p>
       )}
       {reached && (
-        <p className="mt-2 text-xs text-emerald-400">
+        <p className={`mt-2 text-xs ${colors.text}`}>
           You&apos;ve reached your goal!
         </p>
       )}
