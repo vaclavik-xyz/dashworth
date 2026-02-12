@@ -56,6 +56,11 @@ export interface Goal {
   date?: string;
   linkType?: "asset" | "category";
   linkId?: string;
+  color?: string;
+  reachedAt?: string;
+  celebratedAt?: string;
+  hidden?: boolean;
+  initialValue?: number;
 }
 
 export interface UserSettings {
