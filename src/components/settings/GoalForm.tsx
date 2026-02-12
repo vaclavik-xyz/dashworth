@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Check } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid } from "@/lib/utils";
+import { PALETTE_COLORS, COLOR_BG_CLASSES } from "@/constants/colors";
 import type { Goal, Currency, Asset, Category } from "@/types";
 import Button from "@/components/ui/Button";
+
+const GOAL_TYPE_DEFAULT_COLORS: Record<string, string> = {
+  "": "emerald",
+  asset: "sky",
+  category: "purple",
+};
 
 interface GoalFormProps {
   goal?: Goal;
@@ -20,6 +28,7 @@ export default function GoalForm({ goal, categories, assets, onClose }: GoalForm
   const [date, setDate] = useState(goal?.date ?? "");
   const [linkType, setLinkType] = useState<"" | "asset" | "category">(goal?.linkType ?? "");
   const [linkId, setLinkId] = useState(goal?.linkId ?? "");
+  const [color, setColor] = useState(goal?.color ?? GOAL_TYPE_DEFAULT_COLORS[goal?.linkType ?? ""] ?? "emerald");
   const [saving, setSaving] = useState(false);
 
   const selectClass =
@@ -32,6 +41,22 @@ export default function GoalForm({ goal, categories, assets, onClose }: GoalForm
       items: assets.filter((a) => a.categoryId === cat.id),
     }))
     .filter((g) => g.items.length > 0);
+
+  const isLiabilityGoal = (() => {
+    if (linkType === "category" && linkId) {
+      return categories.find((c) => c.id === linkId)?.isLiability ?? false;
+    }
+    if (linkType === "asset" && linkId) {
+      const asset = assets.find((a) => a.id === linkId);
+      if (!asset) return false;
+      return categories.find((c) => c.id === asset.categoryId)?.isLiability ?? false;
+    }
+    return false;
+  })();
+
+  useEffect(() => {
+    if (isLiabilityGoal && !amount) setAmount("0");
+  }, [isLiabilityGoal]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,6 +75,17 @@ export default function GoalForm({ goal, categories, assets, onClose }: GoalForm
       date: date || undefined,
       linkType: linkType || undefined,
       linkId: linkType && linkId ? linkId : undefined,
+      color,
+      // Preserve completion fields when editing
+      ...(goal?.reachedAt && { reachedAt: goal.reachedAt }),
+      ...(goal?.celebratedAt && { celebratedAt: goal.celebratedAt }),
+      ...(goal?.hidden && { hidden: goal.hidden }),
+      // Preserve initialValue for liability goals (only if link unchanged)
+      ...(goal?.initialValue != null &&
+        goal?.linkType === (linkType || undefined) &&
+        goal?.linkId === (linkType && linkId ? linkId : undefined) && {
+          initialValue: goal.initialValue,
+        }),
     };
 
     if (goal) {
@@ -77,12 +113,19 @@ export default function GoalForm({ goal, categories, assets, onClose }: GoalForm
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-400">Target Amount</label>
+        <label className="mb-1 block text-sm font-medium text-zinc-400">
+          {isLiabilityGoal ? "Target Balance" : "Target Amount"}
+        </label>
+        {isLiabilityGoal && (
+          <p className="text-xs text-zinc-500 mb-2">
+            The balance you want to reduce this debt to (0 = pay off completely)
+          </p>
+        )}
         <input
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="e.g. 1000000"
+          placeholder={isLiabilityGoal ? "e.g. 0" : "e.g. 1000000"}
           className={selectClass}
           min={0}
           step="any"
@@ -95,8 +138,14 @@ export default function GoalForm({ goal, categories, assets, onClose }: GoalForm
         <select
           value={linkType}
           onChange={(e) => {
-            setLinkType(e.target.value as "" | "asset" | "category");
+            const newType = e.target.value as "" | "asset" | "category";
+            setLinkType(newType);
             setLinkId("");
+            // Update color to type default if current color is a type default
+            const typeDefaults = Object.values(GOAL_TYPE_DEFAULT_COLORS);
+            if (typeDefaults.includes(color)) {
+              setColor(GOAL_TYPE_DEFAULT_COLORS[newType] ?? "emerald");
+            }
           }}
           className={selectClass}
         >
@@ -175,6 +224,28 @@ export default function GoalForm({ goal, categories, assets, onClose }: GoalForm
           onChange={(e) => setDate(e.target.value)}
           className={selectClass}
         />
+      </div>
+
+      {/* Color picker */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-zinc-400">Color</label>
+        <div className="grid grid-cols-8 gap-2">
+          {PALETTE_COLORS.map((c) => {
+            const isSelected = color === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setColor(c)}
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${
+                  COLOR_BG_CLASSES[c] ?? "bg-zinc-500"
+                } ${isSelected ? "ring-2 ring-offset-2 ring-offset-zinc-900 ring-white/60 scale-110" : "hover:scale-105"}`}
+              >
+                {isSelected && <Check className="h-4 w-4 text-white" />}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
