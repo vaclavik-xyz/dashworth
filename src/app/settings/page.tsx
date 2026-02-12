@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield, Info, Eye, Layers, Smartphone, Target } from "lucide-react";
+import { Download, Upload, Trash2, Globe, Github, RefreshCw, Plus, Pencil, ChevronUp, ChevronDown, Monitor, Palette, Wallet, BarChart3, Shield, Info, Eye, Layers, Smartphone, Target, RotateCcw } from "lucide-react";
 import { db } from "@/lib/db";
 import { exportData } from "@/lib/export";
 import { importData, validateImport, readJsonFile } from "@/lib/import";
@@ -83,6 +83,12 @@ function GuideItem({ icon: Icon, title, children }: { icon: LucideIcon; title: s
       </div>
     </div>
   );
+}
+
+function goalBadgeClass(goal: Goal): string {
+  const c = goal.color
+    ?? (goal.linkType === "asset" ? "sky" : goal.linkType === "category" ? "purple" : "emerald");
+  return COLOR_BADGE_CLASSES[c] ?? COLOR_BADGE_CLASSES.emerald;
 }
 
 export default function SettingsPage() {
@@ -592,54 +598,109 @@ export default function SettingsPage() {
           </Button>
         }
       >
-        <Card className="mt-3 p-0">
-          {settings.goals && settings.goals.length > 0 ? (
-            <div className="divide-y divide-[var(--dw-border)]">
-              {settings.goals.map((goal) => (
-                <div key={goal.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                    <Target className="h-4.5 w-4.5 text-emerald-500" />
+        {(() => {
+          const activeGoals = settings.goals?.filter((g) => !g.hidden) ?? [];
+          const completedGoals = settings.goals?.filter((g) => g.hidden) ?? [];
+
+          return (
+            <>
+              <Card className="mt-3 p-0">
+                {activeGoals.length > 0 ? (
+                  <div className="divide-y divide-[var(--dw-border)]">
+                    {activeGoals.map((goal) => (
+                      <div key={goal.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${goalBadgeClass(goal)}`}>
+                          <Target className="h-4.5 w-4.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{goal.name}</p>
+                          <p className="text-xs text-zinc-500">
+                            {hidden ? HIDDEN_VALUE : formatCurrency(goal.amount, goal.currency ?? settings.primaryCurrency)}
+                            {goal.date && ` · by ${new Date(goal.date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
+                            {goal.linkType && goal.linkId && (() => {
+                              const linked = goal.linkType === "asset"
+                                ? assets?.find((a) => a.id === goal.linkId)?.name
+                                : categories?.find((c) => c.id === goal.linkId)?.name;
+                              return linked
+                                ? <> · {linked}</>
+                                : <> · <span className="text-amber-400">broken link</span></>;
+                            })()}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openEditGoal(goal)}
+                          aria-label="Edit goal"
+                          className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:hover:text-white transition-colors"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteGoalTarget(goal)}
+                          aria-label="Delete goal"
+                          className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">{goal.name}</p>
-                    <p className="text-xs text-zinc-500">
-                      {hidden ? HIDDEN_VALUE : formatCurrency(goal.amount, goal.currency ?? settings.primaryCurrency)}
-                      {goal.date && ` · by ${new Date(goal.date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
-                      {goal.linkType && goal.linkId && (() => {
-                        const linked = goal.linkType === "asset"
-                          ? assets?.find((a) => a.id === goal.linkId)?.name
-                          : categories?.find((c) => c.id === goal.linkId)?.name;
-                        return linked
-                          ? <> · {linked}</>
-                          : <> · <span className="text-amber-400">broken link</span></>;
-                      })()}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openEditGoal(goal)}
-                    aria-label="Edit goal"
-                    className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-zinc-900 dark:hover:text-white transition-colors"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteGoalTarget(goal)}
-                    aria-label="Delete goal"
-                    className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="px-4 py-6 text-center text-sm text-zinc-500">
-              No goals yet. Add one to track your progress.
-            </p>
-          )}
-        </Card>
+                ) : (
+                  <p className="px-4 py-6 text-center text-sm text-zinc-500">
+                    No active goals. Add one to track your progress.
+                  </p>
+                )}
+              </Card>
+
+              {completedGoals.length > 0 && (
+                <>
+                  <p className="mt-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">Completed</p>
+                  <Card className="mt-2 p-0">
+                    <div className="divide-y divide-[var(--dw-border)]">
+                      {completedGoals.map((goal) => (
+                        <div key={goal.id} className="flex items-center gap-3 px-4 py-3">
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg opacity-50 ${goalBadgeClass(goal)}`}>
+                            <Target className="h-4.5 w-4.5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-zinc-500 truncate">{goal.name}</p>
+                            <p className="text-xs text-zinc-600">
+                              {hidden ? HIDDEN_VALUE : formatCurrency(goal.amount, goal.currency ?? settings.primaryCurrency)}
+                              {goal.reachedAt && ` · Reached ${new Date(goal.reachedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const goals = settings.goals?.map((g) =>
+                                g.id === goal.id ? { ...g, hidden: false } : g
+                              );
+                              await db.settings.update("settings", { goals });
+                            }}
+                            aria-label="Restore goal"
+                            title="Restore to dashboard"
+                            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-emerald-500 transition-colors"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteGoalTarget(goal)}
+                            aria-label="Delete goal"
+                            className="rounded-lg p-2 text-zinc-400 hover:bg-[var(--dw-hover)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </>
+              )}
+            </>
+          );
+        })()}
       </CollapsibleSection>
 
       {/* Data */}

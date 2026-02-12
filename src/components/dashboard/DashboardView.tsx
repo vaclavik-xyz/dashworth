@@ -61,7 +61,7 @@ export default function DashboardView() {
       />
 
       {/* Goal Progress */}
-      {settings?.goals && settings.goals.length > 0 && history && assets && categories && settings.goals.map((goal) => (
+      {settings?.goals && settings.goals.length > 0 && history && assets && categories && settings.goals.filter((g) => !g.hidden).map((goal) => (
         <GoalProgress
           key={goal.id}
           goal={goal}
