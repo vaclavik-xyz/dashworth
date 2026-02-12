@@ -13,6 +13,7 @@ import {
   Landmark,
   CreditCard,
   Plus,
+  Check,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { uuid, formatCurrency, calcNetWorth } from "@/lib/utils";
@@ -974,7 +975,7 @@ function StepReview({
       <Button
         onClick={onSave}
         disabled={saving}
-        className="mt-8 rounded-full px-8 py-3"
+        className="mt-8 hidden rounded-full px-8 py-3 md:inline-flex"
       >
         {saving ? "Saving..." : "Save & Start Tracking"}
       </Button>
@@ -1152,13 +1153,14 @@ export default function OnboardingWizard({
           </button>
 
           {step === 3 ? (
-            <Button
+            <button
               onClick={saveAll}
               disabled={saving}
-              className="rounded-full px-6"
+              className="group flex items-center gap-1.5 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 md:hidden"
             >
-              {saving ? "Saving..." : "Save & Start Tracking"}
-            </Button>
+              {saving ? "Saving..." : "Finish"}
+              <Check className="h-4 w-4 transition-transform group-hover:scale-110" />
+            </button>
           ) : (
             <button
               onClick={next}
