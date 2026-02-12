@@ -972,13 +972,13 @@ function StepReview({
         )}
       </div>
 
-      <Button
+      <button
         onClick={onSave}
         disabled={saving}
-        className="mt-8 hidden rounded-full px-8 py-3 md:inline-flex"
+        className="mt-8 hidden rounded-full bg-emerald-600 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50 disabled:pointer-events-none md:inline-flex"
       >
         {saving ? "Saving..." : "Save & Start Tracking"}
-      </Button>
+      </button>
     </div>
   );
 }
