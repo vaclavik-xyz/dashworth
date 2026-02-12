@@ -665,7 +665,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <Button variant="secondary" onClick={exportData}>
-              <Download className="h-4 w-4" />
+              <Upload className="h-4 w-4" />
               Export
             </Button>
           </div>
@@ -688,37 +688,31 @@ export default function SettingsPage() {
               variant="secondary"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="h-4 w-4" />
+              <Download className="h-4 w-4" />
               Import
             </Button>
           </div>
-        </Card>
-      </CollapsibleSection>
 
-      {/* Danger Zone */}
-      <section className="mt-8">
-        <h2 className="text-sm font-medium text-red-400 uppercase tracking-wider">
-          Danger Zone
-        </h2>
-        <Card className="mt-3 border-red-500/20">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-white">Delete All Data</p>
-              <p className="text-xs text-zinc-500">
-                Permanently remove all assets, history, and settings
-              </p>
+          <div className="border-t border-red-500/20 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-red-400">Delete All Data</p>
+                <p className="text-xs text-zinc-500">
+                  Permanently remove all assets, history, and settings
+                </p>
+              </div>
+              <Button
+                variant="danger"
+                className="shrink-0 whitespace-nowrap"
+                onClick={() => setDeleteModalOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete All
+              </Button>
             </div>
-            <Button
-              variant="danger"
-              className="shrink-0 whitespace-nowrap"
-              onClick={() => setDeleteModalOpen(true)}
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete All
-            </Button>
           </div>
         </Card>
-      </section>
+      </CollapsibleSection>
 
       {/* About */}
       <section className="mt-8">
@@ -779,6 +773,7 @@ export default function SettingsPage() {
           })()}
         </Card>
       </section>
+
 
       {/* Add/Edit Category modal */}
       <Modal
