@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Plus, Wallet, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Plus, Wallet, Eye, EyeOff, ArrowLeft, Search, ArrowUpDown } from "lucide-react";
 import { db } from "@/lib/db";
 import { formatCurrency, calcNetWorth, HIDDEN_VALUE } from "@/lib/utils";
 import { convertCurrency } from "@/lib/exchange-rates";
@@ -32,11 +32,14 @@ interface GroupedSection {
   assetCount: number;
 }
 
+type SortBy = "value-desc" | "value-asc" | "name-asc" | "name-za" | "recent";
+
 function buildGroupedSections(
   assets: Asset[],
   categories: Category[],
   rates: Record<string, number>,
   targetCurrency: Currency,
+  sortBy: SortBy = "value-desc",
 ): GroupedSection[] {
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const byCat = new Map<string, Asset[]>();
@@ -62,40 +65,33 @@ function buildGroupedSections(
     const catAssets = byCat.get(catId) ?? [];
     const category = categoryMap.get(catId);
 
-    // Sort assets by converted value descending
     const sorted = [...catAssets].sort((a, b) => {
-      const va = convertCurrency(a.currentValue, a.currency, targetCurrency, rates);
-      const vb = convertCurrency(b.currentValue, b.currency, targetCurrency, rates);
-      return vb - va;
+      switch (sortBy) {
+        case "value-asc": {
+          const va = convertCurrency(a.currentValue, a.currency, targetCurrency, rates);
+          const vb = convertCurrency(b.currentValue, b.currency, targetCurrency, rates);
+          return va - vb;
+        }
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-za":
+          return b.name.localeCompare(a.name);
+        case "recent":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        default: { // value-desc
+          const va = convertCurrency(a.currentValue, a.currency, targetCurrency, rates);
+          const vb = convertCurrency(b.currentValue, b.currency, targetCurrency, rates);
+          return vb - va;
+        }
+      }
     });
 
-    const byGroup = new Map<string | null, Asset[]>();
-    for (const a of sorted) {
-      const key = a.group ?? null;
-      const list = byGroup.get(key) ?? [];
-      list.push(a);
-      byGroup.set(key, list);
-    }
-
-    // Named groups first (sorted), ungrouped last
-    const groupNames = [...byGroup.keys()]
-      .filter((k) => k !== null)
-      .sort() as string[];
-    const hasUngrouped = byGroup.has(null);
-
-    const groups = [
-      ...groupNames.map((name) => {
-        const ga = byGroup.get(name)!;
-        return { name, assets: ga, subtotal: ga.reduce((s, a) => s + convertCurrency(a.currentValue, a.currency, targetCurrency, rates), 0) };
-      }),
-      ...(hasUngrouped
-        ? byGroup.get(null)!.map((a) => ({
-            name: null as string | null,
-            assets: [a],
-            subtotal: convertCurrency(a.currentValue, a.currency, targetCurrency, rates),
-          }))
-        : []),
-    ];
+    // Flat: each asset is its own entry, no group nesting
+    const groups = sorted.map((a) => ({
+      name: null as string | null,
+      assets: [a],
+      subtotal: convertCurrency(a.currentValue, a.currency, targetCurrency, rates),
+    }));
 
     return {
       categoryId: catId,
@@ -106,7 +102,7 @@ function buildGroupedSections(
     };
   });
 
-  // Sort: assets first, then liabilities; within each group: non-empty by value desc, empty at bottom by sortOrder
+  // Sort: assets first, then liabilities; within each group: non-empty by value/name, empty at bottom by sortOrder
   sections.sort((a, b) => {
     const aLiab = a.category?.isLiability ? 1 : 0;
     const bLiab = b.category?.isLiability ? 1 : 0;
@@ -114,7 +110,18 @@ function buildGroupedSections(
 
     if (a.assetCount > 0 && b.assetCount === 0) return -1;
     if (a.assetCount === 0 && b.assetCount > 0) return 1;
-    if (a.assetCount > 0 && b.assetCount > 0) return b.subtotal - a.subtotal;
+    if (a.assetCount > 0 && b.assetCount > 0) {
+      switch (sortBy) {
+        case "value-asc":
+          return a.subtotal - b.subtotal;
+        case "name-asc":
+          return (a.category?.name ?? "").localeCompare(b.category?.name ?? "");
+        case "name-za":
+          return (b.category?.name ?? "").localeCompare(a.category?.name ?? "");
+        default: // value-desc, recent
+          return b.subtotal - a.subtotal;
+      }
+    }
     return (a.category?.sortOrder ?? 99) - (b.category?.sortOrder ?? 99);
   });
 
@@ -125,7 +132,6 @@ function isSelectionEqual(a: Selection, b: Selection): boolean {
   if (a === null || b === null) return a === b;
   if (a.type !== b.type) return false;
   if (a.type === "category" && b.type === "category") return a.categoryId === b.categoryId;
-  if (a.type === "group" && b.type === "group") return a.categoryId === b.categoryId && a.group === b.group;
   if (a.type === "asset" && b.type === "asset") return a.assetId === b.assetId;
   return false;
 }
@@ -152,7 +158,8 @@ export default function AssetsPage() {
   const [expandedAssetId, setExpandedAssetId] = useState<string | null>(null);
   const [sheetAssetId, setSheetAssetId] = useState<string | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortBy>("value-desc");
   const scrollYRef = useRef(0);
 
   const { rates } = useExchangeRates();
@@ -160,9 +167,20 @@ export default function AssetsPage() {
   const breakdown = assets && categories ? calcNetWorth(assets, categories, primaryCurrency, rates) : { totalAssets: 0, totalLiabilities: 0, netWorth: 0 };
   const totalNetWorth = breakdown.netWorth;
 
+  const filteredAssets = useMemo(() => {
+    if (!assets) return [];
+    if (!searchQuery.trim()) return assets;
+    const q = searchQuery.toLowerCase();
+    return assets.filter((a) =>
+      a.name.toLowerCase().includes(q) ||
+      a.ticker?.toLowerCase().includes(q) ||
+      a.group?.toLowerCase().includes(q)
+    );
+  }, [assets, searchQuery]);
+
   const sections = useMemo(
-    () => (assets && categories ? buildGroupedSections(assets, categories, rates, primaryCurrency) : []),
-    [assets, categories, rates, primaryCurrency],
+    () => (assets && categories ? buildGroupedSections(filteredAssets, categories, rates, primaryCurrency, sortBy) : []),
+    [filteredAssets, categories, rates, primaryCurrency, sortBy, assets],
   );
 
   // Latest change per asset (for percentage display on cards)
@@ -192,15 +210,6 @@ export default function AssetsPage() {
       const next = new Set(prev);
       if (next.has(categoryId)) next.delete(categoryId);
       else next.add(categoryId);
-      return next;
-    });
-  }
-
-  function toggleGroupCollapse(key: string) {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
       return next;
     });
   }
@@ -323,6 +332,36 @@ export default function AssetsPage() {
         )}
       </div>
 
+      {/* Search and sort controls */}
+      {assets && assets.length > 0 && (
+        <div className="mt-4 flex items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search assets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-[var(--dw-border)] bg-[var(--dw-input)] pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+          <div className="relative">
+            <ArrowUpDown className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="rounded-lg border border-[var(--dw-input-border)] bg-[var(--dw-input)] pl-8 pr-3 py-2 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none dark:text-white appearance-none cursor-pointer"
+            >
+              <option value="value-desc">Highest value</option>
+              <option value="value-asc">Lowest value</option>
+              <option value="name-asc">Name A-Z</option>
+              <option value="name-za">Name Z-A</option>
+              <option value="recent">Newest first</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       {/* Asset list or empty state */}
       {assets && assets.length === 0 ? (
         <div className="mt-20 flex flex-col items-center text-center">
@@ -342,7 +381,14 @@ export default function AssetsPage() {
         <div className="mt-6 flex gap-0 md:gap-6">
           {/* Left: asset list */}
           <div className="w-full md:w-3/5 space-y-8">
-            {sections.map((section, sectionIdx) => {
+            {searchQuery.trim() && filteredAssets.length === 0 ? (
+              <div className="mt-12 flex flex-col items-center text-center">
+                <Search className="h-8 w-8 text-zinc-500" />
+                <p className="mt-3 text-sm text-zinc-500">
+                  No assets matching &ldquo;{searchQuery.trim()}&rdquo;
+                </p>
+              </div>
+            ) : sections.map((section, sectionIdx) => {
               const Icon = section.category ? getIcon(section.category.icon) : null;
               const colorClass = section.category
                 ? (COLOR_TEXT_CLASSES[section.category.color] ?? "text-zinc-500")
@@ -432,113 +478,49 @@ export default function AssetsPage() {
                   {!isCatCollapsed && (section.assetCount === 0 ? (
                     <p className="ml-1 text-sm text-zinc-500">No assets yet. Tap + to add one.</p>
                   ) : (
-                    <div className="space-y-4">
-                      {section.groups.map((grp, gi) => {
-                        const isGroupSelected =
-                          grp.name !== null &&
-                          selection?.type === "group" &&
-                          selection.categoryId === section.categoryId &&
-                          selection.group === grp.name;
-
-                        const grpSelection: Selection = grp.name
-                          ? { type: "group", categoryId: section.categoryId, group: grp.name }
-                          : null;
-                        const groupKey = grp.name ? `${section.categoryId}::${grp.name}` : null;
-                        const isGrpCollapsed = groupKey ? collapsedGroups.has(groupKey) : false;
+                    <div className="grid gap-1.5">
+                      {section.groups.flatMap((grp) => grp.assets).map((asset) => {
+                        const isAssetSelected =
+                          selection?.type === "asset" && selection.assetId === asset.id;
+                        const assetSelection: Selection = { type: "asset", assetId: asset.id };
 
                         return (
-                          <div key={grp.name ?? `ungrouped-${gi}`}>
-                            {/* Group header */}
-                            {grp.name && grp.assets.length > 0 && (
-                              <div
-                                className={`mb-2 ml-1 cursor-pointer rounded-lg transition-colors ${
-                                  isGroupSelected
-                                    ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-2"
-                                    : "md:border-l-2 md:border-transparent md:pl-2"
-                                }`}
-                                onClick={() => {
-                                  if (groupKey) toggleGroupCollapse(groupKey);
-                                  if (grpSelection && window.matchMedia("(min-width: 768px)").matches) {
-                                    toggleSelection(grpSelection);
-                                  }
-                                }}
-                              >
-                                <div className={`flex items-center gap-1.5 ${isGrpCollapsed ? "md:py-0.5" : ""}`}>
-                                  <span className={`text-sm font-medium text-zinc-600 dark:text-zinc-400 ${isGrpCollapsed ? "md:text-base" : ""}`}>
-                                    {grp.name}
-                                  </span>
-                                  {isGrpCollapsed && (
-                                    <>
-                                      <span className="ml-auto text-xs md:text-sm text-zinc-500">
-                                        {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (grpSelection) navigateToMobileDetail(grpSelection);
-                                        }}
-                                        className="inline-flex items-center justify-center min-w-[24px] h-6 md:h-7 px-2 md:px-2.5 rounded-full bg-zinc-700 text-zinc-300 text-xs md:text-sm font-medium md:pointer-events-none"
-                                      >
-                                        {grp.assets.length}
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                                {!isGrpCollapsed && (
-                                  <p className="text-xs text-zinc-500">
-                                    {hidden ? HIDDEN_VALUE : formatCurrency(grp.subtotal, primaryCurrency)} · {grp.assets.length} {grp.assets.length === 1 ? "asset" : "assets"}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                            {!isGrpCollapsed && (<div className={`grid ${"gap-1.5"}`}>
-                              {grp.assets.map((asset) => {
-                                const isAssetSelected =
-                                  selection?.type === "asset" && selection.assetId === asset.id;
-                                const assetSelection: Selection = { type: "asset", assetId: asset.id };
-
-                                return (
-                                  <div
-                                    key={asset.id}
-                                    className={`rounded-lg transition-colors ${
-                                      isAssetSelected
-                                        ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-1"
-                                        : "md:border-l-2 md:border-transparent md:pl-1"
-                                    }`}
-                                  >
-                                    <AssetCard
-                                      asset={asset}
-                                      category={section.category}
-                                      latestChange={latestChangeMap.get(asset.id)}
-                                      isExpanded={expandedAssetId === asset.id}
-                                      onToggleExpand={() => {
-                                        if (window.matchMedia("(max-width: 767px)").matches) {
-                                          setSheetAssetId(asset.id);
-                                        } else {
-                                          setExpandedAssetId((prev) => prev === asset.id ? null : asset.id);
-                                          toggleSelection(assetSelection);
-                                        }
-                                      }}
-                                      onViewDetails={() => {
-                                        setExpandedAssetId(null);
-                                        setEditingAssetId(null);
-                                        setSelection(assetSelection);
-                                        navigateToMobileDetail(assetSelection);
-                                      }}
-                                      onSettings={() => {
-                                        setExpandedAssetId(null);
-                                        setEditingAssetId(asset.id);
-                                        setSelection(assetSelection);
-                                        navigateToMobileDetail(assetSelection);
-                                      }}
-                                      currency={primaryCurrency}
-                                      rates={rates}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>)}
+                          <div
+                            key={asset.id}
+                            className={`rounded-lg transition-colors ${
+                              isAssetSelected
+                                ? "md:border-l-2 md:border-emerald-500 md:bg-emerald-500/5 md:pl-1"
+                                : "md:border-l-2 md:border-transparent md:pl-1"
+                            }`}
+                          >
+                            <AssetCard
+                              asset={asset}
+                              category={section.category}
+                              latestChange={latestChangeMap.get(asset.id)}
+                              isExpanded={expandedAssetId === asset.id}
+                              onToggleExpand={() => {
+                                if (window.matchMedia("(max-width: 767px)").matches) {
+                                  setSheetAssetId(asset.id);
+                                } else {
+                                  setExpandedAssetId((prev) => prev === asset.id ? null : asset.id);
+                                  toggleSelection(assetSelection);
+                                }
+                              }}
+                              onViewDetails={() => {
+                                setExpandedAssetId(null);
+                                setEditingAssetId(null);
+                                setSelection(assetSelection);
+                                navigateToMobileDetail(assetSelection);
+                              }}
+                              onSettings={() => {
+                                setExpandedAssetId(null);
+                                setEditingAssetId(asset.id);
+                                setSelection(assetSelection);
+                                navigateToMobileDetail(assetSelection);
+                              }}
+                              currency={primaryCurrency}
+                              rates={rates}
+                            />
                           </div>
                         );
                       })}
@@ -549,16 +531,18 @@ export default function AssetsPage() {
             })}
 
             {/* Add Category */}
-            <div className="border-t border-[var(--dw-border)] pt-4">
-              <button
-                type="button"
-                onClick={() => setCategoryModalOpen(true)}
-                className="flex items-center gap-2 text-sm text-zinc-500 hover:text-emerald-500 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Add Category
-              </button>
-            </div>
+            {(!searchQuery.trim() || filteredAssets.length > 0) && (
+              <div className="border-t border-[var(--dw-border)] pt-4">
+                <button
+                  type="button"
+                  onClick={() => setCategoryModalOpen(true)}
+                  className="flex items-center gap-2 text-sm text-zinc-500 hover:text-emerald-500 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Category
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right: detail panel (desktop only) */}

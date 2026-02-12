@@ -77,6 +77,7 @@ export default function AssetCard({
             {isAuto && asset.quantity != null && asset.ticker
               ? `${asset.quantity.toLocaleString()} ${asset.ticker.toUpperCase()}`
               : category?.name ?? "Unknown"}
+            {asset.group && <span className="text-zinc-600"> · {asset.group}</span>}
           </span>
           {isExpanded ? (
             <div className="flex items-center gap-3 shrink-0 ml-2">
