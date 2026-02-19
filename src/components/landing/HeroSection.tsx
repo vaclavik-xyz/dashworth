@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   Shield,
   Layers,
@@ -404,7 +405,14 @@ export default function HeroSection() {
       <div className={`relative${showInstallCard ? " flex flex-1 flex-col items-center justify-center pt-[5vh] md:flex-none md:pt-0" : ""}`}>
         {/* Logo */}
         <div className="mb-3 sm:mb-6 flex items-center justify-center gap-4">
-          <img src="/icons/icon-192x192.png" alt="Dashworth" className="h-14 w-14 rounded-2xl sm:h-16 sm:w-16" />
+          <Image
+            src="/icons/icon-192x192.png"
+            alt="Dashworth"
+            width={64}
+            height={64}
+            priority
+            className="h-14 w-14 rounded-2xl sm:h-16 sm:w-16"
+          />
           <span className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
             Dash<span className="text-emerald-500">worth</span>
           </span>
