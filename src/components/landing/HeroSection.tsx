@@ -371,8 +371,9 @@ export default function HeroSection() {
   const [heroReady, setHeroReady] = useState(false);
 
   useEffect(() => {
-    // Runs after paint — triggers the CSS transition
-    setHeroReady(true);
+    // Trigger transition after first paint without sync setState in effect body.
+    const raf = requestAnimationFrame(() => setHeroReady(true));
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return (
@@ -389,7 +390,7 @@ export default function HeroSection() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-[30%] h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.08] blur-[120px]" />
         <div className="absolute right-[-10%] top-[70%] h-[400px] w-[400px] rounded-full bg-emerald-600/[0.05] blur-[100px]" />
-        <div className="absolute left-[-5%] top-[10%] h-[300px] w-[300px] rounded-full bg-teal-500/[0.04] blur-[80px]" />
+        <div className="absolute left-[8%] top-[12%] hidden h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-teal-500/[0.04] blur-[80px] sm:block" />
         <div
           className="absolute inset-0 opacity-[0.035]"
           style={{

@@ -20,7 +20,7 @@ import CTASection from "./CTASection";
 export default function LandingPage() {
   return (
     <InstallProvider>
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-[#09090b]">
+      <div className="fixed inset-0 z-50 overflow-x-hidden overflow-y-auto bg-[#09090b]">
         {/* ── Hero ── */}
         <HeroSection />
 
