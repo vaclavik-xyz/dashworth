@@ -225,7 +225,6 @@ export default function AssetDetail({
     }
 
     return points;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [changes, asset.currentValue, asset.updatedAt, currency, rates]);
 
   const manyPoints = chartData.length > 10;

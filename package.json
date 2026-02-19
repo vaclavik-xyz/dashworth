@@ -19,14 +19,16 @@
     "recharts": "^3.7.0"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "16.1.6",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint": "^10.0.0",
+    "eslint-plugin-react-hooks": "7.1.0-canary-4842fbea-20260217",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "typescript-eslint": "^8.56.0"
   }
 }

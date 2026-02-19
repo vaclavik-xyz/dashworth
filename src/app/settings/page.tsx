@@ -14,7 +14,7 @@ import { convertCurrency } from "@/lib/exchange-rates";
 import { formatDate, formatCurrency, calcNetWorth, HIDDEN_VALUE } from "@/lib/utils";
 import { getIcon } from "@/lib/icons";
 import { COLOR_BADGE_CLASSES } from "@/constants/colors";
-import type { Category, Goal, Currency, CustomThemeColors, Theme } from "@/types";
+import type { Category, Goal, Currency, CustomThemeColors, Theme, UserSettings } from "@/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
@@ -127,12 +127,11 @@ export default function SettingsPage() {
     border: "#0f3460",
   };
 
-  async function updateSetting(
-    key: "primaryCurrency" | "theme",
-    value: string,
+  async function updateSetting<K extends "primaryCurrency" | "theme">(
+    key: K,
+    value: UserSettings[K],
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await db.settings.update("settings", { [key]: value } as any);
+    await db.settings.update("settings", { [key]: value } as Pick<UserSettings, K>);
   }
 
   async function selectCustomTheme() {

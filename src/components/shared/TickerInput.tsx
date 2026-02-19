@@ -86,7 +86,7 @@ export default function TickerInput({
       }
     }, 500);
     return () => clearTimeout(debounceRef.current);
-  }, [value, currency, source]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value, currency, source]);
 
   return (
     <div className="space-y-2">

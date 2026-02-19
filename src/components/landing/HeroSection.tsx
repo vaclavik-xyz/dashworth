@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import Image from "next/image";
 import {
   Shield,
   Layers,
@@ -389,8 +388,9 @@ export default function HeroSection() {
     >
       {/* Background layers */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-[30%] h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.08] blur-[120px]" />
-        <div className="absolute right-[-10%] top-[70%] h-[400px] w-[400px] rounded-full bg-emerald-600/[0.05] blur-[100px]" />
+        <div className="absolute inset-0 sm:hidden bg-[radial-gradient(circle_at_50%_18%,rgba(16,185,129,0.12),transparent_55%)]" />
+        <div className="absolute left-1/2 top-[30%] hidden h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.08] blur-[120px] sm:block" />
+        <div className="absolute right-[-10%] top-[70%] hidden h-[400px] w-[400px] rounded-full bg-emerald-600/[0.05] blur-[100px] sm:block" />
         <div className="absolute left-[8%] top-[12%] hidden h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-teal-500/[0.04] blur-[80px] sm:block" />
         <div
           className="absolute inset-0 opacity-[0.035]"
@@ -405,13 +405,12 @@ export default function HeroSection() {
       <div className={`relative${showInstallCard ? " flex flex-1 flex-col items-center justify-center pt-[5vh] md:flex-none md:pt-0" : ""}`}>
         {/* Logo */}
         <div className="mb-3 sm:mb-6 flex items-center justify-center gap-4">
-          <Image
+          <img
             src="/icons/icon-192x192.png"
             alt="Dashworth"
-            width={64}
-            height={64}
-            priority
             className="h-14 w-14 rounded-2xl sm:h-16 sm:w-16"
+            loading="eager"
+            decoding="async"
           />
           <span className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
             Dash<span className="text-emerald-500">worth</span>
