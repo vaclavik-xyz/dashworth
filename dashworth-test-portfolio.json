@@ -1,0 +1,293 @@
+{
+  "app": "dashworth",
+  "version": 2,
+  "data": {
+    "categories": [
+      {
+        "id": "cat-crypto",
+        "name": "Crypto",
+        "icon": "bitcoin",
+        "color": "orange",
+        "createdAt": "2024-01-15T10:00:00.000Z"
+      },
+      {
+        "id": "cat-stocks",
+        "name": "Stocks & ETFs",
+        "icon": "trending-up",
+        "color": "emerald",
+        "createdAt": "2024-01-15T10:00:00.000Z"
+      },
+      {
+        "id": "cat-realestate",
+        "name": "Real Estate",
+        "icon": "home",
+        "color": "blue",
+        "createdAt": "2024-01-15T10:00:00.000Z"
+      },
+      {
+        "id": "cat-cash",
+        "name": "Cash & Savings",
+        "icon": "banknote",
+        "color": "yellow",
+        "createdAt": "2024-01-15T10:00:00.000Z"
+      },
+      {
+        "id": "cat-business",
+        "name": "Business",
+        "icon": "briefcase",
+        "color": "purple",
+        "createdAt": "2024-01-15T10:00:00.000Z"
+      },
+      {
+        "id": "cat-other",
+        "name": "Other",
+        "icon": "circle-dot",
+        "color": "zinc",
+        "createdAt": "2024-01-15T10:00:00.000Z"
+      }
+    ],
+    "assets": [
+      {
+        "id": "asset-btc-ledger",
+        "name": "Bitcoin (Ledger)",
+        "categoryId": "cat-crypto",
+        "group": "Bitcoin Total",
+        "currency": "CZK",
+        "currentValue": 2850000,
+        "priceSource": "coingecko",
+        "priceSourceId": "bitcoin",
+        "quantity": 0.45,
+        "isArchived": false,
+        "createdAt": "2024-01-20T10:00:00.000Z",
+        "updatedAt": "2026-02-07T18:00:00.000Z"
+      },
+      {
+        "id": "asset-btc-exchange",
+        "name": "Bitcoin (Coinbase)",
+        "categoryId": "cat-crypto",
+        "group": "Bitcoin Total",
+        "currency": "CZK",
+        "currentValue": 630000,
+        "priceSource": "coingecko",
+        "priceSourceId": "bitcoin",
+        "quantity": 0.1,
+        "isArchived": false,
+        "createdAt": "2024-06-15T10:00:00.000Z",
+        "updatedAt": "2026-02-07T18:00:00.000Z"
+      },
+      {
+        "id": "asset-eth",
+        "name": "Ethereum",
+        "categoryId": "cat-crypto",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 420000,
+        "priceSource": "coingecko",
+        "priceSourceId": "ethereum",
+        "quantity": 3.2,
+        "isArchived": false,
+        "createdAt": "2024-02-10T10:00:00.000Z",
+        "updatedAt": "2026-02-07T18:00:00.000Z"
+      },
+      {
+        "id": "asset-sol",
+        "name": "Solana",
+        "categoryId": "cat-crypto",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 95000,
+        "priceSource": "coingecko",
+        "priceSourceId": "solana",
+        "quantity": 12,
+        "isArchived": false,
+        "createdAt": "2024-08-20T10:00:00.000Z",
+        "updatedAt": "2026-02-07T18:00:00.000Z"
+      },
+      {
+        "id": "asset-sp500",
+        "name": "S&P 500 ETF (VOO)",
+        "categoryId": "cat-stocks",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 580000,
+        "priceSource": "yahoo",
+        "priceSourceId": "VOO",
+        "quantity": 10,
+        "isArchived": false,
+        "createdAt": "2024-03-15T10:00:00.000Z",
+        "updatedAt": "2026-02-07T18:00:00.000Z"
+      },
+      {
+        "id": "asset-aapl",
+        "name": "Apple (AAPL)",
+        "categoryId": "cat-stocks",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 310000,
+        "priceSource": "yahoo",
+        "priceSourceId": "AAPL",
+        "quantity": 25,
+        "isArchived": false,
+        "createdAt": "2024-05-20T10:00:00.000Z",
+        "updatedAt": "2026-02-07T18:00:00.000Z"
+      },
+      {
+        "id": "asset-msft",
+        "name": "Microsoft (MSFT)",
+        "categoryId": "cat-stocks",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 275000,
+        "priceSource": "yahoo",
+        "priceSourceId": "MSFT",
+        "quantity": 12,
+        "isArchived": false,
+        "createdAt": "2024-05-20T10:00:00.000Z",
+        "updatedAt": "2026-02-07T18:00:00.000Z"
+      },
+      {
+        "id": "asset-flat",
+        "name": "Byt Brno - Žabovřesky",
+        "categoryId": "cat-realestate",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 5800000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-01-15T10:00:00.000Z",
+        "updatedAt": "2026-01-15T10:00:00.000Z"
+      },
+      {
+        "id": "asset-parking",
+        "name": "Garážové stání",
+        "categoryId": "cat-realestate",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 450000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-01-15T10:00:00.000Z",
+        "updatedAt": "2025-06-01T10:00:00.000Z"
+      },
+      {
+        "id": "asset-savings-czk",
+        "name": "Spořicí účet (CZK)",
+        "categoryId": "cat-cash",
+        "group": "Emergency Fund",
+        "currency": "CZK",
+        "currentValue": 850000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-01-15T10:00:00.000Z",
+        "updatedAt": "2026-02-01T10:00:00.000Z"
+      },
+      {
+        "id": "asset-savings-eur",
+        "name": "Savings account (EUR)",
+        "categoryId": "cat-cash",
+        "group": "Emergency Fund",
+        "currency": "EUR",
+        "currentValue": 5000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-06-01T10:00:00.000Z",
+        "updatedAt": "2026-02-01T10:00:00.000Z"
+      },
+      {
+        "id": "asset-checking",
+        "name": "Běžný účet",
+        "categoryId": "cat-cash",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 180000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-01-15T10:00:00.000Z",
+        "updatedAt": "2026-02-05T10:00:00.000Z"
+      },
+      {
+        "id": "asset-macdoktor",
+        "name": "MacDoktor (vybavení + zásoby)",
+        "categoryId": "cat-business",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 350000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-01-15T10:00:00.000Z",
+        "updatedAt": "2026-01-10T10:00:00.000Z"
+      },
+      {
+        "id": "asset-macmini",
+        "name": "Mac Mini server",
+        "categoryId": "cat-business",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 45000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2025-01-10T10:00:00.000Z",
+        "updatedAt": "2025-01-10T10:00:00.000Z"
+      },
+      {
+        "id": "asset-car",
+        "name": "Škoda Octavia 2021",
+        "categoryId": "cat-other",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 380000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-01-15T10:00:00.000Z",
+        "updatedAt": "2025-09-01T10:00:00.000Z"
+      },
+      {
+        "id": "asset-domain",
+        "name": "Domény (portfolio)",
+        "categoryId": "cat-other",
+        "group": "",
+        "currency": "CZK",
+        "currentValue": 25000,
+        "priceSource": "manual",
+        "isArchived": false,
+        "createdAt": "2024-09-01T10:00:00.000Z",
+        "updatedAt": "2025-12-01T10:00:00.000Z"
+      }
+    ],
+    "history": [
+      { "totalValue": 9200000, "currency": "CZK", "createdAt": "2024-01-31T12:00:00.000Z" },
+      { "totalValue": 9450000, "currency": "CZK", "createdAt": "2024-02-28T12:00:00.000Z" },
+      { "totalValue": 9800000, "currency": "CZK", "createdAt": "2024-03-31T12:00:00.000Z" },
+      { "totalValue": 10100000, "currency": "CZK", "createdAt": "2024-04-15T12:00:00.000Z" },
+      { "totalValue": 10050000, "currency": "CZK", "createdAt": "2024-05-15T12:00:00.000Z" },
+      { "totalValue": 10400000, "currency": "CZK", "createdAt": "2024-06-15T12:00:00.000Z" },
+      { "totalValue": 10800000, "currency": "CZK", "createdAt": "2024-07-01T12:00:00.000Z" },
+      { "totalValue": 10650000, "currency": "CZK", "createdAt": "2024-08-01T12:00:00.000Z" },
+      { "totalValue": 11000000, "currency": "CZK", "createdAt": "2024-09-01T12:00:00.000Z" },
+      { "totalValue": 11500000, "currency": "CZK", "createdAt": "2024-10-01T12:00:00.000Z" },
+      { "totalValue": 11300000, "currency": "CZK", "createdAt": "2024-11-01T12:00:00.000Z" },
+      { "totalValue": 11800000, "currency": "CZK", "createdAt": "2024-12-01T12:00:00.000Z" },
+      { "totalValue": 12200000, "currency": "CZK", "createdAt": "2025-01-15T12:00:00.000Z" },
+      { "totalValue": 12000000, "currency": "CZK", "createdAt": "2025-02-15T12:00:00.000Z" },
+      { "totalValue": 12350000, "currency": "CZK", "createdAt": "2025-03-15T12:00:00.000Z" },
+      { "totalValue": 12500000, "currency": "CZK", "createdAt": "2025-04-15T12:00:00.000Z" },
+      { "totalValue": 12400000, "currency": "CZK", "createdAt": "2025-05-15T12:00:00.000Z" },
+      { "totalValue": 12650000, "currency": "CZK", "createdAt": "2025-06-15T12:00:00.000Z" },
+      { "totalValue": 12800000, "currency": "CZK", "createdAt": "2025-07-01T12:00:00.000Z" },
+      { "totalValue": 12750000, "currency": "CZK", "createdAt": "2025-08-01T12:00:00.000Z" },
+      { "totalValue": 12900000, "currency": "CZK", "createdAt": "2025-09-01T12:00:00.000Z" },
+      { "totalValue": 13100000, "currency": "CZK", "createdAt": "2025-10-01T12:00:00.000Z" },
+      { "totalValue": 12950000, "currency": "CZK", "createdAt": "2025-11-01T12:00:00.000Z" },
+      { "totalValue": 13200000, "currency": "CZK", "createdAt": "2025-12-01T12:00:00.000Z" },
+      { "totalValue": 13365000, "currency": "CZK", "createdAt": "2026-01-15T12:00:00.000Z" },
+      { "totalValue": 13400000, "currency": "CZK", "createdAt": "2026-02-01T12:00:00.000Z" },
+      { "totalValue": 13365000, "currency": "CZK", "createdAt": "2026-02-08T10:00:00.000Z" }
+    ],
+    "settings": {
+      "id": "settings",
+      "primaryCurrency": "CZK",
+      "theme": "dark",
+      "showHints": false
+    }
+  }
+}
